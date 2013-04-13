@@ -46,7 +46,7 @@
 				PreprocessorDefinitions="WIN32;_WINDOWS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="2"
+				RuntimeLibrary="3"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				DebugInformationFormat="3"
@@ -122,7 +122,7 @@
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
-				AdditionalIncludeDirectories="../Util/Source;../include;../../../vendors_external/BWTA;&quot;../../BWAPI 3.7.4/include&quot;"
+				AdditionalIncludeDirectories="../../BWSAL/Util/Source;../../BWSAL/include;../../../vendors_external/BWTA;&quot;../../BWAPI 3.7.4/include&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_SECURE_SCL 0"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
@@ -143,7 +143,7 @@
 				Name="VCLinkerTool"
 				AdditionalDependencies="BWAPI.lib BWTA.lib BWSAL.lib tinyxml.lib CGAL-vc90-mt.lib libboost_thread-vc90-mt-1_40.lib gmp-vc90-mt.lib mpfr-vc90-mt.lib"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="&quot;../../BWAPI 3.7.4/lib&quot;;../lib"
+				AdditionalLibraryDirectories="&quot;../../BWAPI 3.7.4/lib&quot;;../../BWSAL/lib"
 				IgnoreDefaultLibraryNames="LIBCMT"
 				GenerateDebugInformation="false"
 				SubSystem="2"
@@ -185,6 +185,10 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
+				RelativePath=".\Source\BattleEstimator.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\Source\Dll.cpp"
 				>
 			</File>
@@ -203,6 +207,10 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
+				RelativePath=".\Source\BattleEstimator.h"
+				>
+			</File>
+			<File
 				RelativePath=".\Source\EnhancedUI.h"
 				>
 			</File>
@@ -216,6 +224,506 @@
 			Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav"
 			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}"
 			>
+		</Filter>
+		<Filter
+			Name="BWSAL"
+			>
+			<File
+				RelativePath="..\..\BWSAL\include\BWSAL.h"
+				>
+			</File>
+			<Filter
+				Name="Source"
+				>
+				<File
+					RelativePath="..\..\BWSAL\BWSAL\Source\Assignment.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWSAL\BWSAL\Source\Base.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWSAL\BWSAL\Source\BaseManager.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWSAL\BWSAL\Source\BFSBuildingPlacer.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWSAL\BWSAL\Source\BorderManager.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWSAL\BWSAL\Source\BuildEvent.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWSAL\BWSAL\Source\BuildEventTimeline.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWSAL\BWSAL\Source\BuildOrderManager.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWSAL\BWSAL\Source\BuildState.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWSAL\BWSAL\Source\BuildType.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWSAL\BWSAL\Source\BuildUnit.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWSAL\BWSAL\Source\BuildUnitManager.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWSAL\BWSAL\Source\BWSAL.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWSAL\BWSAL\Source\BWSAL.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWSAL\BWSAL\Source\DefenseManager.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWSAL\BWSAL\Source\InformationManager.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWSAL\BWSAL\Source\MacroTask.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWSAL\BWSAL\Source\MetaUnitVariable.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWSAL\BWSAL\Source\ReservedMap.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWSAL\BWSAL\Source\ScoutManager.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWSAL\BWSAL\Source\SupplyManager.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWSAL\BWSAL\Source\Task.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWSAL\BWSAL\Source\TaskExecutor.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWSAL\BWSAL\Source\TaskScheduler.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWSAL\BWSAL\Source\TaskState.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWSAL\BWSAL\Source\UnitGroup.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWSAL\BWSAL\Source\UnitGroupManager.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWSAL\BWSAL\Source\Util.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWSAL\BWSAL\Source\WorkerManager.cpp"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="Include"
+				>
+				<File
+					RelativePath="..\..\BWSAL\include\BWSAL\Arbitrator.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWSAL\include\BWSAL\Base.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWSAL\include\BWSAL\BaseManager.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWSAL\include\BWSAL\BFSBuildingPlacer.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWSAL\include\BWSAL\BorderManager.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWSAL\include\BWSAL\BuildEvent.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWSAL\include\BWSAL\BuildEventTimeline.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWSAL\include\BWSAL\BuildingPlacer.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWSAL\include\BWSAL\BuildOrderManager.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWSAL\include\BWSAL\BuildState.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWSAL\include\BWSAL\BuildType.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWSAL\include\BWSAL\BuildUnit.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWSAL\include\BWSAL\BuildUnitManager.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWSAL\include\BWSAL\Controller.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWSAL\include\BWSAL\DefenseManager.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWSAL\include\BWSAL\Heap.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWSAL\include\BWSAL\InformationManager.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWSAL\include\BWSAL\MacroTask.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWSAL\include\BWSAL\MetaUnit.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWSAL\include\BWSAL\MetaUnitVariable.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWSAL\include\BWSAL\RectangleArray.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWSAL\include\BWSAL\ReservedMap.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWSAL\include\BWSAL\ScoutManager.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWSAL\include\BWSAL\SupplyManager.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWSAL\include\BWSAL\Task.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWSAL\include\BWSAL\TaskExecutor.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWSAL\include\BWSAL\TaskList.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWSAL\include\BWSAL\TaskScheduler.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWSAL\include\BWSAL\TaskState.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWSAL\include\BWSAL\Types.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWSAL\include\BWSAL\UnitGroup.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWSAL\include\BWSAL\UnitGroupManager.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWSAL\include\BWSAL\Util.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWSAL\include\BWSAL\WorkerManager.h"
+					>
+				</File>
+			</Filter>
+		</Filter>
+		<Filter
+			Name="BWAPI"
+			>
+			<Filter
+				Name="Include"
+				>
+				<File
+					RelativePath="..\..\BWAPI 3.7.4\include\BWAPI\AIModule.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWAPI 3.7.4\include\BWAPI\Bullet.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWAPI 3.7.4\include\BWAPI\BulletType.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWAPI 3.7.4\include\BWAPI\Client.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWAPI 3.7.4\include\BWAPI\Color.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWAPI 3.7.4\include\BWAPI\Constants.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWAPI 3.7.4\include\BWAPI\CoordinateType.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWAPI 3.7.4\include\BWAPI\DamageType.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWAPI 3.7.4\include\BWAPI\Error.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWAPI 3.7.4\include\BWAPI\Event.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWAPI 3.7.4\include\BWAPI\EventType.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWAPI 3.7.4\include\BWAPI\ExplosionType.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWAPI 3.7.4\include\BWAPI\Flag.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWAPI 3.7.4\include\BWAPI\Force.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWAPI 3.7.4\include\BWAPI\Game.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWAPI 3.7.4\include\BWAPI\GameType.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWAPI 3.7.4\include\BWAPI\Input.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWAPI 3.7.4\include\BWAPI\Latency.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWAPI 3.7.4\include\BWAPI\Order.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWAPI 3.7.4\include\BWAPI\Player.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWAPI 3.7.4\include\BWAPI\PlayerType.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWAPI 3.7.4\include\BWAPI\Position.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWAPI 3.7.4\include\BWAPI\Race.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWAPI 3.7.4\include\BWAPI\Region.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWAPI 3.7.4\include\BWAPI\TechType.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWAPI 3.7.4\include\BWAPI\TilePosition.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWAPI 3.7.4\include\BWAPI\TournamentAction.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWAPI 3.7.4\include\BWAPI\Type.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWAPI 3.7.4\include\BWAPI\Unit.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWAPI 3.7.4\include\BWAPI\UnitCommand.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWAPI 3.7.4\include\BWAPI\UnitCommandType.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWAPI 3.7.4\include\BWAPI\UnitSizeType.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWAPI 3.7.4\include\BWAPI\UnitType.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWAPI 3.7.4\include\BWAPI\UpgradeType.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\BWAPI 3.7.4\include\BWAPI\WeaponType.h"
+					>
+				</File>
+				<Filter
+					Name="Client"
+					>
+					<File
+						RelativePath="..\..\BWAPI 3.7.4\include\BWAPI\Client\BulletData.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\BWAPI 3.7.4\include\BWAPI\Client\BulletImpl.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\BWAPI 3.7.4\include\BWAPI\Client\Client.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\BWAPI 3.7.4\include\BWAPI\Client\Command.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\BWAPI 3.7.4\include\BWAPI\Client\CommandType.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\BWAPI 3.7.4\include\BWAPI\Client\Event.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\BWAPI 3.7.4\include\BWAPI\Client\ForceData.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\BWAPI 3.7.4\include\BWAPI\Client\ForceImpl.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\BWAPI 3.7.4\include\BWAPI\Client\GameData.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\BWAPI 3.7.4\include\BWAPI\Client\GameImpl.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\BWAPI 3.7.4\include\BWAPI\Client\GameTable.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\BWAPI 3.7.4\include\BWAPI\Client\PlayerData.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\BWAPI 3.7.4\include\BWAPI\Client\PlayerImpl.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\BWAPI 3.7.4\include\BWAPI\Client\RegionData.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\BWAPI 3.7.4\include\BWAPI\Client\RegionImpl.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\BWAPI 3.7.4\include\BWAPI\Client\Shape.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\BWAPI 3.7.4\include\BWAPI\Client\ShapeType.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\BWAPI 3.7.4\include\BWAPI\Client\UnitCommand.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\BWAPI 3.7.4\include\BWAPI\Client\UnitData.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\BWAPI 3.7.4\include\BWAPI\Client\UnitImpl.h"
+						>
+					</File>
+				</Filter>
+			</Filter>
 		</Filter>
 	</Files>
 	<Globals>
