@@ -189,6 +189,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Source\ClusterManager.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\Source\Dll.cpp"
 				>
 			</File>
@@ -208,6 +212,10 @@
 			>
 			<File
 				RelativePath=".\Source\BattleEstimator.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Source\ClusterManager.h"
 				>
 			</File>
 			<File
