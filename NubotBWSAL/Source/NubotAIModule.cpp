@@ -1,4 +1,5 @@
 #include "NubotAIModule.h"
+#include "ClusterManager.h"
 #include <BWSAL/Util.h>
 #include <Util/Foreach.h>
 #include <algorithm>
@@ -190,6 +191,38 @@ void NubotAIModule::onFrame()
   {
     return;
   }
+
+  //for testing & debug:
+  //cluster all of my own units into two groups & draw lines to represent clustering
+  UnitGroup myUnits = SelectAll();
+  if (myUnits.size() >= 2)
+  {
+     BWAPI::Color color = BWAPI::Colors::Orange;
+
+     std::vector<BWSAL::UnitGroup> clusters = ClusterManager::GetClustersByCount(myUnits, 2); //get two clusters
+
+     std::vector<BWSAL::UnitGroup>::iterator it;
+     for (it = clusters.begin(); it!=clusters.end(); it++)
+     {
+        BWSAL::UnitGroup cluster = *it;
+        BWSAL::UnitGroup::iterator jt = cluster.begin();
+        BWAPI::Unit* A = *jt;
+        jt++;
+        for (; jt!=cluster.end(); jt++)
+        {
+           BWAPI::Unit* B = *jt;
+           //draw line between A & B
+           BWAPI::Broodwar->drawLineMap( A->getPosition().x(),
+                                         A->getPosition().y(),
+                                         B->getPosition().x(),
+                                         B->getPosition().y(),
+                                         color );
+           A = B;
+        }
+        color = ((color==BWAPI::Colors::Orange)?(BWAPI::Colors::Purple):(BWAPI::Colors::Orange));
+     }
+  }
+
 
   m_unitArbitrator->update();
   m_buildEventTimeline->reset();
