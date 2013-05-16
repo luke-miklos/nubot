@@ -201,6 +201,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Source\MacroSearch.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\Source\NubotAIModule.cpp"
 				>
 			</File>
@@ -220,6 +224,10 @@
 			</File>
 			<File
 				RelativePath=".\Source\EnhancedUI.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Source\MacroSearch.h"
 				>
 			</File>
 			<File
