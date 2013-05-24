@@ -1,239 +1,378 @@
 
 #include "MacroSearch.h"
-#include "BWSAL.h"
+//#include "BWSAL.h"
 #include <algorithm>
+
+#define cATTACK_ID 300
+
+  #ifndef max
+    #define max std::max
+  #endif
+  #ifndef min
+    #define min std::min
+  #endif
+
+
+namespace
+{
+   int sDistanceToEnemy = 128*8;   //WAG (unit: pixels)
+}
+
+bool operator< (const QueuedMove& a, const QueuedMove& b)
+{
+   return (a.frameComplete > b.frameComplete);
+}
+bool operator== (const QueuedMove& a, const QueuedMove& b)
+{
+   return (a.move.getID() == b.move.getID() &&
+           a.frameComplete == b.frameComplete); //should be enough to check this, if type same & complete-time the same, then start time the same.  which bldg shouldn't matter
+}
+
 
 MacroSearch::MacroSearch()
    :
-    cAttackId(300)
    //,CurrentGameTime(0.0)
    //,GameStateTime(0.0)
    //,CurrentGameFrame(0)
-   ,GameStateFrame(0)
-   ,ForceAttacking(false)
-   ,Minerals(50)                 //default starting minerals (enough for 1 worker)
-   ,Gas(0)
-   ,CurrentFarm(4)               //4 starting probes
-   ,FarmCapacity(9)              //default starting farm capacity?
-   ,MineralsPerMinute(4*42)      //default starting rate (4 workers * 42/minute)
-   ,MaxTrainingCapacity(1)       //nexus (1 probe at a time)
-   ,mUnitCounts(12)              //only 12 kinds of units?
-   ,mTrainingCompleteFrames(4, std::vector<int>()) //only  4 kinds of buildings?
+    mGameStateFrame(0)
+   ,mForceAttacking(false)
+   ,mMinerals(50)                 //default starting mMinerals (enough for 1 worker)
+   ,mGas(0)
+   ,mCurrentFarm(4*2)             //4 starting probes
+   ,mFarmCapacity(9*2)            //default starting farm capacity (9)
+   ,mMineralsPerMinute(4*42)      //default starting rate (4 workers * 42/minute)
+   ,mMaxTrainingCapacity(2)       //nexus (1 probe at a time)
+   ,mUnitCounts(12, 0)            //only 12 kinds of units?
+   ,mTrainingCompleteFrames(14, std::vector<int>())   // 14 kinds of buildings?
    ,mMoveStack()
 {
+   mTrainingCompleteFrames[0].push_back(0);  //start with 1 nexus
    mUnitCounts[0] = 4;  //4 starting probes
 }
 
-std::vector<MoveType> MacroSearch::FindMoves(int currentFrame, int targetFrame)
+std::vector<QueuedMove> MacroSearch::FindMoves(int targetFrame)
 {
-   std::vector<MoveType> moves = PossibleMoves();
+   //BWAPI::UnitTypes::Protoss_Corsair;        //60
+   //BWAPI::UnitTypes::Protoss_Dark_Templar;   //61
+   //BWAPI::UnitTypes::Protoss_Dark_Archon;    //63
+   //BWAPI::UnitTypes::Protoss_Probe;          //64
+   //BWAPI::UnitTypes::Protoss_Zealot;         //65
+   //BWAPI::UnitTypes::Protoss_Dragoon;        //66
+   //BWAPI::UnitTypes::Protoss_High_Templar;   //67
+   //BWAPI::UnitTypes::Protoss_Archon;         //68
+   //BWAPI::UnitTypes::Protoss_Shuttle;        //69
+   //BWAPI::UnitTypes::Protoss_Scout;          //70
+   //BWAPI::UnitTypes::Protoss_Arbiter;        //71
+   //BWAPI::UnitTypes::Protoss_Carrier;        //72
+   //BWAPI::UnitTypes::Protoss_Interceptor;    //73
+   //BWAPI::UnitTypes::Protoss_Reaver;         //83
+   //BWAPI::UnitTypes::Protoss_Observer;       //84
+   //BWAPI::UnitTypes::Protoss_Scarab;         //85
+
+   //BWAPI::UnitTypes::Protoss_Nexus;                //154
+   //BWAPI::UnitTypes::Protoss_Robotics_Facility;    //155
+   //BWAPI::UnitTypes::Protoss_Pylon;                //156
+   //BWAPI::UnitTypes::Protoss_Assimilator;          //157
+   //BWAPI::UnitTypes::Protoss_Observatory;          //159
+   //BWAPI::UnitTypes::Protoss_Gateway;              //160
+   //BWAPI::UnitTypes::Protoss_Photon_Cannon;        //162
+   //BWAPI::UnitTypes::Protoss_Citadel_of_Adun;      //163
+   //BWAPI::UnitTypes::Protoss_Cybernetics_Core;     //164
+   //BWAPI::UnitTypes::Protoss_Templar_Archives;     //165
+   //BWAPI::UnitTypes::Protoss_Forge;                //166
+   //BWAPI::UnitTypes::Protoss_Stargate;             //167
+   //BWAPI::UnitTypes::Special_Stasis_Cell_Prison;   //168
+   //BWAPI::UnitTypes::Protoss_Fleet_Beacon;         //169
+   //BWAPI::UnitTypes::Protoss_Arbiter_Tribunal;     //170
+   //BWAPI::UnitTypes::Protoss_Robotics_Support_Bay; //171
+   //BWAPI::UnitTypes::Protoss_Shield_Battery;       //172
+
+   mMaxScore = 0;
+   mBestMoves.clear();
+   FindMovesRecursive(targetFrame);
+   return mBestMoves;
+}
+
+
+void MacroSearch::FindMovesRecursive(int targetFrame)
+{
+   std::vector<MoveType> moves = PossibleMoves(targetFrame);
    std::vector<MoveType>::iterator it;
    for (it=moves.begin(); it!=moves.end(); it++)
    {
       MoveType move = *it;
-      int tempFrame = GameStateFrame;
+      int tempFrame = mGameStateFrame;
       DoMove(move);
-      if (GameStateFrame < targetFrame)
+      if (mGameStateFrame < targetFrame)
       {
-         FindMoves(GameStateFrame, targetFrame);
+         FindMovesRecursive(targetFrame);
       }
       else
       {
          //save off this current game state as a leaf node of the DFS game tree search
+         int score = EvaluateState();
+         if (score > mMaxScore)
+         {
+            mMaxScore = score;
+            mBestMoves = mMoveStack;
+         }
+         UndoMove(tempFrame); //undo last move on the stack
+         mGameStateFrame = tempFrame;
+         return;  //none of the other events in "moves" array will score differently here
       }
       UndoMove(tempFrame); //undo last move on the stack
-      GameStateFrame = tempFrame;
+      mGameStateFrame = tempFrame;
    }
    //return mMoveStack;
-   return moves;   //this aint right either
+   //return mBestMoves;
+   return;
 }
 
 //given the current game state
-std::vector<MoveType> MacroSearch::PossibleMoves()
+std::vector<MoveType> MacroSearch::PossibleMoves(int targetFrame)
 {
    std::vector<MoveType> moves;
    //TODO: count mineral spots, for now... use 8
    if (mUnitCounts[0] < 16 && //two per mineral spot
-       CurrentFarm < FarmCapacity &&   //and have pylons
+       mCurrentFarm < mFarmCapacity &&   //and have pylons
        mTrainingCompleteFrames[0].size() >0) //and have a nexus to build it in
    {
       moves.push_back(BWAPI::UnitTypes::Protoss_Probe);
    }
 
-   if (CurrentFarm < FarmCapacity)  //have pylons
+   if (mCurrentFarm < mFarmCapacity &&  //have pylons
+       mTrainingCompleteFrames[2].size() >0) //and have a gateway to build it in
    {
       moves.push_back(BWAPI::UnitTypes::Protoss_Zealot);
    }
 
-   if ((2*(FarmCapacity-CurrentFarm)) <= MaxTrainingCapacity)
+   if ((mTrainingCompleteFrames[1].size()==0) ||
+       ((mFarmCapacity-mCurrentFarm) <= (2*mMaxTrainingCapacity)) )
    {
       moves.push_back(BWAPI::UnitTypes::Protoss_Pylon);
    }
 
-   if (FarmCapacity > 9)
+   if (mTrainingCompleteFrames[1].size()>0)  //need pylon
    {
       moves.push_back(BWAPI::UnitTypes::Protoss_Gateway);
    }
+
+   if (mUnitCounts[1] > 1)
+   {
+      moves.push_back( BWAPI::UnitType(cATTACK_ID) );  //cATTACK_ID to represent ATTACK
+   }
+
    return moves;
 }
 
 void MacroSearch::DoMove(MoveType aMove)
 {
-   int price          = aMove.mineralPrice();
-   int buildTime      = aMove.buildTime();   //frames
-   int supplyRequired = aMove.supplyRequired();
+   //int price          = aMove.mineralPrice();
+   //int buildTime      = aMove.buildTime();   //frames
+   //int supplyRequired = aMove.supplyRequired();
 
    switch (aMove.getID())
    {
-   case 32: //probe //TODO: verify this ID
+   case 64: //probe //TODO: verify this ID //50, 300, 2
       {
-         //0=nexus, 1=gateways, 2=robotics facility, 3=stargate
-         int buildingIndex = 0;
-         //find out at what time minerals are available
-         //TODO: search for gas time too
-         int frameMineralAvailable = GameStateFrame;
-         if (Minerals < price) {
-            frameMineralAvailable += ((price-Minerals)*FramePerMinute/MineralsPerMinute);
+         int price          = 50;
+         int buildTime      = 300;   //frames
+         int supplyRequired = 2;
+
+         int buildingIndex = 0;  //nexus
+         //find out at what time mMinerals are available
+         //TODO: search for mGas time too
+         int frameMineralAvailable = mGameStateFrame;
+         if (mMinerals < price) {
+            frameMineralAvailable += ((price-mMinerals)*FramePerMinute/mMineralsPerMinute);
          }
          //find out at what time a production building is available
          //TODO: check all buildings of correct type, not just last one
          int frameBuildingAvailable = mTrainingCompleteFrames[buildingIndex][0];//.back();   //TODO find right nexus
-         if (frameBuildingAvailable < GameStateFrame) {
-            frameBuildingAvailable = GameStateFrame;
+         if (frameBuildingAvailable < mGameStateFrame) {
+            frameBuildingAvailable = mGameStateFrame;
          }
+         //0. find build time
          //start time is latest of these two times
          int moveStartTime = max(frameMineralAvailable, frameBuildingAvailable);
 
          //advance game state to this time & adjust values
-         int dt = moveStartTime - GameStateFrame;
-         Minerals -= price;
-         Minerals += ((MineralsPerMinute * dt)/FramePerMinute);
-         //TODO: adjust gas too
-         CurrentFarm += supplyRequired;   //supply taken when unit training started
+         int dt = moveStartTime - mGameStateFrame;
+         //1. adjust mMinerals
+         mMinerals -= price;
+         mMinerals += ((mMineralsPerMinute * dt)/FramePerMinute);
+         //TODO: adjust mGas too
 
-         QueuedMove newMove(moveStartTime, moveStartTime+buildTime, mTrainingCompleteFrames[buildingIndex][0], aMove);  //TODO find right nexus
-         mTrainingCompleteFrames[buildingIndex][0] = (moveStartTime+buildTime);//.push_back(moveStartTime+buildTime);
+         //2. adjust supply
+         mCurrentFarm += supplyRequired;   //supply taken when unit training started
+
+         QueuedMove newMove(moveStartTime, moveStartTime+buildTime, mTrainingCompleteFrames[buildingIndex][0], aMove);  //TODO - find right nexus
+         //3. adjust training times
+         mTrainingCompleteFrames[buildingIndex][0] = (moveStartTime+buildTime);//TODO - find right nexus
+         //4. add event to queue
          mMoveStack.push_back(newMove);
          mEventQueue.push(newMove);
          //mUnitCounts[0]   ++; //probe   //TODO, increment this when unit done building
-         //MineralsPerMinute += 42;       //TODO, increment this when unit done building
-         GameStateFrame = moveStartTime;
+         //mMineralsPerMinute += 42;       //TODO, increment this when unit done building
+         //5. adjust time
+         mGameStateFrame = moveStartTime;
       }break;
 
-   case 33: //zealot //TODO: verify this ID
+   case 65: //zealot //TODO: verify this ID  //100, 600, 4
       {
-         //0=nexus, 1=gateways, 2=robotics facility, 3=stargate
-         int buildingIndex = 1;
-         //find out at what time minerals are available
-         //TODO: search for gas time too
-         int frameMineralAvailable = GameStateFrame;
-         if (Minerals < price) {
-            frameMineralAvailable += ((price-Minerals)*FramePerMinute/MineralsPerMinute);
+         int price          = 100;
+         int buildTime      = 600;   //frames
+         int supplyRequired = 4;
+
+         int buildingIndex = 2;  //gateway
+         //find out at what time mMinerals are available
+         //TODO: search for mGas time too
+         int frameMineralAvailable = mGameStateFrame;
+         if (mMinerals < price) {
+            frameMineralAvailable += ((price-mMinerals)*FramePerMinute/mMineralsPerMinute);
          }
          //find out at what time a production building is available
          //TODO: check all buildings of correct type, not just last one
-         int frameBuildingAvailable = mTrainingCompleteFrames[buildingIndex][0]; //.back();  //TODO find right gateway
-         if (frameBuildingAvailable < GameStateFrame) {
-            frameBuildingAvailable = GameStateFrame;
+         int frameBuildingAvailable = mTrainingCompleteFrames[buildingIndex][0]; //TODO - find right gateway
+         if (frameBuildingAvailable < mGameStateFrame) {
+            frameBuildingAvailable = mGameStateFrame;
          }
          //start time is latest of these two times
          int moveStartTime = max(frameMineralAvailable, frameBuildingAvailable);
 
          //advance game state to this time & adjust values
-         int dt = moveStartTime - GameStateFrame;
-         Minerals -= price;
-         Minerals += ((MineralsPerMinute * dt)/FramePerMinute);
-         //TODO: adjust gas too
-         CurrentFarm += supplyRequired;   //supply taken when unit building started
+         int dt = moveStartTime - mGameStateFrame;
+         mMinerals -= price;
+         mMinerals += ((mMineralsPerMinute * dt)/FramePerMinute);
+         //TODO: adjust mGas too
+         mCurrentFarm += supplyRequired;   //supply taken when unit building started
 
          //1. proper use of mTrainingCompleteFrames[buildingIndex]
          //2. proper creationg of QueuedMove structs
          //3. undo moves
          //4. use proper building (search gateways)
 
-         QueuedMove newMove(moveStartTime, moveStartTime+buildTime, mTrainingCompleteFrames[buildingIndex][0], aMove);  //TODO find right gateway
-         mTrainingCompleteFrames[buildingIndex][0] = (moveStartTime+buildTime);//.push_back(moveStartTime+buildTime);
+         QueuedMove newMove(moveStartTime, moveStartTime+buildTime, mTrainingCompleteFrames[buildingIndex][0], aMove);  //TODO - find right gateway
+         mTrainingCompleteFrames[buildingIndex][0] = (moveStartTime+buildTime);  //TODO - find right gateway
          mMoveStack.push_back(newMove);
          mEventQueue.push(newMove);
 
          //mUnitCounts[1]   ++; //zealot  //TODO, increment this when unit done building
-         GameStateFrame = moveStartTime;
+         mGameStateFrame = moveStartTime;
       }break;
 
-   case 82: //pylon  //TODO: verify this ID
+   case 156: //pylon  //TODO: verify this ID //100, 450, 0
       {
-         //find out at what time minerals are available
-         //TODO: search for gas time too
-         int frameMineralAvailable = GameStateFrame;
-         if (Minerals < price) {
-            frameMineralAvailable += ((price-Minerals)*FramePerMinute/MineralsPerMinute);
+         int price          = 100;
+         int buildTime      = 450;   //frames
+
+         //find out at what time mMinerals are available
+         //TODO: search for mGas time too
+         int frameMineralAvailable = mGameStateFrame;
+         if (mMinerals < price) {
+            frameMineralAvailable += ((price-mMinerals)*FramePerMinute/mMineralsPerMinute);
          }
          //start time is mineral time
          int moveStartTime = frameMineralAvailable;
 
          //advance game state to this time & adjust values
-         int dt = moveStartTime - GameStateFrame;
-         Minerals -= price;
-         Minerals += ((MineralsPerMinute * dt)/FramePerMinute);
-         //TODO: adjust gas too
-         GameStateFrame = moveStartTime;
-         mEventQueue.push(QueuedMove(moveStartTime+buildTime,aMove));
-         //FarmCapacity += move.supplyProvided(); //TODO, increment this when unit done building
+         int dt = moveStartTime - mGameStateFrame;
+         mMinerals -= price;
+         mMinerals += ((mMineralsPerMinute * dt)/FramePerMinute);
+         //TODO: adjust mGas too
+         mGameStateFrame = moveStartTime;
+         QueuedMove newMove(moveStartTime, moveStartTime+buildTime, 0, aMove);
+         mTrainingCompleteFrames[1].push_back(moveStartTime+buildTime);
+         mEventQueue.push(newMove);
+         mMoveStack.push_back(newMove);
+         //mFarmCapacity += 16; //TODO, increment this when unit done building
       }break;
 
-   case 85: //gateway   //TODO: verify this ID
+   case 160: //gateway   //TODO: verify this ID //150, 900, 0
       {
-         //find out at what time minerals are available
-         //TODO: search for gas time too
-         int frameMineralAvailable = GameStateFrame;
-         if (Minerals < price) {
-            frameMineralAvailable += ((price-Minerals)*FramePerMinute/MineralsPerMinute);
+         int price          = 150;
+         int buildTime      = 900;   //frames
+
+         //find out at what time mMinerals are available
+         //TODO: search for mGas time too
+         int frameMineralAvailable = mGameStateFrame;
+         if (mMinerals < price) {
+            frameMineralAvailable += ((price-mMinerals)*FramePerMinute/mMineralsPerMinute);
          }
-         //start time is mineral time
-         int moveStartTime = frameMineralAvailable;
+         //find out at what time a pylon is available
+         int framePreReqAvailable = mTrainingCompleteFrames[1].front();
+
+         //start time is max of these two times
+         int moveStartTime = max(frameMineralAvailable, framePreReqAvailable);
 
          //advance game state to this time & adjust values
-         int dt = moveStartTime - GameStateFrame;
-         Minerals -= price;
-         Minerals += ((MineralsPerMinute * dt)/FramePerMinute);
-         //TODO: adjust gas too
-         GameStateFrame = moveStartTime;
-         mEventQueue.push(QueuedMove(moveStartTime+buildTime,aMove));
+         int dt = moveStartTime - mGameStateFrame;
+         mMinerals -= price;
+         mMinerals += ((mMineralsPerMinute * dt)/FramePerMinute);
+         //TODO: adjust mGas too
+         mGameStateFrame = moveStartTime;
+         QueuedMove newMove(moveStartTime, moveStartTime+buildTime, 0, aMove);
+         mTrainingCompleteFrames[2].push_back(moveStartTime+buildTime);
+         mEventQueue.push(newMove);
+         mMoveStack.push_back(newMove);
 
-         //MaxTrainingCapacity += 1;  //for a zealot, what is a goon? 2?   //TODO, increment this when unit done building
+         //mMaxTrainingCapacity += 2;  //for a zealot, what is a goon? 2?   //TODO, increment this when unit done building
       }break;
+
+   case cATTACK_ID:
+      {
+         //mForceAttacking = true; //TODO set this when force arrives (travel time over)
+
+         //sDistanceToEnemy;  //distance in pixels
+         double speed = BWAPI::UnitTypes::Protoss_Zealot.topSpeed(); //pixels per frame
+         double dTime = ((double)sDistanceToEnemy) / speed;
+         int time = (int)(dTime+0.5);  //frames
+         QueuedMove newMove(mGameStateFrame, mGameStateFrame+time, 0, aMove);
+         mEventQueue.push(newMove);
+         mMoveStack.push_back(newMove);
+      }break;
+
    default:
       {
          //unknown move, shouldn't be here
       }break;
    };
 
-   //finish any units or buildings that have completed by the new GameStateFrame
+   ProcessQueuedEventsUntil(mGameStateFrame);
+}
+
+void MacroSearch::ProcessQueuedEventsUntil(int targetFrame)
+{
+   //finish any units or buildings that should be completed by the targetFrame
    while (mEventQueue.size()>0 &&
-          mEventQueue.top().frameComplete <= GameStateFrame)
+          mEventQueue.top().frameComplete <= targetFrame)
    {
       int time = mEventQueue.top().frameComplete;
-      MoveType move = mEventQueue.top().move;
-      switch (move.getID())
+      QueuedMove qMove = mEventQueue.top();
+      switch (qMove.move.getID())
       {
-      case 32: //probe //TODO: verify this ID
+      case 64: //probe //TODO: verify this ID
          {
             mUnitCounts[0]++; //probe
-            MineralsPerMinute += 42;
+            mMineralsPerMinute += 42;
          }break;
-      case 33: //zealot //TODO: verify this ID
+      case 65: //zealot //TODO: verify this ID
          {
             mUnitCounts[1]++; //zealot
          }break;
-      case 82: //pylon  //TODO: verify this ID
+      case 156: //pylon  //TODO: verify this ID
          {
-            FarmCapacity += move.supplyProvided(); //should be 8 ?
+            mFarmCapacity += 16;
          }break;
-      case 85: //gateway   //TODO: verify this ID
+      case 160: //gateway   //TODO: verify this ID
          {
-            mTrainingCompleteFrames[1].push_back(time);  //add new gateway (available to use at 'time')
-            MaxTrainingCapacity += 1;  //zealot? //TODO: find largest unit buildable by this building
+            //mTrainingCompleteFrames[2].push_back(time);  //add new gateway (available to use at 'time')   //already done
+            mMaxTrainingCapacity += 2;  //zealot? //TODO: find largest unit buildable by this building
          }break;
+      case cATTACK_ID:
+         {
+            mForceAttacking = true;
+         }
       default:
          {
             //unknown move, shouldn't be here
@@ -243,7 +382,9 @@ void MacroSearch::DoMove(MoveType aMove)
    }
 }
 
-void MacroSearch::UndoMove(previousFrame)
+
+
+void MacroSearch::UndoMove(int previousFrame)
 {
    //MoveType move = mMoveStack.back();
    //mMoveStack.pop_back();
@@ -251,6 +392,10 @@ void MacroSearch::UndoMove(previousFrame)
    //{
    //   //these should match, unknown error
    //}
+   if (mMoveStack.empty())
+   {
+      return;
+   }
 
    QueuedMove undoMove = mMoveStack.back();
    mMoveStack.pop_back();
@@ -259,11 +404,11 @@ void MacroSearch::UndoMove(previousFrame)
    undoMove.frameComplete;
    undoMove.prevFrameComplete;
 
-   if (GameStateFrame >= undoMove.frameStarted &&  //should this line always be true? do we have to check here?
-       GameStateFrame < undoMove.frameComplete)
+   if (mGameStateFrame >= undoMove.frameStarted &&  //should this line always be true? do we have to check here?
+       mGameStateFrame < undoMove.frameComplete)
    {
       std::deque<QueuedMove> tempStack;
-      while (mEventQueue.top() != undoMove)
+      while (!(mEventQueue.top() == undoMove))
       {
          tempStack.push_back(mEventQueue.top());
          mEventQueue.pop();
@@ -276,106 +421,110 @@ void MacroSearch::UndoMove(previousFrame)
       }
    }
 
+   //int price          = undoMove.move.mineralPrice();
+   //int buildTime      = undoMove.move.buildTime();   //frames
+   //int supplyRequired = undoMove.move.supplyRequired();
 
-   int price          = undoMove.move.mineralPrice();
-   int buildTime      = undoMove.move.buildTime();   //frames
-   int supplyRequired = undoMove.move.supplyRequired();
-
+   //0. find build time
+   //1. adjust mMinerals
+   //2. adjust supply
+   //3. adjust training times
+   //4. add event to queue
+   //5. adjust time
 
    switch (undoMove.move.getID())
    {
-   case 32: //probe //TODO: verify this ID
+   case 64: //probe //TODO: verify this ID
       {
-         //undoMove.
-         //int dt = GameStateFrame - previousFrame;
-         //GameStateFrame = previousFrame;
-         //mTrainingCompleteFrames[0].pop_back();
-         //CurrentFarm      -= BWAPI::UnitTypes::Protoss_Probe.supplyRequired();
-         //Minerals         -= ((MineralsPerMinute * dt)/30);  //30 Hz update rate?
-         //Minerals         += BWAPI::UnitTypes::Protoss_Probe.mineralPrice();
-         //mUnitCounts[0]   --; //probe
-         //MineralsPerMinute -= 42;
+         int price          = 50;
+         int buildTime      = 300;   //frames
+         int supplyRequired = 2;
 
-         //0=nexus, 1=gateways, 2=robotics facility, 3=stargate
-         int buildingIndex = 0;
-
-         //start time is latest of these two times
+         int buildingIndex = 0;  //nexus
+         //check for probe mining duration -> mineral rate changes because of probe
+         if (undoMove.frameComplete <= mGameStateFrame)
+         {
+            //adjust time back to end of move
+            int dt = undoMove.frameComplete - mGameStateFrame; //should be negative
+            mMinerals += ((mMineralsPerMinute * dt)/FramePerMinute);
+            mGameStateFrame = undoMove.frameComplete;
+            mMineralsPerMinute -= 42;  //this is safe now, we've backed up time to when probe finished
+                                       //otherwise dont do this, the mining rate wasn't updated yet
+         }
          int moveStartTime = undoMove.frameComplete - buildTime;
-         int dt = moveStartTime - GameStateFrame;  //should be negative
-
+         int dt = moveStartTime - mGameStateFrame;  //should be negative
          //reverse game state to the beginning time of the move & adjust values
-         Minerals += price;
-         Minerals -= ((MineralsPerMinute * dt)/FramePerMinute);
-         MineralsPerMinute -= 42;
-         //TODO: adjust gas too
-         CurrentFarm -= supplyRequired;
-         mTrainingCompleteFrames[buildingIndex].[0] = undoMove.prevFrameComplete;
+         mMinerals += price;
+         mMinerals += ((mMineralsPerMinute * dt)/FramePerMinute);
+         //TODO: adjust mGas too
+         mCurrentFarm -= supplyRequired;
+         mTrainingCompleteFrames[buildingIndex][0] = undoMove.prevFrameComplete; //TODO - find right nexus
          mUnitCounts[0]--; //probe
-
-         GameStateFrame = moveStartTime;
+         mGameStateFrame = moveStartTime;
       }break;
 
-   case 33: //zealot //TODO: verify this ID
+   case 65: //zealot //TODO: verify this ID
       {
-         //0=nexus, 1=gateways, 2=robotics facility, 3=stargate
-         int buildingIndex = 1;
-         int moveStartTime = 0;//?????  // max(frameMineralAvailable, frameBuildingAvailable);
+         int price          = 100;
+         int buildTime      = 600;   //frames
+         int supplyRequired = 4;
+
+         int buildingIndex = 2;  //gateway
+         int moveStartTime = undoMove.frameComplete - buildTime;
 
          //advance game state to this time & adjust values
-         int dt = moveStartTime - GameStateFrame;
-         Minerals -= price;
-         Minerals += ((MineralsPerMinute * dt)/FramePerMinute);
-         //TODO: adjust gas too
-         CurrentFarm += supplyRequired;   //supply taken when unit building started
-         mTrainingCompleteFrames[buildingIndex].push_back(moveStartTime+buildTime);
-         GameStateFrame = moveStartTime;
-         //mEventQueue.push(QueuedMove(moveStartTime+buildTime,aMove));
-         //mUnitCounts[1]   ++; //zealot  //TODO, increment this when unit done building
+         int dt = moveStartTime - mGameStateFrame; //should be negative
+         mMinerals += price;
+         mMinerals += ((mMineralsPerMinute * dt)/FramePerMinute);
+         //TODO: adjust mGas too
+         mCurrentFarm -= supplyRequired;
+         mTrainingCompleteFrames[buildingIndex][0] = undoMove.prevFrameComplete; //TODO - find right gateway
+         mUnitCounts[1]--; //zealot  //TODO, increment this when unit done building
+         mGameStateFrame = moveStartTime;
       }break;
 
-   case 82: //pylon  //TODO: verify this ID
+   case 156: //pylon  //TODO: verify this ID
       {
-         //find out at what time minerals are available
-         //TODO: search for gas time too
-         int frameMineralAvailable = GameStateFrame;
-         if (Minerals < price) {
-            frameMineralAvailable += ((price-Minerals)*FramePerMinute/MineralsPerMinute);
-         }
-         //start time is mineral time
-         int moveStartTime = frameMineralAvailable;
+         int price          = 100;
+         int buildTime      = 450;   //frames
 
+         int moveStartTime = undoMove.frameComplete - buildTime;
          //advance game state to this time & adjust values
-         int dt = moveStartTime - GameStateFrame;
-         Minerals -= price;
-         Minerals += ((MineralsPerMinute * dt)/FramePerMinute);
-         //TODO: adjust gas too
-         GameStateFrame = moveStartTime;
-         //mEventQueue.push(QueuedMove(moveStartTime+buildTime,aMove));
-         //FarmCapacity += move.supplyProvided(); //TODO, increment this when unit done building
+         int dt = moveStartTime - mGameStateFrame; //should be negative
+         mMinerals += price;
+         mMinerals += ((mMineralsPerMinute * dt)/FramePerMinute);
+         //TODO: adjust mGas too
+         mGameStateFrame = moveStartTime;
+         mTrainingCompleteFrames[1].pop_back(); //should remove last added pylon
+
+         //QueuedMove newMove(moveStartTime, moveStartTime+buildTime, 0, aMove);
+         //mEventQueue.push(newMove);
+         //mMoveStack.push_back(newMove);
+
+         mFarmCapacity -= 16;
       }break;
 
-   case 85: //gateway   //TODO: verify this ID
+   case 160: //gateway   //TODO: verify this ID
       {
-         //find out at what time minerals are available
-         //TODO: search for gas time too
-         int frameMineralAvailable = GameStateFrame;
-         if (Minerals < price) {
-            frameMineralAvailable += ((price-Minerals)*FramePerMinute/MineralsPerMinute);
-         }
-         //start time is mineral time
-         int moveStartTime = frameMineralAvailable;
+         int price          = 150;
+         int buildTime      = 900;   //frames
 
+         int moveStartTime = undoMove.frameComplete - buildTime;
          //advance game state to this time & adjust values
-         int dt = moveStartTime - GameStateFrame;
-         Minerals -= price;
-         Minerals += ((MineralsPerMinute * dt)/FramePerMinute);
-         //TODO: adjust gas too
-         GameStateFrame = moveStartTime;
-         //mEventQueue.push(QueuedMove(moveStartTime+buildTime,aMove));
-
-         //mTrainingCompleteFrames[1].push_back(time);  //TODO, increment this when unit done building
-         //MaxTrainingCapacity += 1;  //zealot?          //TODO, increment this when unit done building
+         int dt = moveStartTime - mGameStateFrame; //should be negative
+         mMinerals += price;
+         mMinerals += ((mMineralsPerMinute * dt)/FramePerMinute);
+         //TODO: adjust mGas too
+         mGameStateFrame = moveStartTime;
+         mTrainingCompleteFrames[2].pop_back(); //should remove last added gateway
+         mMaxTrainingCapacity -= 2;  //zealot? //TODO: find largest unit buildable by this building
       }break;
+
+   case cATTACK_ID:
+      {
+         mForceAttacking = false;
+      }
+
    default:
       {
          //unknown move, shouldn't be here
@@ -388,10 +537,10 @@ void MacroSearch::UndoMove(previousFrame)
 
 int MacroSearch::EvaluateState()
 {
-   int score = Minerals;
+   int score = mMinerals;
    score += mUnitCounts[0] * 50;
-   score += mUnitCounts[0] * 200;   //doubly favor zealots
-   score += FarmCapacity * 10;
-   score += mTrainingCompleteFrames[1].size() * 200;  //slightly favor gateways
+   score += mUnitCounts[1] * 200;   //doubly favor zealots
+   score += mFarmCapacity * 10;
+   score += mTrainingCompleteFrames[2].size() * 200;  //slightly favor gateways
    return score;
 }
