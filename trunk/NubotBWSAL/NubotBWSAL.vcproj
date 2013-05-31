@@ -223,6 +223,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Source\EnemyData.h"
+				>
+			</File>
+			<File
 				RelativePath=".\Source\EnhancedUI.h"
 				>
 			</File>

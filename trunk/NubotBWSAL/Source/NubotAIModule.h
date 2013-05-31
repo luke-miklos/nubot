@@ -3,6 +3,8 @@
 #include <BWTA.h>
 #include <BWSAL.h>
 #include "EnhancedUI.h"
+#include "MacroSearch.h"
+
 
 class NubotAIModule : public BWAPI::AIModule
 {
@@ -20,6 +22,9 @@ class NubotAIModule : public BWAPI::AIModule
     virtual void onUnitRenegade( BWAPI::Unit* unit );
     virtual void onUnitComplete( BWAPI::Unit* unit );
   private:
+
+    MacroSearch*               m_macroSearch;
+
     std::list< BWAPI::AIModule* > m_modules;
     BWSAL::BorderManager*      m_borderManager;
     BWSAL::InformationManager* m_informationManager;
