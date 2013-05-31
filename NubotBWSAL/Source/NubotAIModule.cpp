@@ -1,11 +1,14 @@
+
 #include "NubotAIModule.h"
 #include "ClusterManager.h"
 #include <BWSAL/Util.h>
 #include <Util/Foreach.h>
 #include <algorithm>
+
 using namespace BWSAL;
 using namespace BWAPI;
 using namespace std;
+
 NubotAIModule::NubotAIModule()
 {
 }
@@ -20,6 +23,8 @@ void NubotAIModule::onStart()
   BWTA::readMap();
   BWTA::analyze();
   BWSAL::resetLog();
+
+  m_macroSearch = new MacroSearch();
 
   m_informationManager = InformationManager::create();
   m_borderManager = BorderManager::create( m_informationManager );
@@ -75,6 +80,9 @@ void NubotAIModule::onStart()
       }
     }
   }
+
+
+
   int buildID = 1;
   if ( race == Races::Zerg )
   {
@@ -165,20 +173,39 @@ void NubotAIModule::onStart()
   }
   else if (race == Races::Protoss)
   {
-    //build 20 carriers - tests dependency resolver
-    m_buildOrderManager->build(8,UnitTypes::Protoss_Probe,90);
-    m_buildOrderManager->build(1,UnitTypes::Protoss_Pylon,85);
-    m_buildOrderManager->build(20,UnitTypes::Protoss_Probe,80);
-    m_buildOrderManager->buildAdditional(10,UnitTypes::Protoss_Dragoon,70);
-    m_buildOrderManager->buildAdditional(10,UnitTypes::Protoss_Zealot,70);
-    m_buildOrderManager->upgrade(1,UpgradeTypes::Singularity_Charge,61);
-    m_buildOrderManager->buildAdditional(20,UnitTypes::Protoss_Carrier,60);
+     //use macro search to find protoss moves
+     std::vector<QueuedMove*> moves = m_macroSearch->FindMoves(3*60*24);   //3 minute look ahead
+     if (moves.size() > 0)
+     {
+        std::vector<QueuedMove*>::iterator it;
+        int priority = 10 + 5*moves.size();
+        for (it=moves.begin(); it!=moves.end(); it++, priority-=5)
+        {
+           QueuedMove* q = *it;
+           if (q->move != 300)
+           {
+              //BWAPI::UnitType move = (BWAPI::UnitType)q.move;
+              BWAPI::UnitType move(q->move);
+              m_buildOrderManager->build( 1, move, priority );
+           }
+        }
+     }
+     else
+     {
+         //build 20 carriers - tests dependency resolver
+         m_buildOrderManager->build(8,UnitTypes::Protoss_Probe,90);
+         m_buildOrderManager->build(1,UnitTypes::Protoss_Pylon,85);
+         m_buildOrderManager->build(20,UnitTypes::Protoss_Probe,80);
+         m_buildOrderManager->buildAdditional(10,UnitTypes::Protoss_Dragoon,70);
+         m_buildOrderManager->buildAdditional(10,UnitTypes::Protoss_Zealot,70);
+         m_buildOrderManager->upgrade(1,UpgradeTypes::Singularity_Charge,61);
+         m_buildOrderManager->buildAdditional(20,UnitTypes::Protoss_Carrier,60);
+     }
   }
   m_drawTasks = true;
   m_drawAssignments = false;
   m_drawResources = true;
   m_drawLarva = Broodwar->self()->getRace() == Races::Zerg;
-
 }
 
 void NubotAIModule::onEnd( bool isWinner )
@@ -244,6 +271,11 @@ void NubotAIModule::onFrame()
   {
     m_scoutManager->setScoutCount( 0 );
   }
+
+
+
+
+
 
 
   m_buildEventTimeline->m_initialState.createUnclaimedBuildUnits();
