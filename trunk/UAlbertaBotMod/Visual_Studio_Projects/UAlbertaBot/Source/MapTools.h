@@ -11,6 +11,8 @@
 // calculates connectivity and distances using flood fills
 class MapTools
 {
+	std::map<BWAPI::Position, DistanceMap>	allMaps;
+
 	// holds distance maps from enemy base and my base
 	DistanceMap			enemyBaseMap;
 	DistanceMap			myBaseMap;
@@ -75,6 +77,9 @@ public:
 	
 	// computes connectivity for the map
 	void fill(const int index, const int region);
+
+	// get the ground distance between (from, to)
+	int getGroundDistance(BWAPI::Position from, BWAPI::Position to);
 
 	// get distance to various bases
 	int	getEnemyBaseDistance(BWAPI::Position p);

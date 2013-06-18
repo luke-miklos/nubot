@@ -1,4 +1,4 @@
-#ifdef OPENGL_VIS
+#ifdef USING_VISUALIZATION_LIBRARIES
 
 #pragma once
 

@@ -74,7 +74,7 @@ public:
 			void				onEnd(const bool isWinner);
 	
 	const	bool				regroup(int numInRadius);
-	const	bool				doAttack(const UnitVector & freeUnits);
+	const	bool				doAttack(const std::set<BWAPI::Unit *> & freeUnits);
 	const	bool				defendWithWorkers();
 	const	bool				rushDetected();
 

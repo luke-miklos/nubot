@@ -31,7 +31,7 @@ public:
 	ScoutManager();
 	~ScoutManager() {};
 
-	void update(const UnitVector & scoutUnits);
+	void update(const std::set<BWAPI::Unit *> & scoutUnits);
 	void moveScouts();
 
 	void onSendText(std::string text);

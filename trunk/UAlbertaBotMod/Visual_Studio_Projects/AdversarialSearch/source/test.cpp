@@ -13,7 +13,7 @@
 #include "AlphaBeta.h"
 #include "TranspositionTable.h"
 
-#ifdef OPENGL_VIS
+#ifdef USING_VISUALIZATION_LIBRARIES
 	#include "Display.h"
 #endif
 
@@ -232,7 +232,7 @@ void results()
 	addSearchPlayers50ms(playerOnePlayers, Search::Players::Player_One);
 	addModelPlayers(playerTwoPlayers, Search::Players::Player_Two);
 	
-#ifdef OPENGL_VIS
+#ifdef USING_VISUALIZATION_LIBRARIES
 	Display disp(map ? map->getWidth() / 4 : 64, map ? map->getHeight() / 4 : 64);
 	disp.OnStart();
 	disp.LoadMapTexture(map, 19);
@@ -271,7 +271,7 @@ void results()
 
 				// construct the game
 				Game g(states[state], playerOne, playerTwo, 500);
-				#ifdef OPENGL_VIS
+				#ifdef USING_VISUALIZATION_LIBRARIES
 					g.disp = &disp;
 				#endif
 

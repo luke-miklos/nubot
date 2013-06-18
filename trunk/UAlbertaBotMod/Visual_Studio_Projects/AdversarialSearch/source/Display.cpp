@@ -1,4 +1,7 @@
-#ifdef OPENGL_VIS
+#pragma once
+#include "Common.h"
+
+#ifdef USING_VISUALIZATION_LIBRARIES
 
 #include "Display.h"
 

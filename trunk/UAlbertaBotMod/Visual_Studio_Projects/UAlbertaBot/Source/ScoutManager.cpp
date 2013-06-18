@@ -6,16 +6,18 @@ ScoutManager::ScoutManager() : workerScout(NULL), numWorkerScouts(0), scoutUnder
 {
 }
 
-void ScoutManager::update(const UnitVector & scoutUnits)
+void ScoutManager::update(const std::set<BWAPI::Unit *> & scoutUnits)
 {
 	if (scoutUnits.size() == 1)
 	{
-		if (scoutUnits[0]->getType().isWorker())
+		BWAPI::Unit * scoutUnit = *scoutUnits.begin();
+
+		if (scoutUnit->getType().isWorker())
 		{
-			if (scoutUnits[0] != workerScout)
+			if (scoutUnit != workerScout)
 			{
 				numWorkerScouts++;
-				workerScout = scoutUnits[0];
+				workerScout = scoutUnit;
 			}
 		}
 	}

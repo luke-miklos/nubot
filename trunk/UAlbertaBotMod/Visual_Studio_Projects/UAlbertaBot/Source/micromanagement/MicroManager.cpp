@@ -242,6 +242,6 @@ bool MicroManager::unitNearChokepoint(BWAPI::Unit * unit) const
 void MicroManager::drawOrderText() {
 
 	BOOST_FOREACH (BWAPI::Unit * unit, units) {
-		if (Options::Debug::DRAW_UALBERTABOT_DEBUG) BWAPI::Broodwar->drawTextMap(unit->getPosition().x(), unit->getPosition().y(), "%s", order.getOrderString().c_str());
+		if (Options::Debug::DRAW_UALBERTABOT_DEBUG) BWAPI::Broodwar->drawTextMap(unit->getPosition().x(), unit->getPosition().y(), "%s", order.getStatus().c_str());
 	}
 }

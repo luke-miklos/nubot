@@ -1,6 +1,8 @@
-#ifdef OPENGL_VIS
-
 #pragma once
+
+#include "..\..\AdversarialSearch\source\common.h"
+
+#ifdef USING_VISUALIZATION_LIBRARIES
 
 #include <Common.h>
 

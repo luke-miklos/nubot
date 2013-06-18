@@ -9,7 +9,7 @@
 #include <intrin.h>
 #include <sstream>
 
-//#define OPENGL_VIS 1
+// #define USING_VISUALIZATION_LIBRARIES
 
 // SEARCH PARAMETERS
 namespace Search

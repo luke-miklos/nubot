@@ -36,6 +36,12 @@ void InformationManager::updateUnitInfo()
 		updateUnit(unit);
 	}
 
+	// update enemy unit information
+	BOOST_FOREACH (BWAPI::Unit * unit, BWAPI::Broodwar->self()->getUnits())
+	{
+		updateUnit(unit);
+	}
+
 	// remove bad enemy units
 	enemyUnitData.removeBadUnits();
 	selfUnitData.removeBadUnits();
@@ -254,8 +260,6 @@ void InformationManager::drawUnitInformation(int x, int y) {
 		}
 	}
 }
-
-
 
 void InformationManager::onStart() {}
 
