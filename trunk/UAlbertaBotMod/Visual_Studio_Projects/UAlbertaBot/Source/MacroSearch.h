@@ -25,10 +25,15 @@ enum MOVEID
 {
    eNull_Move = -1,
 
-   eTerran_Marine = 0,
-   eTerran_SCV = 7,
+   eTerran_Marine       =   0,
+   eTerran_SCV          =   7,
    eTerran_Supply_Depot = 109,
-   eTerran_Barracks = 111,
+   eTerran_Barracks     = 111,
+
+   eZerg_Zergling      =  37,
+   eZerg_Drone         =  41,
+   eZerg_Overlord      =  42,
+   eZerg_Spawning_Pool = 142,
 
    eProtoss_Corsair = 60,
    eProtoss_Dark_Templar = 61,
@@ -201,6 +206,7 @@ public:
    int   mNextFarmDoneIndex;
    std::vector<int> mUnitCounts; // 0=probe, 1=zealot, 2=dragoon, 3=templar, 4=dark templar, 5=archon, 6=dark archon, 7=observer, 8=shuttle, 9=reaver, 10=corsair, 11=scout, 12=carrier
                                  // 0=scv, 1=marine, 2=firebat, 3=ghost, 4=vulture, 5=tank, 6=goliath, 7=
+							     // TODO: fix-> for now, decrement unit counts for scv when building something
    std::vector< std::vector<int> > mTrainingCompleteFrames;  //0=nexus, 1=pylon, 2=gateways, 3=assimilator, 4=cybercore, 5=forge, 6=robotfacility, 7=stargate, 8=citadel, 9=templar, 10=observatory, 11=arbiter, 12=fleetbeacon,  13=robotsupportbay
                                                              //0=command center, 1=supply depot, 2=barracks, 3=refinery, 4=factory, 5=engineering bay, 6=armory, 7=starport, 8=academy, 9=science, 10=
 };

@@ -121,7 +121,7 @@ MacroSearch::MacroSearch()
    ,mSearchDepth(0)
    ,mSearchLookAhead(0)
  //,mPossibleMoves(30, std::vector<MoveType>())   //initialize with a possible depth of 30
-   ,mPossibleMoves(30, std::vector<int>())   //initialize with a possible depth of 30
+   ,mPossibleMoves(60, std::vector<int>())   //initialize with a possible depth of 60
 {
 
    if (BWAPI::Broodwar->self()->getRace() == BWAPI::Races::Protoss)
@@ -598,7 +598,7 @@ std::vector<int>* MacroSearch::UpdatePossibleMoves()
 
    if (mMyRace == ePROTOSS)
    {
-	  int gateCnt = mSearchState.mTrainingCompleteFrames[2].size();
+     int gateCnt = mSearchState.mTrainingCompleteFrames[2].size();
 
       if ((mSearchState.mCurrentFarm+4) <= (mSearchState.mFarmCapacity + 16*mSearchState.mFarmBuilding) &&  //have (or will have) farm available
           gateCnt >0) //and have a gateway to build it in
@@ -608,7 +608,7 @@ std::vector<int>* MacroSearch::UpdatePossibleMoves()
          mostCost = max(mostCost,100);
       }
 
-	  int maxGate = ((int)mSearchState.mMineralsPerMinute)/(240+60);  //max spend rate = 2.4 zealots a minute, +6/10 pylon
+     int maxGate = ((int)mSearchState.mMineralsPerMinute)/(240+60);  //max spend rate = 2.4 zealots a minute, +6/10 pylon
       if ((mSearchState.mTrainingCompleteFrames[1].size()>0 || 
            mSearchState.mFarmBuilding>0                     || 
            mSearchState.mFarmCapacity > 18) &&
@@ -644,7 +644,7 @@ std::vector<int>* MacroSearch::UpdatePossibleMoves()
       //eTerran_SCV = 7,
       //eTerran_Supply_Depot = 109,
       //eTerran_Barracks = 111,
-	  int raxCnt = mSearchState.mTrainingCompleteFrames[2].size();
+     int raxCnt = mSearchState.mTrainingCompleteFrames[2].size();
 
       if ((mSearchState.mCurrentFarm+2) <= (mSearchState.mFarmCapacity + 16*mSearchState.mFarmBuilding) &&  //have (or will have) farm available
           raxCnt >0) //and have a barracks to build it in
@@ -653,7 +653,7 @@ std::vector<int>* MacroSearch::UpdatePossibleMoves()
          mostCost = max(mostCost,50);
       }
 
-	  int maxRax = ((int)mSearchState.mMineralsPerMinute)/(200+50);  //max spend rate = 4 marines a minute, +1/2 depot
+     int maxRax = ((int)mSearchState.mMineralsPerMinute)/(200+50);  //max spend rate = 4 marines a minute, +1/2 depot
     //if ((mSearchState.mTrainingCompleteFrames[0].size()*4) > mSearchState.mTrainingCompleteFrames[2].size())
       if (raxCnt==0 || raxCnt < maxRax)
       {
@@ -678,7 +678,42 @@ std::vector<int>* MacroSearch::UpdatePossibleMoves()
    }
    else //(mMyRace == eZERG)
    {
+      //eZerg_Zergling      =  37,
+      //eZerg_Drone         =  41,
+      //eZerg_Overlord      =  42,
+      //eZerg_Spawning_Pool = 142,
 
+      int poolCnt = mSearchState.mTrainingCompleteFrames[2].size();
+
+      if ((mSearchState.mCurrentFarm+2) <= (mSearchState.mFarmCapacity + 16*mSearchState.mFarmBuilding) &&  //have (or will have) farm available
+          poolCnt >0) //and have a pool to enable lings
+      {
+         movesPtr->push_back(eZerg_Zergling);
+         //mostCost = max(mostCost,50);
+      }
+
+     //int maxRax = ((int)mSearchState.mMineralsPerMinute)/(200+50);  //max spend rate = 4 marines a minute, +1/2 depot
+    //if ((mSearchState.mTrainingCompleteFrames[0].size()*4) > mSearchState.mTrainingCompleteFrames[2].size())
+      if (poolCnt<=0)// || raxCnt < maxRax)
+      {
+         movesPtr->push_back(eZerg_Spawning_Pool);
+         //mostCost = max(mostCost,200);
+      }
+
+      if ((mSearchState.mFarmCapacity+16*mSearchState.mFarmBuilding-mSearchState.mCurrentFarm) <= (2*mSearchState.mMaxTrainingCapacity))
+      {
+         movesPtr->push_back(eZerg_Overlord);
+         //mostCost = max(mostCost,100);
+      }
+
+      //TODO: count mineral spots, for now... use 8
+      if (mSearchState.mUnitCounts[0] < 17 && //two per mineral spot +1 for building
+         (mSearchState.mCurrentFarm+2) <= (mSearchState.mFarmCapacity + 16*mSearchState.mFarmBuilding) && //and have (or will have) farm available
+          mSearchState.mTrainingCompleteFrames[0].size() >0 ) //&&    //and have a command center to build it in
+          //((mostCost==0)||((mostCost+50)>mSearchState.mMinerals)||mSearchState.mTrainingCompleteFrames[0][0]<=mSearchState.mGameStateFrame) ) //if we could instantly build something else, & an scv is already building, dont do an scv right now
+      {
+         movesPtr->push_back(eZerg_Drone);
+      }
 
    }
 
@@ -941,7 +976,7 @@ bool MacroSearch::DoMove(int aMove, int targetFrame)
          //mMineralsPerMinute += MineralsPerMinute;       //TODO, increment this when unit done building
       }break;
 
-   case eTerran_Marine: //marin //TODO: verify this ID  //100, 600, 4
+   case eTerran_Marine: //marin //TODO: verify this ID  //100, 360, 2
       {
          price              = 50;
          int buildTime      = 360; //frames
@@ -1008,12 +1043,21 @@ bool MacroSearch::DoMove(int aMove, int targetFrame)
          {
             return false;  //no need to search this move, its past our end search time
          }
-
-         newMovePtr = new QueuedMove(moveStartTime, moveStartTime+buildTime, 0, mSearchState.mGameStateFrame, aMove);
-         mSearchState.mTrainingCompleteFrames[1].push_back(moveStartTime+buildTime);
+         int frameComplete = moveStartTime + buildTime;
+         newMovePtr = new QueuedMove(moveStartTime, frameComplete, 0, mSearchState.mGameStateFrame, aMove);
+         mSearchState.mTrainingCompleteFrames[1].push_back(frameComplete);
          mSearchState.mFarmBuilding++;
          //mFarmCapacity += 16; //TODO, increment this when unit done building
-      }break;
+
+         //adjust minerals ourselves here, & then take out scv from production
+         int dt = moveStartTime - mSearchState.mGameStateFrame;
+         mSearchState.mMinerals += ((mSearchState.mMineralsPerMinute * dt)/FramePerMinute);
+         mSearchState.mGameStateFrame = moveStartTime;
+         //take out an scv, to perform construction
+         mSearchState.mUnitCounts[0]--; //scv
+         mSearchState.mMineralsPerMinute -= MineralsPerMinute;
+
+     }break;
 
    case eTerran_Barracks: //rax //TODO: verify this ID //150, 900, 0
       {
@@ -1030,11 +1074,166 @@ bool MacroSearch::DoMove(int aMove, int targetFrame)
          {
             return false;  //no need to search this move, its past our end search time
          }
-         newMovePtr = new QueuedMove(moveStartTime, moveStartTime+buildTime, 0, mSearchState.mGameStateFrame, aMove);
-         mSearchState.mTrainingCompleteFrames[2].push_back(moveStartTime+buildTime);
-         //mMaxTrainingCapacity += 2;  //for a zealot, what is a goon? 2?   //TODO, increment this when unit done building
+         int frameComplete = moveStartTime + buildTime;
+         newMovePtr = new QueuedMove(moveStartTime, frameComplete, 0, mSearchState.mGameStateFrame, aMove);
+         mSearchState.mTrainingCompleteFrames[2].push_back(frameComplete);
+
+         //adjust minerals ourselves here, & then take out scv from production
+         int dt = moveStartTime - mSearchState.mGameStateFrame;
+         mSearchState.mMinerals += ((mSearchState.mMineralsPerMinute * dt)/FramePerMinute);
+         mSearchState.mGameStateFrame = moveStartTime;
+         //take out an scv, to perform construction
+         mSearchState.mUnitCounts[0]--; //scv
+         mSearchState.mMineralsPerMinute -= MineralsPerMinute;
+
       }break;
 
+
+   case eZerg_Drone: //drone //TODO: verify this ID //50, 300, 2
+      {
+         price              = 50;
+         int buildTime      = 300;   //frames
+         int supplyRequired = 2;
+
+         //find out at what time mMinerals are available
+         //TODO: search for mGas time too
+         int frameMineralAvailable = mSearchState.mGameStateFrame;
+         if (mSearchState.mMinerals < price) {
+            frameMineralAvailable += (int)((price-mSearchState.mMinerals)*FramePerMinute/mSearchState.mMineralsPerMinute);  //rough check, doesn't account for scv that could finish training by then
+         }
+         //find out at what time a production building is available
+         //TODO: check all buildings of correct type, not just last one
+         int frameBuildingAvailable = mSearchState.mTrainingCompleteFrames[0][0];//.back();   //TODO find right cc
+         if (frameBuildingAvailable < mSearchState.mGameStateFrame) {
+            frameBuildingAvailable = mSearchState.mGameStateFrame;
+         }
+         //find out at what time farm will be available
+         int farmAvailable = mSearchState.mGameStateFrame;
+         if ((mSearchState.mCurrentFarm+supplyRequired)>mSearchState.mFarmCapacity)
+         {
+            //find when pylon will be done
+            assert(mSearchState.mFarmBuilding>0);
+            assert(mSearchState.mNextFarmDoneIndex < (int)mSearchState.mTrainingCompleteFrames[1].size());
+            farmAvailable = mSearchState.mTrainingCompleteFrames[1][mSearchState.mNextFarmDoneIndex];
+            //farmAvailable = mSearchState.mTrainingCompleteFrames[1].front();  //TODO - find right pylon! not necessarily front in vector
+         }
+         //0. find build time
+         //start time is latest of these three times
+         moveStartTime = max(frameMineralAvailable, max(frameBuildingAvailable, farmAvailable));
+         if ((moveStartTime+buildTime) > targetFrame)
+         {
+            return false;  //no need to search this move, its past our end search time
+         }
+         //2. adjust supply
+         mSearchState.mCurrentFarm += supplyRequired;   //supply taken when unit training started
+         newMovePtr = new QueuedMove(moveStartTime, moveStartTime+buildTime, mSearchState.mTrainingCompleteFrames[0][0], mSearchState.mGameStateFrame, aMove);
+         //3. adjust training times
+         mSearchState.mTrainingCompleteFrames[0][0] = (moveStartTime+buildTime);//TODO - find right cc
+         //mUnitCounts[0]   ++; //probe   //TODO, increment this when unit done building
+         //mMineralsPerMinute += MineralsPerMinute;       //TODO, increment this when unit done building
+      }break;
+
+   case eZerg_Zergling: //ling //TODO: verify this ID  //100, 420, 2
+      {
+         price              = 50;
+         int buildTime      = 420; //frames
+         int supplyRequired = 2;
+
+         //find out at what time mMinerals are available
+         //TODO: search for mGas time too
+         int frameMineralAvailable = mSearchState.mGameStateFrame;
+         if (mSearchState.mMinerals < price) {
+            frameMineralAvailable += (int)((price-mSearchState.mMinerals)*FramePerMinute/mSearchState.mMineralsPerMinute);
+         }
+         //find out at what time a production building is available
+         int raxIndex = 0;
+         int frameBuildingAvailable = mSearchState.mTrainingCompleteFrames[2][raxIndex];
+         for (int i=1; i<(int)mSearchState.mTrainingCompleteFrames[2].size(); ++i)
+         {
+            if (mSearchState.mTrainingCompleteFrames[2][i] < frameBuildingAvailable)
+            {
+               raxIndex = i;
+               frameBuildingAvailable = mSearchState.mTrainingCompleteFrames[2][i];
+            }
+         }
+         //if (frameBuildingAvailable < mSearchState.mGameStateFrame) {
+         //   frameBuildingAvailable = mSearchState.mGameStateFrame;
+         //}
+
+         int farmAvailable = mSearchState.mGameStateFrame;
+         if ((mSearchState.mCurrentFarm+supplyRequired)>mSearchState.mFarmCapacity)
+         {
+            //find when depot will be done
+            assert(mSearchState.mFarmBuilding>0);
+            assert(mSearchState.mNextFarmDoneIndex < (int)mSearchState.mTrainingCompleteFrames[1].size());
+            farmAvailable = mSearchState.mTrainingCompleteFrames[1][mSearchState.mNextFarmDoneIndex];
+            //farmAvailable = mSearchState.mTrainingCompleteFrames[1].front();  //TODO - find right pylon! not necessarily front in vector
+         }
+
+         //0. find build time
+         //start time is latest of these three times
+         moveStartTime = max(frameMineralAvailable, max(frameBuildingAvailable, farmAvailable));
+         if ((moveStartTime+buildTime) > targetFrame)
+         {
+            return false;  //no need to search this move, its past our end search time
+         }
+         mSearchState.mCurrentFarm += supplyRequired;   //supply taken when unit building started
+         newMovePtr = new QueuedMove(moveStartTime, moveStartTime+buildTime, mSearchState.mTrainingCompleteFrames[2][raxIndex], mSearchState.mGameStateFrame, aMove);
+         mSearchState.mTrainingCompleteFrames[2][raxIndex] = (moveStartTime+buildTime);
+         //mUnitCounts[1]   ++; //zealot  //TODO, increment this when unit done building
+      }break;
+
+   case eZerg_Overlord: //ovie //TODO: verify this ID //100, 600, 0
+      {
+         price              = 100;
+         int buildTime      = 600; //frames
+
+         //find out at what time mMinerals are available
+         //TODO: search for mGas time too
+         int frameMineralAvailable = mSearchState.mGameStateFrame;
+         if (mSearchState.mMinerals < price) {
+            frameMineralAvailable += (int)((price-mSearchState.mMinerals)*FramePerMinute/mSearchState.mMineralsPerMinute);
+         }
+         //start time is mineral time
+         moveStartTime = frameMineralAvailable;
+         if ((moveStartTime+buildTime) > targetFrame)
+         {
+            return false;  //no need to search this move, its past our end search time
+         }
+         int frameComplete = moveStartTime + buildTime;
+         newMovePtr = new QueuedMove(moveStartTime, frameComplete, 0, mSearchState.mGameStateFrame, aMove);
+         mSearchState.mTrainingCompleteFrames[1].push_back(frameComplete);
+         mSearchState.mFarmBuilding++;
+         //mFarmCapacity += 16; //TODO, increment this when unit done building
+     }break;
+
+   case eZerg_Spawning_Pool: //pool //TODO: verify this ID //200, 1200, 0
+      {
+         price              = 200;
+         int buildTime      = 1200; //frames
+
+         //find out at what time mMinerals are available
+         //TODO: search for mGas time too
+         int moveStartTime = mSearchState.mGameStateFrame;
+         if (mSearchState.mMinerals < price) {
+            moveStartTime += (int)((price-mSearchState.mMinerals)*FramePerMinute/mSearchState.mMineralsPerMinute);
+         }
+         if ((moveStartTime+buildTime) > targetFrame)
+         {
+            return false;  //no need to search this move, its past our end search time
+         }
+         int frameComplete = moveStartTime + buildTime;
+         newMovePtr = new QueuedMove(moveStartTime, frameComplete, 0, mSearchState.mGameStateFrame, aMove);
+         mSearchState.mTrainingCompleteFrames[2].push_back(frameComplete);
+
+         //adjust minerals ourselves here, & then take out drone from production
+         int dt = moveStartTime - mSearchState.mGameStateFrame;
+         mSearchState.mMinerals += ((mSearchState.mMineralsPerMinute * dt)/FramePerMinute);
+         mSearchState.mGameStateFrame = moveStartTime;
+         //take out an scv, to perform construction
+         mSearchState.mUnitCounts[0]--; //drone
+         mSearchState.mMineralsPerMinute -= MineralsPerMinute;
+      }break;
 
    default:
       {
@@ -1049,9 +1248,10 @@ bool MacroSearch::DoMove(int aMove, int targetFrame)
    mSearchState.mMinerals += ((mSearchState.mMineralsPerMinute * dt)/FramePerMinute);
    //TODO: adjust mGas too
 
-   //AddMove(newMove);
    AddMove(newMovePtr);
-   AdvanceQueuedEventsUntil(moveStartTime);  //adjusts mSearchState.mGameStateFrame too
+   //assert(moveStartTime >= mSearchState.mGameStateFrame);
+   AdvanceQueuedEventsUntil(moveStartTime);
+   mSearchState.mGameStateFrame = moveStartTime;
    return true;
 }
 
@@ -1105,7 +1305,7 @@ void MacroSearch::AddMove(QueuedMove* move)
 
 void MacroSearch::AdvanceQueuedEventsUntil(int targetFrame)
 {
-   assert(targetFrame >= mSearchState.mGameStateFrame);
+   //assert(targetFrame >= mSearchState.mGameStateFrame);
 
    //later events are further back in the list
    mLastEventIter++;
@@ -1160,10 +1360,23 @@ void MacroSearch::AdvanceQueuedEventsUntil(int targetFrame)
             mSearchState.mFarmCapacity += 16;
             mSearchState.mFarmBuilding--;
             mSearchState.mNextFarmDoneIndex++;
+            //add back in the scv, its done building
+            mSearchState.mUnitCounts[0]++; //scv
+            mSearchState.mMineralsPerMinute += MineralsPerMinute;
+            //just add in mineral change from this scv only
+            int dt = targetFrame - movePtr->frameComplete; //should be positive
+            mSearchState.mMinerals += ((MineralsPerMinute * dt)/FramePerMinute);
          }break;
       case eTerran_Barracks: //rax  //TODO: verify this ID
          {
             mSearchState.mMaxTrainingCapacity += 2;  //marine? //TODO: find largest unit buildable by this building
+
+            //add back in the scv, its done building
+            mSearchState.mUnitCounts[0]++; //scv
+            mSearchState.mMineralsPerMinute += MineralsPerMinute;
+            //just add in mineral change from this scv only
+            int dt = targetFrame - movePtr->frameComplete; //should be positive
+            mSearchState.mMinerals += ((MineralsPerMinute * dt)/FramePerMinute);
          }break;
 
       default:
@@ -1176,7 +1389,7 @@ void MacroSearch::AdvanceQueuedEventsUntil(int targetFrame)
    }
    //decrement iterator & exit
    mLastEventIter--;
-   mSearchState.mGameStateFrame = targetFrame;
+   //mSearchState.mGameStateFrame = targetFrame;
 
 
    ////events the queue (list) are ordered largest (latest) time is towards the front
@@ -1288,10 +1501,24 @@ void MacroSearch::ReverseQueuedEventsUntil(int targetFrame)
             mSearchState.mFarmCapacity -= 16;
             mSearchState.mFarmBuilding++;
             mSearchState.mNextFarmDoneIndex--;
+
+            //take out an scv, to perform construction
+            mSearchState.mUnitCounts[0]--; //scv
+            mSearchState.mMineralsPerMinute -= MineralsPerMinute;
+            //adjust mineral change from this one scv only
+            int dt = movePtr->frameComplete - mSearchState.mGameStateFrame; //should be negative
+            mSearchState.mMinerals += ((MineralsPerMinute * dt)/FramePerMinute);
          }break;
       case eTerran_Barracks: //rax //TODO: verify this ID
          {
             mSearchState.mMaxTrainingCapacity -= 2;  //marine? //TODO: find largest unit buildable by this building
+
+            //take out an scv, to perform construction
+            mSearchState.mUnitCounts[0]--; //scv
+            mSearchState.mMineralsPerMinute -= MineralsPerMinute;
+            //adjust mineral change from this one scv only
+            int dt = movePtr->frameComplete - mSearchState.mGameStateFrame; //should be negative
+            mSearchState.mMinerals += ((MineralsPerMinute * dt)/FramePerMinute);
          }break;
       default:
          {
@@ -1395,7 +1622,7 @@ void MacroSearch::UndoMove()
    switch (undoMove->move)
    {
    case eProtoss_Probe: //probe //TODO: verify this ID
-      {
+	   {
          price              = 50;
          int buildTime      = 300;   //frames
          int supplyRequired = 2;
@@ -1500,14 +1727,31 @@ void MacroSearch::UndoMove()
          price              = 100;
          int buildTime      = 600;  //frames
          mSearchState.mFarmBuilding--;
-         mSearchState.mTrainingCompleteFrames[1].pop_back(); //should remove last added pylon
+         mSearchState.mTrainingCompleteFrames[1].pop_back(); //should remove last added depot
+
+         //add back in an scv, no longer needed for this construction
+         mSearchState.mUnitCounts[0]++; //scv
+         mSearchState.mMineralsPerMinute += MineralsPerMinute;
+         //adjust mineral change from this one scv only
+         //subtraction below will take his production into account when it shouldn't, so add it in fake here
+         int dt = mSearchState.mGameStateFrame - undoMove->frameStarted;  //should be positive
+         mSearchState.mMinerals += ((MineralsPerMinute * dt)/FramePerMinute);
       }break;
 
    case eTerran_Barracks: //rax   //TODO: verify this ID
       {
-         price              = 150;
-         int buildTime      = 1200;  //frames
-         mSearchState.mTrainingCompleteFrames[2].pop_back(); //should remove last added gateway
+		   price              = 150;
+		   int buildTime      = 1200;  //frames
+			mSearchState.mTrainingCompleteFrames[2].pop_back(); //should remove last added rax
+
+			//add back in an scv, no longer needed for this construction
+			mSearchState.mUnitCounts[0]++; //scv
+			mSearchState.mMineralsPerMinute += MineralsPerMinute;
+			//adjust mineral change from this one scv only
+			//subtraction below will take his production into account when it shouldn't, so add it in fake here
+			int dt = mSearchState.mGameStateFrame - undoMove->frameStarted;  //should be positive
+			mSearchState.mMinerals += ((MineralsPerMinute * dt)/FramePerMinute);
+
       }break;
 
    default:
