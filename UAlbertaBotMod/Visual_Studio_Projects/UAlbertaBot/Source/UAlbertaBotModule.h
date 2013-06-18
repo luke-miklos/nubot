@@ -9,6 +9,7 @@
 #include "HardCodedInfo.h"
 #include "../../StarcraftBuildOrderSearch/Source/starcraftsearch/StarcraftData.hpp"
 #include "MicroSearchManager.h"
+#include "ReplayVisualizer.h"
 
 #include "EnhancedInterface.hpp"
 

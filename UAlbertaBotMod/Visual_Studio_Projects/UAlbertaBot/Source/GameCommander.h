@@ -90,21 +90,23 @@ public:
 	}
 };
 
-class GameCommander {
-
+class GameCommander 
+{
 	CombatCommander		combatCommander;
 	ScoutManager		scoutManager;
 	TimerManager		timerManager;
 
-	// pair is (unit pointer, isAlreadyAssigned)
-	std::vector<UnitToAssign> validUnits;
+	std::set<BWAPI::Unit *> combatUnits;
+	std::set<BWAPI::Unit *> scoutUnits;
+	std::set<BWAPI::Unit *> workerUnits;
 
-	UnitVector combatUnits;
-	UnitVector scoutUnits;
-	UnitVector workerUnits;
+	std::set<BWAPI::Unit *>	validUnits;
+	std::set<BWAPI::Unit *> assignedUnits;
 
 	BWAPI::Unit * currentScout;
 	int numWorkerScouts;
+
+	const bool isAssigned(BWAPI::Unit * unit) const;
 
 public:
 
@@ -125,8 +127,8 @@ public:
 	bool isCombatUnit(BWAPI::Unit * unit) const;
 
 	BWAPI::Unit * getFirstSupplyProvider();
-	int getClosestUnitToTarget(BWAPI::UnitType type, BWAPI::Position target);
-	int getClosestWorkerToTarget(BWAPI::Position target);
+	BWAPI::Unit * getClosestUnitToTarget(BWAPI::UnitType type, BWAPI::Position target);
+	BWAPI::Unit * getClosestWorkerToTarget(BWAPI::Position target);
 
 	void onSendText(std::string text);
 	void onUnitShow(BWAPI::Unit * unit);

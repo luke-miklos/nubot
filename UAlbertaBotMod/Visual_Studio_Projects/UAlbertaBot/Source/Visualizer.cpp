@@ -1,7 +1,6 @@
-#ifdef OPENGL_VIS
-
-#include "Common.h"
 #include "Visualizer.h"
+
+#ifdef USING_VISUALIZATION_LIBRARIES
 
 Visualizer & Visualizer::Instance() 
 {

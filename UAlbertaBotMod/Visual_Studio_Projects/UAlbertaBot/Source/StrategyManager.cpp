@@ -304,7 +304,7 @@ const bool StrategyManager::defendWithWorkers()
 
 // called by combat commander to determine whether or not to send an attack force
 // freeUnits are the units available to do this attack
-const bool StrategyManager::doAttack(const UnitVector & freeUnits)
+const bool StrategyManager::doAttack(const std::set<BWAPI::Unit *> & freeUnits)
 {
 	int ourForceSize = (int)freeUnits.size();
 

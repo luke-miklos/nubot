@@ -9,7 +9,6 @@ class SquadData
 	std::vector<Squad>	squads;
 
 	void				updateAllSquads();
-	int					getNumType(const UnitVector & units, BWAPI::UnitType type);
 
 public:
 
@@ -18,10 +17,10 @@ public:
 
 	void				clearSquadData();
 
-	void				addSquad(Squad & squad);
+	void				addSquad(const Squad & squad);
 	void				drawSquadInformation(int x, int y);
 
 	void				update();
-	void				setSquad(const Squad & squad);
+	void				setSquad(const UnitVector & units, const SquadOrder & order);
 	void				setRegroup();
 };

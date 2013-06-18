@@ -138,7 +138,7 @@ void ProductionManager::onUnitDestroy(BWAPI::Unit * unit)
 	if ((unit->getType().isWorker() && !WorkerManager::Instance().isWorkerScout(unit)) || unit->getType().isBuilding())
 	{
 		BWAPI::Broodwar->printf("Critical unit died, re-searching build order");
-		
+
 		//if (unit->getType() != BWAPI::UnitTypes::Zerg_Drone)
 		//{
 		//	testBuildOrderSearch(StrategyManager::Instance().getBuildOrderGoal());

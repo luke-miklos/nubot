@@ -3,12 +3,12 @@
 
 Squad::Squad(const UnitVector & units, SquadOrder order) 
 	: units(units)
-	, lastRegroup(0)
 	, order(order)
 {
 }
 
-void Squad::update()
+void 
+Squad::update()
 {
 	// update all necessary unit information within this squad
 	updateUnits();
@@ -54,14 +54,16 @@ void Squad::update()
 	}
 }
 
-void Squad::updateUnits()
+void
+Squad::updateUnits()
 {
 	setAllUnits();
 	setNearEnemyUnits();
 	setManagerUnits();
 }
 
-void Squad::setAllUnits()
+void 
+Squad::setAllUnits()
 {
 	// clean up the units vector just in case one of them died
 	UnitVector goodUnits;
@@ -79,7 +81,8 @@ void Squad::setAllUnits()
 	units = goodUnits;
 }
 
-void Squad::setNearEnemyUnits()
+void 
+Squad::setNearEnemyUnits()
 {
 	nearEnemy.clear();
 	BOOST_FOREACH(BWAPI::Unit * unit, units)
@@ -104,7 +107,8 @@ void Squad::setNearEnemyUnits()
 	}
 }
 
-void Squad::setManagerUnits()
+void 
+Squad::setManagerUnits()
 {
 	UnitVector meleeUnits;
 	UnitVector rangedUnits;
@@ -145,13 +149,9 @@ void Squad::setManagerUnits()
 	transportManager.setUnits(detectorUnits);
 }
 
-void Squad::clear()
-{
-	units.clear();
-}
-
 // calculates whether or not to regroup
-bool Squad::needsToRegroup()
+bool 
+Squad::needsToRegroup()
 {
 	// if we are not attacking, never regroup
 	if (units.empty() || (order.type != SquadOrder::Attack))
@@ -194,17 +194,14 @@ bool Squad::needsToRegroup()
 	return retreat;
 }
 
-void Squad::setSquadOrder(const SquadOrder & so)
+void 
+Squad::setSquadOrder(const SquadOrder & so)
 {
-	if (so.position != order.position)
-	{
-		order = so;
-		distanceMap.reset();
-		MapTools::Instance().computeDistance(distanceMap, order.position);
-	}
+	order = so;
 }
 
-bool Squad::unitNearEnemy(BWAPI::Unit * unit)
+bool 
+Squad::unitNearEnemy(BWAPI::Unit * unit)
 {
 	assert(unit);
 
@@ -215,7 +212,8 @@ bool Squad::unitNearEnemy(BWAPI::Unit * unit)
 	return enemyNear.size() > 0;
 }
 
-BWAPI::Position Squad::calcCenter()
+BWAPI::Position 
+Squad::calcCenter()
 {
 	BWAPI::Position accum(0,0);
 	BOOST_FOREACH(BWAPI::Unit * unit, units)
@@ -225,7 +223,8 @@ BWAPI::Position Squad::calcCenter()
 	return BWAPI::Position(accum.x() / units.size(), accum.y() / units.size());
 }
 
-BWAPI::Position Squad::calcRegroupPosition()
+BWAPI::Position 
+Squad::calcRegroupPosition()
 {
 	BWAPI::Position regroup(0,0);
 
@@ -254,7 +253,8 @@ BWAPI::Position Squad::calcRegroupPosition()
 	}
 }
 
-BWAPI::Unit * Squad::unitClosestToEnemy()
+BWAPI::Unit * 
+Squad::unitClosestToEnemy()
 {
 	BWAPI::Unit * closest = NULL;
 	int closestDist = 100000;
@@ -267,7 +267,7 @@ BWAPI::Unit * Squad::unitClosestToEnemy()
 		}
 
 		// the distance to the order position
-		int dist = distanceMap[unit->getPosition()];
+		int dist = MapTools::Instance().getGroundDistance(unit->getPosition(), order.position);
 
 		if (dist != -1 && (!closest || dist < closestDist))
 		{
@@ -299,7 +299,8 @@ BWAPI::Unit * Squad::unitClosestToEnemy()
 	return closest;
 }
 
-int Squad::squadUnitsNear(BWAPI::Position p)
+int 
+Squad::squadUnitsNear(BWAPI::Position p)
 {
 	int numUnits = 0;
 
@@ -314,7 +315,8 @@ int Squad::squadUnitsNear(BWAPI::Position p)
 	return numUnits;
 }
 
-bool Squad::squadObserverNear(BWAPI::Position p)
+bool 
+Squad::squadObserverNear(BWAPI::Position p)
 {
 	BOOST_FOREACH (BWAPI::Unit * unit, units)
 	{
@@ -325,4 +327,16 @@ bool Squad::squadObserverNear(BWAPI::Position p)
 	}
 
 	return false;
+}
+
+const UnitVector &	
+Squad::getUnits() const	
+{ 
+	return units; 
+} 
+
+const SquadOrder &	
+Squad::getSquadOrder()	const			
+{ 
+	return order; 
 }

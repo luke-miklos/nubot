@@ -6,7 +6,7 @@
 #include "Move.hpp"
 #include <boost/shared_ptr.hpp>
 
-#ifdef OPENGL_VIS
+#ifdef USING_VISUALIZATION_LIBRARIES
 	#include "Display.h"
 #endif
 
@@ -34,7 +34,7 @@ protected:
 
 public:
 	
-#ifdef OPENGL_VIS
+#ifdef USING_VISUALIZATION_LIBRARIES
 	Display *			disp;
 #endif
 

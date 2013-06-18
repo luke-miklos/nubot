@@ -6,22 +6,28 @@ class SquadOrder
 {
 public:
 
-	enum Type { None, Attack, Defend, Regroup, SquadOrderTypes };
+	enum { None, Attack, Defend, Regroup, SquadOrderTypes };
 
-	Type				type;
+	int					type;
 	BWAPI::Position		position;
 	int					radius;
+	std::string			status;
 
-	SquadOrder() : type(None) {}
-	SquadOrder(Type type, BWAPI::Position position, int radius) :
-		type(type), position(position), radius(radius) {}
+	SquadOrder() 
+		: type(None) 
+	{
+	}
 
-	std::string getOrderString() const {
+	SquadOrder(int type, BWAPI::Position position, int radius, std::string stat = "Default") 
+		: type(type)
+		, position(position)
+		, radius(radius) 
+		, status(stat)
+	{
+	}
 
-		if (type == SquadOrder::Attack)					{ return "Attack"; } 
-		else if (type == SquadOrder::Defend)			{ return "Defend"; } 
-		else if (type == SquadOrder::Regroup)			{ return "Regroup"; } 
-
-		return "Not Formed";
+	std::string getStatus() const 
+	{
+		return status;
 	}
 };

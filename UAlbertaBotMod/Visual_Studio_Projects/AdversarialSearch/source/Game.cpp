@@ -12,7 +12,7 @@ Game::Game(const GameState & initialState, PlayerPtr & p1, PlayerPtr & p2, const
 	, totalDepthReached(0)
 	, totalRoundsSearched(0)
 {
-	#ifdef OPENGL_VIS
+	#ifdef USING_VISUALIZATION_LIBRARIES
 		disp = NULL;
 	#endif
 
@@ -111,7 +111,7 @@ void Game::play(bool printGame)
 			totalDepthReached += ab->results().maxDepthReached;
 		}
 
-		#ifdef OPENGL_VIS
+		#ifdef USING_VISUALIZATION_LIBRARIES
 			if (disp)
 			{
 				disp->SetState(state);
@@ -207,7 +207,7 @@ void Game::playScripts()
 			totalDepthReached += ab->results().maxDepthReached;
 		}
 
-		#ifdef OPENGL_VIS
+		#ifdef USING_VISUALIZATION_LIBRARIES
 			if (disp)
 			{
 				disp->SetState(state);

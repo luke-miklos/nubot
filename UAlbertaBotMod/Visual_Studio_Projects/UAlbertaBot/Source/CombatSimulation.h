@@ -3,7 +3,7 @@
 #include "Common.h"
 #include "MapGrid.h"
 
-#ifdef OPENGL_VIS
+#ifdef USING_VISUALIZATION_LIBRARIES
 	#include "Visualizer.h"
 #endif
 

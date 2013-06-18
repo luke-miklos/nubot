@@ -4,8 +4,6 @@
 UnitData::UnitData() 
 	: mineralsLost(0)
 	, gasLost(0)
-	, hasCloakedUnit(false)
-	, hasDetector(false)
 {
 	int maxTypeID(0);
 	BOOST_FOREACH (BWAPI::UnitType t, BWAPI::UnitTypes::allUnitTypes())
@@ -36,21 +34,9 @@ void UnitData::updateUnit(BWAPI::Unit * unit)
 	// otherwise create it
 	else
 	{
+		// put the unit in the map
 		numUnits[unit->getType().getID()]++;
 		unitMap[unit] = UnitInfo(unit->getID(), unit, unit->getPosition(), unit->getType());
-	
-		if (unit->getType() == BWAPI::UnitTypes::Protoss_Dark_Templar
-			|| unit->getType() == BWAPI::UnitTypes::Terran_Wraith
-			|| unit->getType() == BWAPI::UnitTypes::Zerg_Lurker
-			|| unit->getType() == BWAPI::UnitTypes::Terran_Ghost)
-		{
-			hasCloakedUnit = true;
-		}
-
-		if (unit->getType().isDetector())
-		{
-			hasDetector = true;
-		}
 	}
 }
 
@@ -66,14 +52,15 @@ void UnitData::removeUnit(BWAPI::Unit * unit)
 	unitMap.erase(unit);
 }
 
-// removes bad units from the vector
-// can only remove one unit per call
 void UnitData::removeBadUnits()
 {
+	// for each unit in the map
 	for (UIMapIter iter(unitMap.begin()); iter != unitMap.end();)
 	{
+		// if it is bad
 		if (badUnitInfo(iter->second))
 		{
+			// remove it from the map
 			numUnits[iter->second.type.getID()]--;
 			iter = unitMap.erase(iter);
 		}
@@ -92,7 +79,7 @@ const bool UnitData::badUnitInfo(const UnitInfo & ui) const
 		return true;
 	}
 
-	// If the unit is a building and we can currently see its position
+	// If the unit is a building and we can currently see its position and it is not there
 	if(ui.type.isBuilding() && BWAPI::Broodwar->isVisible(ui.lastPosition.x()/32, ui.lastPosition.y()/32) && !ui.unit->isVisible())
 	{
 		return true;
@@ -101,7 +88,7 @@ const bool UnitData::badUnitInfo(const UnitInfo & ui) const
 	return false;
 }
 
-void UnitData::getCloakedUnits(std::vector<UnitInfo> & v) const 
+void UnitData::getCloakedUnits(std::set<UnitInfo> & v) const 
 {
 	FOR_EACH_UIMAP_CONST(iter, unitMap)
 	{
@@ -109,12 +96,12 @@ void UnitData::getCloakedUnits(std::vector<UnitInfo> & v) const
 
 		if (ui.canCloak())
 		{
-			v.push_back(ui);
+			v.insert(ui);
 		}
 	}
 }
 
-void UnitData::getDetectorUnits(std::vector<UnitInfo> & v) const 
+void UnitData::getDetectorUnits(std::set<UnitInfo> & v) const 
 {
 	FOR_EACH_UIMAP_CONST(iter, unitMap)
 	{
@@ -122,12 +109,12 @@ void UnitData::getDetectorUnits(std::vector<UnitInfo> & v) const
 
 		if (ui.isDetector())
 		{
-			v.push_back(ui);
+			v.insert(ui);
 		}
 	}
 }
 
-void UnitData::getFlyingUnits(std::vector<UnitInfo> & v) const 
+void UnitData::getFlyingUnits(std::set<UnitInfo> & v) const 
 {
 	FOR_EACH_UIMAP_CONST(iter, unitMap)
 	{
@@ -135,7 +122,42 @@ void UnitData::getFlyingUnits(std::vector<UnitInfo> & v) const
 
 		if (ui.isFlyer())
 		{
-			v.push_back(ui);
+			v.insert(ui);
 		}
 	}
+}
+
+bool UnitData::hasCloakedUnits() const	
+{ 
+	if (numUnits[BWAPI::UnitTypes::Protoss_Citadel_of_Adun] > 0)
+	{
+		return true;
+	}
+
+	FOR_EACH_UIMAP_CONST(iter, unitMap)
+	{
+		const UnitInfo & ui(iter->second);
+
+		if (ui.canCloak())
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool UnitData::hasDetectorUnits() const 
+{ 
+	FOR_EACH_UIMAP_CONST(iter, unitMap)
+	{
+		const UnitInfo & ui(iter->second);
+
+		if (ui.isDetector())
+		{
+			return true;
+		}
+	}
+
+	return false;
 }

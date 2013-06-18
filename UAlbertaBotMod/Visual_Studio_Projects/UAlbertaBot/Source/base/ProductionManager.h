@@ -78,7 +78,7 @@ public:
 	void						drawQueueInformation(std::map<BWAPI::UnitType, int> & numUnits, int x, int y, int index);
 	void						update();
 
-	void                 onUnitCreate(BWAPI::Unit * unit) { mMacroSearch.onUnitCreate(unit); }
+	void                        onUnitCreate(BWAPI::Unit * unit) { mMacroSearch.onUnitCreate(unit); }
 	void						onUnitMorph(BWAPI::Unit * unit);
 	void						onUnitDestroy(BWAPI::Unit * unit);
 	void						onSendText(std::string text);

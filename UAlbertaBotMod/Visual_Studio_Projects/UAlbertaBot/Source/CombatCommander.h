@@ -10,42 +10,39 @@ class CombatCommander
 {
 	SquadData			squadData;
 
-	bool attacking;
-	bool foundEnemy;
-
-	bool attackSent;
+	bool				attacking;
+	bool				foundEnemy;
+	bool				attackSent;
 	
-	int selfTotalDeadUnits;
-	int numUnitsNeededForAttack;
+	int					selfTotalDeadUnits;
+	int					numUnitsNeededForAttack;
 
-	std::string currentAction;
+	// Functions
 
-	BWAPI::Position enemyExpansion;
+	void				assignDefenseSquads(std::set<BWAPI::Unit *> & combatUnits);
+	void				assignAttackSquads(std::set<BWAPI::Unit *> & combatUnits);
+	void				assignIdleSquads(std::set<BWAPI::Unit *> & combatUnits);
 
-	void	assignDefenders(std::set<BWAPI::Unit *> & unitsToAssign);
-	void	assignAttackRegion(BWTA::Region * enemyRegion, SquadOrder & order);
-	void	assignAttackVisibleUnits(SquadOrder & order);
-	void	assignAttackKnownBuildings(SquadOrder & order);
-	void	assignAttackExplore(SquadOrder & order);
+	void				assignAttackRegion(std::set<BWAPI::Unit *> & unitsToAssign);
+	void				assignAttackVisibleUnits(std::set<BWAPI::Unit *> & unitsToAssign);
+	void				assignAttackKnownBuildings(std::set<BWAPI::Unit *> & unitsToAssign);
+	void				assignAttackExplore(std::set<BWAPI::Unit *> & unitsToAssign);
 
-	bool	isBuildingAtBaselocation(BWTA::BaseLocation * baseLocation);
-	bool	squadUpdateFrame();
+	bool				isBuildingAtBaselocation(BWTA::BaseLocation * baseLocation);
+	bool				squadUpdateFrame();
 
-	int		getNumType(UnitVector & units, BWAPI::UnitType type);
+	int					getNumType(UnitVector & units, BWAPI::UnitType type);
 
-	BWAPI::Unit * findClosestDefender(std::set<BWAPI::Unit *> & enemyUnitsInRegion, const std::set<BWAPI::Unit *> & units);
-
-	BWTA::Region * getClosestEnemyRegion();
-
-
-	BWAPI::Position getDefendLocation();
+	BWAPI::Unit *		findClosestDefender(std::set<BWAPI::Unit *> & enemyUnitsInRegion, const std::set<BWAPI::Unit *> & units);
+	BWTA::Region *		getClosestEnemyRegion();
+	BWAPI::Position		getDefendLocation();
 
 public:
 
-	void update(const UnitVector & allCombatUnits);
-
 	CombatCommander();
 
+	// pass by value is not a typo, saves a line of copying into new set
+	void update(std::set<BWAPI::Unit *> unitsToAssign);
 	bool enemyInOurBase();
 
 	void onRemoveUnit(BWAPI::Unit * unit);

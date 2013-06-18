@@ -45,14 +45,17 @@ void UAlbertaBotModule::onStart()
 
 void UAlbertaBotModule::onEnd(bool isWinner) 
 {
-	std::stringstream result;
-	std::string win = isWinner ? "win" : "lose";
+	if (Options::Modules::USING_GAMECOMMANDER)
+	{
+		StrategyManager::Instance().onEnd(isWinner);
 
-	result << "Game against " << BWAPI::Broodwar->enemy()->getName() << " " << win << " with strategy " << StrategyManager::Instance().getCurrentStrategy() << "\n";
+		std::stringstream result;
+		std::string win = isWinner ? "win" : "lose";
 
-	Logger::Instance().log(result.str());
+		result << "Game against " << BWAPI::Broodwar->enemy()->getName() << " " << win << " with strategy " << StrategyManager::Instance().getCurrentStrategy() << "\n";
 
-	StrategyManager::Instance().onEnd(isWinner);
+		Logger::Instance().log(result.str());
+	}
 }
 
 void UAlbertaBotModule::onFrame()
@@ -70,6 +73,19 @@ void UAlbertaBotModule::onFrame()
 	if (Options::Modules::USING_MICRO_SEARCH)
 	{
 		micro.update();
+	}
+
+	if (Options::Modules::USING_REPLAY_VISUALIZER)
+	{
+		BOOST_FOREACH (BWAPI::Unit * unit, BWAPI::Broodwar->getAllUnits())
+		{
+			BWAPI::Broodwar->drawTextMap(unit->getPosition().x(), unit->getPosition().y(), "   %d", unit->getPlayer()->getID());
+
+			if (unit->isSelected())
+			{
+				BWAPI::Broodwar->drawCircleMap(unit->getPosition().x(), unit->getPosition().y(), 1000, BWAPI::Colors::Red);
+			}
+		}
 	}
 
 	//Visualizer::Instance().setBWAPIState();
@@ -90,7 +106,32 @@ void UAlbertaBotModule::onUnitMorph(BWAPI::Unit * unit)
 void UAlbertaBotModule::onSendText(std::string text) 
 { 
 	BWAPI::Broodwar->sendText(text.c_str());
-	BWAPI::Broodwar->setLocalSpeed(atoi(text.c_str()));
+
+
+	if (Options::Modules::USING_REPLAY_VISUALIZER && (text.compare("sim") == 0))
+	{
+		BWAPI::Unit * selected = NULL;
+		BOOST_FOREACH (BWAPI::Unit * unit, BWAPI::Broodwar->getAllUnits())
+		{
+			if (unit->isSelected())
+			{
+				selected = unit;
+				break;
+			}
+		}
+
+		if (selected)
+		{
+			#ifdef USING_VISUALIZATION_LIBRARIES
+				ReplayVisualizer rv;
+				rv.launchSimulation(selected->getPosition(), 1000);
+			#endif
+		}
+	}
+	else if (text.compare("sim") != 0)
+	{
+		BWAPI::Broodwar->setLocalSpeed(atoi(text.c_str()));
+	}
 }
 
 void UAlbertaBotModule::onUnitCreate(BWAPI::Unit * unit)

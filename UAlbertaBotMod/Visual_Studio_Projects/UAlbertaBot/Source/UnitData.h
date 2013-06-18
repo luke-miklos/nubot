@@ -50,17 +50,17 @@ struct UnitInfo
 		type = t;
 	}
 
-	const bool operator == (BWAPI::Unit * unit)
+	const bool operator == (BWAPI::Unit * unit) const
 	{
 		return unitID == unit->getID();
 	}
 
-	const bool operator == (const UnitInfo & rhs)
+	const bool operator == (const UnitInfo & rhs) const
 	{
 		return (unitID == rhs.unitID);
 	}
 
-	const bool operator < (const UnitInfo & rhs)
+	const bool operator < (const UnitInfo & rhs) const
 	{
 		return (unitID < rhs.unitID);
 	}
@@ -83,9 +83,6 @@ class UnitData {
 	int										mineralsLost;
 	int										gasLost;
 
-	bool									hasCloakedUnit;
-	bool									hasDetector;
-
 	const bool badUnitInfo(const UnitInfo & ui) const;
 
 public:
@@ -97,15 +94,15 @@ public:
 	void	removeUnit(BWAPI::Unit * unit);
 	void	removeBadUnits();
 
-	void	getCloakedUnits(UnitInfoVector & v)				const;
-	void	getDetectorUnits(UnitInfoVector & v)			const;
-	void	getFlyingUnits(UnitInfoVector & v)				const;
+	void	getCloakedUnits(std::set<UnitInfo> & v)				const;
+	void	getDetectorUnits(std::set<UnitInfo> & v)			const;
+	void	getFlyingUnits(std::set<UnitInfo> & v)				const;
+	bool	hasCloakedUnits()									const;
+	bool	hasDetectorUnits()									const;
 
-	int		getGasLost()									const	{ return gasLost; }
-	int		getMineralsLost()								const	{ return mineralsLost; }
-	int		getNumUnits(BWAPI::UnitType t)					const	{ return numUnits[t.getID()]; }
-	int		getNumDeadUnits(BWAPI::UnitType t)				const	{ return numDeadUnits[t.getID()]; }
-	bool	hasCloakedUnits()								const	{ return hasCloakedUnit || numUnits[BWAPI::UnitTypes::Protoss_Citadel_of_Adun] > 0; }
-	bool	hasDetectorUnits()								const	{ return hasDetector; }
-	const	std::map<BWAPI::Unit *, UnitInfo> & getUnits()	const	{ return unitMap; }
+	int		getGasLost()										const	{ return gasLost; }
+	int		getMineralsLost()									const	{ return mineralsLost; }
+	int		getNumUnits(BWAPI::UnitType t)						const	{ return numUnits[t.getID()]; }
+	int		getNumDeadUnits(BWAPI::UnitType t)					const	{ return numDeadUnits[t.getID()]; }
+	const	std::map<BWAPI::Unit *, UnitInfo> & getUnits()		const	{ return unitMap; }
 };

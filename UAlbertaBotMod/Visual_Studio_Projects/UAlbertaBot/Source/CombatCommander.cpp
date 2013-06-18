@@ -1,10 +1,12 @@
 #include "Common.h"
 #include "CombatCommander.h"
 
-CombatCommander::CombatCommander() :attacking(false), foundEnemy(false), attackSent(false) 
+CombatCommander::CombatCommander() 
+	: attacking(false)
+	, foundEnemy(false)
+	, attackSent(false) 
 {
-	enemyExpansion = BWAPI::Position(0,0);
-	currentAction = std::string("\x04 No Attacks Yet");
+	
 }
 
 bool CombatCommander::squadUpdateFrame()
@@ -12,84 +14,62 @@ bool CombatCommander::squadUpdateFrame()
 	return BWAPI::Broodwar->getFrameCount() % 24 == 0;
 }
 
-void CombatCommander::update(const UnitVector & allCombatUnits)
+void CombatCommander::update(std::set<BWAPI::Unit *> unitsToAssign)
 {
-	// Construct squads
 	if(squadUpdateFrame())
 	{
 		// clear all squad data
 		squadData.clearSquadData();
-		
+
 		// give back combat workers to worker manager
 		WorkerManager::Instance().finishedWithCombatWorkers();
 
-		// our starting region and our enemy's closest region
-		//BWTA::Region *				startRegion = BWTA::getRegion(BWAPI::Broodwar->self()->getStartLocation());
-		BWTA::Region *				enemyRegion = getClosestEnemyRegion();
-
-		// Get all units that belong to us
-		std::set<BWAPI::Unit *>		unitsToAssign(allCombatUnits.begin(), allCombatUnits.end());
-
 		// if there are no units to assign, there's nothing to do
-		if (unitsToAssign.empty())
+		if (unitsToAssign.empty()) { return; }
+
+		// Assign defense and attack squads
+		assignDefenseSquads(unitsToAssign);
+		assignAttackSquads(unitsToAssign);
+		assignIdleSquads(unitsToAssign);
+	}
+
+	squadData.update();
+}
+
+void CombatCommander::assignIdleSquads(std::set<BWAPI::Unit *> & unitsToAssign)
+{
+	if (unitsToAssign.empty()) { return; }
+
+	UnitVector combatUnits(unitsToAssign.begin(), unitsToAssign.end());
+	unitsToAssign.clear();
+
+	squadData.addSquad(Squad(combatUnits, SquadOrder(SquadOrder::Defend, BWAPI::Position(BWAPI::Broodwar->self()->getStartLocation()), 1000, "Defend Idle")));
+}
+
+void CombatCommander::assignAttackSquads(std::set<BWAPI::Unit *> & unitsToAssign)
+{
+	if (unitsToAssign.empty()) { return; }
+
+	bool workersDefending = false;
+	BOOST_FOREACH (BWAPI::Unit * unit, unitsToAssign)
+	{
+		if (unit->getType().isWorker())
 		{
-			return;
-		}
-
-		// do we have workers in combat
-		bool workersInCombat = allCombatUnits[0]->getType().isWorker();
-
-		// Assign our defense forces if they seem necessary
-		assignDefenders(unitsToAssign);
-
-		// Determine how to assign remaining units
-		UnitVector					freeUnits(unitsToAssign.begin(), unitsToAssign.end());
-
-		// the default order is to defend near a choke point
-		SquadOrder					order(SquadOrder::Defend, getDefendLocation(), 1000);
-		
-		// if we are attacking, what area are we attacking?
-		if (!workersInCombat && StrategyManager::Instance().doAttack(freeUnits)) 
-		{	
-			// Decide/Assign if we are going to attack an enemy region
-			assignAttackRegion(enemyRegion, order);
-			
-			// If the order is still defend
-			if(order.type == SquadOrder::Defend)
-			{
-				// Decide/Assign if we need to attack known buildings
-				assignAttackKnownBuildings(order);
-			}
-
-			// If the order is still defend
-			if(order.type == SquadOrder::Defend)
-			{
-				// Decide/Assign if we need to attack visible enemy units
-				assignAttackVisibleUnits(order);
-			}
-
-			// If the order is still defend
-			if(order.type == SquadOrder::Defend)
-			{
-				// Decide/Assign if we need to explore for unknown building locations
-				assignAttackExplore(order);
-			}
-		} 
-
-		// grab all the remaining free units
-		freeUnits = UnitVector(unitsToAssign.begin(), unitsToAssign.end());
-
-		if (!freeUnits.empty()) 
-		{
-			squadData.setSquad(Squad(freeUnits, order));
+			workersDefending = true;
 		}
 	}
 
-	// update the squads
-	squadData.update();
+	// do we have workers in combat
+	bool attackEnemy = !unitsToAssign.empty() && !workersDefending && StrategyManager::Instance().doAttack(unitsToAssign);
 
-	//if (Options::Debug::DRAW_UALBERTABOT_DEBUG) BWAPI::Broodwar->drawBoxScreen(200, 319, 325, 341, BWAPI::Colors::Black, true);
-	if (Options::Debug::DRAW_UALBERTABOT_DEBUG) BWAPI::Broodwar->drawTextScreen(200, 320, "%s", currentAction.c_str());
+	// if we are attacking, what area are we attacking?
+	if (attackEnemy) 
+	{	
+		assignAttackRegion(unitsToAssign);				// attack occupied enemy region
+		assignAttackKnownBuildings(unitsToAssign);		// attack known enemy buildings
+		assignAttackVisibleUnits(unitsToAssign);			// attack visible enemy units
+		assignAttackExplore(unitsToAssign);				// attack and explore for unknown units
+	} 
 }
 
 BWTA::Region * CombatCommander::getClosestEnemyRegion()
@@ -112,8 +92,10 @@ BWTA::Region * CombatCommander::getClosestEnemyRegion()
 	return closestEnemyRegion;
 }
 
-void CombatCommander::assignDefenders(std::set<BWAPI::Unit *> & unitsToAssign) 
+void CombatCommander::assignDefenseSquads(std::set<BWAPI::Unit *> & unitsToAssign) 
 {
+	if (unitsToAssign.empty()) { return; }
+
 	// for each of our occupied regions
 	BOOST_FOREACH(BWTA::Region * myRegion, InformationManager::Instance().getOccupiedRegions(BWAPI::Broodwar->self()))
 	{
@@ -194,93 +176,79 @@ void CombatCommander::assignDefenders(std::set<BWAPI::Unit *> & unitsToAssign)
 			// if we need a defense force, make the squad and give the order
 			if (!defenseForce.empty()) 
 			{
-				currentAction = std::string("\x08 Defending base against force");
-				squadData.setSquad(Squad(defenseForce, SquadOrder(SquadOrder::Defend, regionCenter, 1000)));
-
-				// only defend one region at a time?
+				squadData.addSquad(Squad(defenseForce, SquadOrder(SquadOrder::Defend, regionCenter, 1000, "Defend Region")));
 				return;
 			}
 		}
 	}
 }
 
-void CombatCommander::assignAttackRegion(BWTA::Region * enemyRegion, SquadOrder & order) 
+void CombatCommander::assignAttackRegion(std::set<BWAPI::Unit *> & unitsToAssign) 
 {
-	// If we have found the enemy base region
+	if (unitsToAssign.empty()) { return; }
+
+	BWTA::Region * enemyRegion = getClosestEnemyRegion();
+
 	if (enemyRegion && enemyRegion->getCenter().isValid()) 
 	{
-		// get all the units in a 1000 radius of this area
 		UnitVector oppUnitsInArea, ourUnitsInArea;
 		MapGrid::Instance().GetUnits(oppUnitsInArea, enemyRegion->getCenter(), 800, false, true);
 		MapGrid::Instance().GetUnits(ourUnitsInArea, enemyRegion->getCenter(), 200, true, false);
 
-		if (!oppUnitsInArea.empty()) 
+		if (!oppUnitsInArea.empty())
 		{
-			order.type		= SquadOrder::Attack;
-			order.position	= enemyRegion->getCenter();
-			currentAction	= std::string("\x08 Attacking enemy region");
-		} 
-		else 
-		{
-			currentAction = std::string("\x04 No Units In Area");
+			UnitVector combatUnits(unitsToAssign.begin(), unitsToAssign.end());
+			unitsToAssign.clear();
+
+			squadData.addSquad(Squad(combatUnits, SquadOrder(SquadOrder::Attack, enemyRegion->getCenter(), 1000, "Attack Region")));
 		}
 	}
 }
 
-void CombatCommander::assignAttackVisibleUnits(SquadOrder & order) 
+void CombatCommander::assignAttackVisibleUnits(std::set<BWAPI::Unit *> & unitsToAssign) 
 {
-	// If there are any visible enemies anywhere
-	std::set<BWAPI::Unit *> targets;
+	if (unitsToAssign.empty()) { return; }
 
 	BOOST_FOREACH (BWAPI::Unit * unit, BWAPI::Broodwar->enemy()->getUnits())
 	{
 		if (unit->isVisible())
 		{
-			targets.insert(unit);
-		}
-	}
+			UnitVector combatUnits(unitsToAssign.begin(), unitsToAssign.end());
+			unitsToAssign.clear();
 
-	if(!targets.empty())
-	{
-		currentAction = std::string("\x08 Attack Visible");
-		// Attack the first enemy (TODO: Attack the closest enemy?)
-		order.type		= SquadOrder::Attack;
-		order.position	= (*targets.begin())->getPosition();
-	} 
-	else 
-	{
-		//BWAPI::Broodwar->printf("I cannot see any visible units");
+			squadData.addSquad(Squad(combatUnits, SquadOrder(SquadOrder::Attack, unit->getPosition(), 1000, "Attack Visible")));
+
+			return;
+		}
 	}
 }
 
-void CombatCommander::assignAttackKnownBuildings(SquadOrder & order) 
+void CombatCommander::assignAttackKnownBuildings(std::set<BWAPI::Unit *> & unitsToAssign) 
 {
-	currentAction = std::string("\x08 Attack Known Buildings");
+	if (unitsToAssign.empty()) { return; }
 
-	// get all the units we think the enemy still has
-
-	FOR_EACH_UIMAP_CONST(iter, InformationManager::Instance().getUnitInfo(BWAPI::Broodwar->enemy()))
+	FOR_EACH_UIMAP_CONST (iter, InformationManager::Instance().getUnitInfo(BWAPI::Broodwar->enemy()))
 	{
 		const UnitInfo ui(iter->second);
-		// If we saw a building, attack it
 		if(ui.type.isBuilding())
 		{
-			//BWAPI::Broodwar->printf("I saw a %s, going to attack it!", ui.type.getName().c_str());
-			
-			order.type		= SquadOrder::Attack;
-			order.position	= ui.lastPosition;	
-			
-			break;
+			UnitVector combatUnits(unitsToAssign.begin(), unitsToAssign.end());
+			unitsToAssign.clear();
+
+			squadData.addSquad(Squad(combatUnits, SquadOrder(SquadOrder::Attack, ui.lastPosition, 1000, "Attack Known")));
+			return;	
 		}
 	}
 }
 
-void CombatCommander::assignAttackExplore(SquadOrder & order) 
+void CombatCommander::assignAttackExplore(std::set<BWAPI::Unit *> & unitsToAssign) 
 {
-	currentAction = std::string("\x07 Explore For Buildings");
+	if (unitsToAssign.empty()) { return; }
 
-	order.type = SquadOrder::Attack;
-	order.position = MapGrid::Instance().getLeastExplored();
+	UnitVector combatUnits(unitsToAssign.begin(), unitsToAssign.end());
+	unitsToAssign.clear();
+
+	squadData.addSquad(Squad(combatUnits, SquadOrder(SquadOrder::Attack, MapGrid::Instance().getLeastExplored(), 1000, "Attack Explore")));
 }
 
 BWAPI::Unit* CombatCommander::findClosestDefender(std::set<BWAPI::Unit *> & enemyUnitsInRegion, const std::set<BWAPI::Unit *> & units) 

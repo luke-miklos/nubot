@@ -171,6 +171,22 @@ void MapTools::computeConnectedRegions()
 	}
 }
 
+int MapTools::getGroundDistance(BWAPI::Position origin, BWAPI::Position destination)
+{
+	// if we haven't yet computed the distance map to the destination
+	if (allMaps.find(destination) == allMaps.end())
+	{
+		BWAPI::Broodwar->printf("Computing DistanceMap for new destination");
+
+		// add the map and compute it
+		allMaps[destination] = DistanceMap();
+		computeDistance(allMaps[destination], destination);
+	}
+
+	// get the distance from the map
+	return allMaps[destination][origin];
+}
+
 // computes walk distance from Position P to all other points on the map
 void MapTools::computeDistance(DistanceMap & dmap, const BWAPI::Position p)
 {
