@@ -22,10 +22,10 @@ void Squad::update()
 		BWAPI::Broodwar->drawTextScreen(200, 330, "%s", regroupStatus.c_str());
 
 		BWAPI::Unit * closest = unitClosestToEnemy();
-		if (closest && (BWAPI::Broodwar->getFrameCount() % 24 == 0))
-		{
-			BWAPI::Broodwar->setScreenPosition(closest->getPosition().x() - 320, closest->getPosition().y() - 200);
-		}
+		//if (closest && (BWAPI::Broodwar->getFrameCount() % 24 == 0))
+		//{
+		//	BWAPI::Broodwar->setScreenPosition(closest->getPosition().x() - 320, closest->getPosition().y() - 200);
+		//}
 	}
 
 	// if we do need to regroup, do it

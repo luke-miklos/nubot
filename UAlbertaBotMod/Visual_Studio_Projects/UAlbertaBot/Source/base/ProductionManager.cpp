@@ -18,7 +18,7 @@ ProductionManager::ProductionManager()
 	, enemyCloakedDetected(false)
 	, rushDetected(false)
 {
-	populateTypeCharMap();
+	//populateTypeCharMap();
 
 	//setBuildOrder(StarcraftBuildOrderSearchManager::Instance().getOpeningBuildOrder());
 	if (BWAPI::Broodwar->self()->getRace() == BWAPI::Races::Protoss)
@@ -29,6 +29,10 @@ ProductionManager::ProductionManager()
 	{
 		setBuildOrder(std::vector<MetaType>(1,(MetaType(BWAPI::UnitTypes::Terran_SCV))));
 	}
+   else  // BWAPI::Broodwar->self()->getRace() == BWAPI::Races::Zerg
+   {
+		setBuildOrder(std::vector<MetaType>(1,(MetaType(BWAPI::UnitTypes::Zerg_Drone))));
+   }
 }
 
 void ProductionManager::setBuildOrder(const std::vector<MetaType> & buildOrder)
@@ -44,13 +48,13 @@ void ProductionManager::setBuildOrder(const std::vector<MetaType> & buildOrder)
 	}
 }
 
-void ProductionManager::testBuildOrderSearch(const std::vector< std::pair<MetaType, UnitCountType> > & goal)
-{	
-	std::vector<MetaType> buildOrder = StarcraftBuildOrderSearchManager::Instance().findBuildOrder(goal);
-
-	// set the build order
-	setBuildOrder(buildOrder);
-}
+//void ProductionManager::testBuildOrderSearch(const std::vector< std::pair<MetaType, UnitCountType> > & goal)
+//{	
+//	std::vector<MetaType> buildOrder = StarcraftBuildOrderSearchManager::Instance().findBuildOrder(goal);
+//
+//	// set the build order
+//	setBuildOrder(buildOrder);
+//}
 
 void ProductionManager::update() 
 {
@@ -67,16 +71,29 @@ void ProductionManager::update()
 		//use our macro search instead of their strategy manager
 		int frame = BWAPI::Broodwar->getFrameCount();
       //std::vector<QueuedMove*> moves = mMacroSearch.FindMoves(frame+3600, 5000);	//2.5 minute look ahead (2.5*60*24), only search for 5 sec real-time
-        std::vector<QueuedMove*> moves = mMacroSearch.FindMoves(frame+3600, 150);   //2.5 minute look ahead (2.5*60*24), only search for 150 ms real-time
-		if (moves.size()>0)
+      std::vector<QueuedMove*> moves = mMacroSearch.FindMoves(frame+3600, 150);   //2.5 minute look ahead (2.5*60*24), only search for 150 ms real-time
+
+		//if (moves.size()>0)
+		//{
+		//	queue.clearAll();
+		//	queue.queueAsHighestPriority(MetaType(BWAPI::UnitType(moves[0]->move)), true);
+		//	if (moves.size()>1)
+		//	{
+		//		queue.queueAsLowestPriority(MetaType(BWAPI::UnitType(moves[1]->move)), true);
+		//	}
+		//}
+		int N = moves.size()-1;
+		N = (N>3)?(3):(N);
+		if (N>0)
 		{
 			queue.clearAll();
-			queue.queueAsHighestPriority(MetaType(BWAPI::UnitType(moves[0]->move)), true);
-			if (moves.size()>1)
-			{
-				queue.queueAsLowestPriority(MetaType(BWAPI::UnitType(moves[1]->move)), true);
-			}
+		   for (int i=0; i<=N; ++i)
+		   {
+          //queue.queueAsLowestPriority(MetaType(BWAPI::UnitType(moves[i]->move)), true);
+			   queue.queueAsLowestPriority(MetaType(BWAPI::UnitType(moves[i]->move)), false);
+		   }
 		}
+
 	}
 
 	// detect if there's a build order deadlock once per second
@@ -129,17 +146,27 @@ void ProductionManager::onUnitDestroy(BWAPI::Unit * unit)
 		int frame = BWAPI::Broodwar->getFrameCount();
       //std::vector<QueuedMove*> moves = mMacroSearch.FindMoves(frame+3600, 5000);	//2.5 minute look ahead (2.5*60*24), only search for 5 sec real-time
         std::vector<QueuedMove*> moves = mMacroSearch.FindMoves(frame+3600, 150);	//2.5 minute look ahead (2.5*60*24), only search for 150 ms real-time
-		if (moves.size()>0)
+
+		//if (moves.size()>0)
+		//{
+		//	queue.clearAll();
+		//	queue.queueAsHighestPriority(MetaType(BWAPI::UnitType(moves[0]->move)), true);
+		//	if (moves.size()>1)
+		//	{
+		//		queue.queueAsLowestPriority(MetaType(BWAPI::UnitType(moves[1]->move)), true);
+		//	}
+		//}
+		int N = moves.size()-1;
+		N = (N>3)?(3):(N);
+		if (N>0)
 		{
 			queue.clearAll();
-			queue.queueAsHighestPriority(MetaType(BWAPI::UnitType(moves[0]->move)), true);
-			if (moves.size()>1)
-			{
-				queue.queueAsLowestPriority(MetaType(BWAPI::UnitType(moves[1]->move)), true);
-			}
+		   for (int i=0; i<=N; ++i)
+		   {
+			 //queue.queueAsLowestPriority(MetaType(BWAPI::UnitType(moves[i]->move)), true);
+			   queue.queueAsLowestPriority(MetaType(BWAPI::UnitType(moves[i]->move)), false);
+		   }
 		}
-
-
 	}
 }
 
@@ -485,23 +512,23 @@ void ProductionManager::onSendText(std::string text)
 	//}
 }
 
-void ProductionManager::populateTypeCharMap()
-{
-	typeCharMap['p'] = MetaType(BWAPI::UnitTypes::Protoss_Probe);
-	typeCharMap['z'] = MetaType(BWAPI::UnitTypes::Protoss_Zealot);
-	typeCharMap['d'] = MetaType(BWAPI::UnitTypes::Protoss_Dragoon);
-	typeCharMap['t'] = MetaType(BWAPI::UnitTypes::Protoss_Dark_Templar);
-	typeCharMap['c'] = MetaType(BWAPI::UnitTypes::Protoss_Corsair);
-	typeCharMap['e'] = MetaType(BWAPI::UnitTypes::Protoss_Carrier);
-	typeCharMap['h'] = MetaType(BWAPI::UnitTypes::Protoss_High_Templar);
-	typeCharMap['n'] = MetaType(BWAPI::UnitTypes::Protoss_Photon_Cannon);
-	typeCharMap['a'] = MetaType(BWAPI::UnitTypes::Protoss_Arbiter);
-	typeCharMap['r'] = MetaType(BWAPI::UnitTypes::Protoss_Reaver);
-	typeCharMap['o'] = MetaType(BWAPI::UnitTypes::Protoss_Observer);
-	typeCharMap['s'] = MetaType(BWAPI::UnitTypes::Protoss_Scout);
-	typeCharMap['l'] = MetaType(BWAPI::UpgradeTypes::Leg_Enhancements);
-	typeCharMap['v'] = MetaType(BWAPI::UpgradeTypes::Singularity_Charge);
-}
+//void ProductionManager::populateTypeCharMap()
+//{
+//	typeCharMap['p'] = MetaType(BWAPI::UnitTypes::Protoss_Probe);
+//	typeCharMap['z'] = MetaType(BWAPI::UnitTypes::Protoss_Zealot);
+//	typeCharMap['d'] = MetaType(BWAPI::UnitTypes::Protoss_Dragoon);
+//	typeCharMap['t'] = MetaType(BWAPI::UnitTypes::Protoss_Dark_Templar);
+//	typeCharMap['c'] = MetaType(BWAPI::UnitTypes::Protoss_Corsair);
+//	typeCharMap['e'] = MetaType(BWAPI::UnitTypes::Protoss_Carrier);
+//	typeCharMap['h'] = MetaType(BWAPI::UnitTypes::Protoss_High_Templar);
+//	typeCharMap['n'] = MetaType(BWAPI::UnitTypes::Protoss_Photon_Cannon);
+//	typeCharMap['a'] = MetaType(BWAPI::UnitTypes::Protoss_Arbiter);
+//	typeCharMap['r'] = MetaType(BWAPI::UnitTypes::Protoss_Reaver);
+//	typeCharMap['o'] = MetaType(BWAPI::UnitTypes::Protoss_Observer);
+//	typeCharMap['s'] = MetaType(BWAPI::UnitTypes::Protoss_Scout);
+//	typeCharMap['l'] = MetaType(BWAPI::UpgradeTypes::Leg_Enhancements);
+//	typeCharMap['v'] = MetaType(BWAPI::UpgradeTypes::Singularity_Charge);
+//}
 
 void ProductionManager::drawProductionInformation(int x, int y)
 {

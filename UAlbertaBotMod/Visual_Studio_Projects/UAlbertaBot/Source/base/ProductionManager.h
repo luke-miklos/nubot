@@ -33,7 +33,7 @@ class ProductionManager
 	
 	bool						initialBuildSet;
 
-	std::map<char, MetaType>	typeCharMap;
+	//std::map<char, MetaType>	typeCharMap;
 	std::vector< std::pair<MetaType, UnitCountType> > searchGoal;
 
 	bool						assignedWorkerForThisBuilding;
@@ -45,7 +45,7 @@ class ProductionManager
 	BWAPI::TilePosition			predictedTilePosition;
 
 	bool						contains(UnitVector & units, BWAPI::Unit * unit);
-	void						populateTypeCharMap();
+	//void						populateTypeCharMap();
 
 	bool						hasResources(BWAPI::UnitType type);
 	bool						canMake(BWAPI::UnitType type);
@@ -53,7 +53,7 @@ class ProductionManager
 	bool						meetsReservedResources(MetaType type);
 	BWAPI::UnitType				getProducer(MetaType t);
 
-	void						testBuildOrderSearch(const std::vector< std::pair<MetaType, UnitCountType> > & goal);
+	//void						testBuildOrderSearch(const std::vector< std::pair<MetaType, UnitCountType> > & goal);
 	void						setBuildOrder(const std::vector<MetaType> & buildOrder);
 	void						createMetaType(BWAPI::Unit * producer, MetaType type);
 	BWAPI::Unit *				selectUnitOfType(BWAPI::UnitType type, bool leastTrainingTimeRemaining = true, BWAPI::Position closestTo = BWAPI::Position(0,0));
@@ -78,7 +78,7 @@ public:
 	void						drawQueueInformation(std::map<BWAPI::UnitType, int> & numUnits, int x, int y, int index);
 	void						update();
 
-	void                        onUnitCreate(BWAPI::Unit * unit) { mMacroSearch.onUnitCreate(unit); }
+	void                 onUnitCreate(BWAPI::Unit * unit) { mMacroSearch.onUnitCreate(unit); }
 	void						onUnitMorph(BWAPI::Unit * unit);
 	void						onUnitDestroy(BWAPI::Unit * unit);
 	void						onSendText(std::string text);
