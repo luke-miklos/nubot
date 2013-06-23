@@ -425,7 +425,7 @@ bool FlowField::GetFlowFromTo(BWAPI::Position pos, BWAPI::TilePosition tgt, doub
       return false;
    }
    
-   int i = index(pos.x()/4,pos.y()/4);
+   int i = index(pos.x()/8,pos.y()/8);
    TargetField* field = mit->second;
    if (field->isMovable(i))
    {

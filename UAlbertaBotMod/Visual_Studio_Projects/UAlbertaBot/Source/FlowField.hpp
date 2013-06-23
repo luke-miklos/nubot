@@ -13,8 +13,17 @@
 //BWAPI::Position is always in units of pixels.
 //Position (0,0) is top left corner of map; Position (c,r) is lower right corner of map.
 
-//this flow field uses walkable tiles, which are always 4x4 pixels large
+//this flow field uses walkable tiles, which are always 8x8 pixels large
 //the flow field stores angles as chars, for space
+
+
+//conversions:
+//    pixel          -> walkable tile: /8
+//    pixel          -> build tile:    /32
+//    walkable tile  -> pixel:         *8
+//    walkable tile  -> build tile:    /4
+//    build tile     -> pixel:         *32
+//    build tile     -> walkable tile: *4
 
 class FlowField
 {
