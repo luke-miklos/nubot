@@ -107,6 +107,7 @@ void UAlbertaBotModule::onSendText(std::string text)
 { 
 	BWAPI::Broodwar->sendText(text.c_str());
 
+	if (Options::Modules::USING_GAMECOMMANDER) { gameCommander.onSendText(text); }
 
 	if (Options::Modules::USING_REPLAY_VISUALIZER && (text.compare("sim") == 0))
 	{

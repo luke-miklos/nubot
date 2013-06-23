@@ -156,6 +156,9 @@
     <ClCompile Include="..\Source\MacroSearch.cpp">
       <Filter>game\macro\managers</Filter>
     </ClCompile>
+    <ClCompile Include="..\Source\FlowField.cpp">
+      <Filter>game\util\map</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Source\CombatCommander.h">
@@ -277,6 +280,9 @@
     </ClInclude>
     <ClInclude Include="..\Source\MacroSearch.h">
       <Filter>game\macro\managers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\FlowField.hpp">
+      <Filter>game\util\map</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

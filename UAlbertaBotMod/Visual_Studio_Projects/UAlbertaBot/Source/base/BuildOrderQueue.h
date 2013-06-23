@@ -53,14 +53,16 @@ public:
 
 	void removeAll(MetaType m);									// removes all matching meta types from queue
 
-	BuildOrderItem<PRIORITY_TYPE> & getHighestPriorityItem();	// returns the highest priority item
-	BuildOrderItem<PRIORITY_TYPE> & getNextHighestPriorityItem();	// returns the highest priority item
+   //void setNumSkipped(int aVal) { numSkippedItems = aVal; }
+
+	BuildOrderItem<PRIORITY_TYPE> getHighestPriorityItem(); 	// returns the highest priority item
+	BuildOrderItem<PRIORITY_TYPE> getNextHighestPriorityItem();	// returns the highest priority item
 
 	bool canSkipItem();
 	bool hasNextHighestPriorityItem();								// returns the highest priority item
 
 	void drawQueueInformation(int x, int y);
 
-	// overload the bracket operator for ease of use
-	BuildOrderItem<PRIORITY_TYPE> operator [] (int i); 
+	//// overload the bracket operator for ease of use
+	//BuildOrderItem<PRIORITY_TYPE> operator [] (int i); 
 };

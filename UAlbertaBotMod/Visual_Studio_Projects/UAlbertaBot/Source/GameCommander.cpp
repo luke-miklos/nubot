@@ -1,6 +1,8 @@
 #include "Common.h"
 #include "GameCommander.h"
 
+static int flowDebug = 0;
+static int flowMapIndex = 0;
 
 GameCommander::GameCommander() : numWorkerScouts(0), currentScout(NULL)
 {
@@ -9,8 +11,27 @@ GameCommander::GameCommander() : numWorkerScouts(0), currentScout(NULL)
 
 void GameCommander::update()
 {
+   FlowField::Instance();
+   if (flowDebug == 1)
+   {
+      std::set<BWAPI::TilePosition> starts = BWAPI::Broodwar->getStartLocations();
+      int i = flowMapIndex % starts.size();
+      std::set<BWAPI::TilePosition>::iterator it = starts.begin();
+      std::advance(it, i);
+      FlowField::Instance()->DrawFlowFieldOnMap(*it);
+      //FlowField::Instance()->DrawWalkable();
+   }
+   //else if (flowDebug == 2)
+   //{
+   //   std::set<BWAPI::TilePosition> starts = BWAPI::Broodwar->getStartLocations();
+   //   int i = flowMapIndex % starts.size();
+   //   std::set<BWAPI::TilePosition>::iterator it = starts.begin();
+   //   std::advance(it, i);
+   //   FlowField::Instance()->DrawFloodFillOnMap(*it);
+   //   //FlowField::Instance()->DrawWalkable();
+   //}
+
 	timerManager.startTimer(TimerManager::All);
-	
 
 	// economy and base managers
 	timerManager.startTimer(TimerManager::Worker);
@@ -50,7 +71,7 @@ void GameCommander::update()
 	timerManager.stopTimer(TimerManager::MapTools);
 
 	timerManager.startTimer(TimerManager::Search);
-	StarcraftBuildOrderSearchManager::Instance().update(35 - timerManager.getTotalElapsed());
+	//StarcraftBuildOrderSearchManager::Instance().update(35 - timerManager.getTotalElapsed());
 	timerManager.stopTimer(TimerManager::Search);
 		
 	timerManager.stopTimer(TimerManager::All);
@@ -297,11 +318,24 @@ void GameCommander::onUnitMorph(BWAPI::Unit * unit)
 { 
 	InformationManager::Instance().onUnitMorph(unit);
 	WorkerManager::Instance().onUnitMorph(unit);
+	ProductionManager::Instance().onUnitMorph(unit);
 }
 
 void GameCommander::onSendText(std::string text)
 {
 	ProductionManager::Instance().onSendText(text);
+
+	if (text.compare("f") == 0)
+   {
+      flowDebug++;
+      if (flowDebug>1)
+         flowDebug = 0;
+   }
+
+   if (text.compare("m") == 0)
+   {
+      flowMapIndex++;
+   }
 
 	if (text.compare("0") == 0)
 	{
