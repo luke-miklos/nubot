@@ -22,6 +22,12 @@ void ScoutManager::update(const std::set<BWAPI::Unit *> & scoutUnits)
 		}
 	}
 
+   std::vector<BWAPI::Position>::iterator it = mScoutTrail.begin();
+   for (; it!=mScoutTrail.end(); it++)
+   {
+      BWAPI::Broodwar->drawDotMap(it->x(), it->y(), BWAPI::Colors::White);
+   }
+
 	moveScouts();
 }
 
@@ -31,6 +37,9 @@ void ScoutManager::moveScouts()
 	{
 		return;
 	}
+
+   //save off current scout location, for drawing
+   mScoutTrail.push_back(workerScout->getPosition());
 
 	// get the enemy base location, if we have one
 	BWTA::BaseLocation * enemyBaseLocation = InformationManager::Instance().getMainBaseLocation(BWAPI::Broodwar->enemy());

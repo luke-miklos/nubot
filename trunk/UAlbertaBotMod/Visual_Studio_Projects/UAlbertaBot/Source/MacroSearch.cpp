@@ -118,9 +118,9 @@ MacroSearch::MacroSearch()
    ,mSearchState()   //fake search state (starts off search as copy of mMyState)
    ,mMoveStack()
    ,mEventQueue()
+   ,mMaxDepth(-1)
    ,mSearchDepth(0)
    ,mSearchLookAhead(0)
- //,mPossibleMoves(30, std::vector<MoveType>())   //initialize with a possible depth of 30
    ,mPossibleMoves(60, std::vector<int>())   //initialize with a possible depth of 60
 {
 
@@ -138,8 +138,6 @@ MacroSearch::MacroSearch()
    }
 
    mEventQueue.clear();
- //mEventQueue.push_front(QueuedMove(2147483647, 2147483647, 2147483647, 2147483647, MoveType(-1)));   //must have empty (max int) node at the beginning, useful later
- //mEventQueue.push_front(QueuedMove(-1, -1, -1, -1, MoveType(-1)));   //must have empty (-1) node at the beginning, useful later
    mEventQueue.push_front(new QueuedMove(-1, -1, -1, -1, eNull_Move));   //must have empty (-1) node at the beginning, useful later
    mLastEventIter = mEventQueue.begin();  //all events in the queue before this are not "complete" yet
                                           //mLastEventIter points to the last event processed, should be in sync with game time
@@ -208,9 +206,110 @@ void MacroSearch::onUnitDestroy(BWAPI::Unit* unit)  //last event processed when 
       };
    }
 }
-//void MacroSearch::onUnitMorph(BWAPI::Unit* unit)
-//{
-//}
+
+void MacroSearch::onUnitMorph(BWAPI::Unit* unit)
+{
+   ////void onUnitMorph(Unit* unit);
+   ////BWAPI calls this when an accessible unit changes type, such as from a Zerg Drone to a Zerg Hatchery, or from a Terran Siege Tank Tank Mode to Terran Siege Tank Siege Mode. This is not called when the type changes to or from UnitTypes::Unknown (which happens when a unit is transitioning to or from inaccessibility). 
+   //if (unit->getPlayer()->getID() == BWAPI::Broodwar->self()->getID() &&
+   //    unit->isBeingConstructed() &&
+   //    !unit->isCompleted())
+   //{
+   //   int type = unit->getType().getID();
+   // //if (unit->isMorphing() && type == 36)
+   //   if (unit->isMorphing())
+   //   {
+   //      //zerg unit about to become something else
+   //      type = unit->getBuildType().getID();
+   //   }
+
+   //   //find appropriate building to start the construction in
+   //   int buildFrames = unit->getRemainingBuildTime();
+   //   int gameFrame = BWAPI::Broodwar->getFrameCount();
+   //   int endBuildTime = gameFrame + buildFrames;
+
+   //   //if(mMyRace == eZERG)
+   //   //{
+   //   //   std::vector<Hatchery>::iterator it = mMyState.mLarva.begin();
+   //   //   for (; it!= mMyState.mLarva.end(); it++)
+   //   //   {
+   //   //      while (it->NumLarva < 3 && it->NextLarvaSpawnFrame <= gameFrame)
+   //   //      {
+   //   //         it->NumLarva++;
+   //   //         it->NextLarvaSpawnFrame += LarvaFrameTime;
+   //   //      }
+   //   //   }
+   //   //}
+
+   //   switch(type)
+   //   {
+   //   case eZerg_Drone:
+   //      {
+   //         //////TODO - find right cc
+   //         //////clear the cc build time to be available now
+   //         ////mMyState.mTrainingCompleteFrames[0][0] = endBuildTime;   //cc
+   //         //int hatchIndex = 0;  //TODO: find right hatchery
+   //         //if (mMyState.mLarva[hatchIndex].NumLarva == 3)
+   //         //{
+   //         //   mMyState.mLarva[hatchIndex].NextLarvaSpawnFrame = gameFrame + LarvaFrameTime;
+   //         //}
+   //         //mMyState.mLarva[hatchIndex].NumLarva--;
+
+   //         QueuedMove* move = new QueuedMove(gameFrame, endBuildTime, 0, gameFrame, eZerg_Drone);
+   //         std::list<QueuedMove*>::reverse_iterator rit = mEventQueue.rbegin();
+   //         for ( ; rit != mEventQueue.rend() && move->frameComplete < (*rit)->frameComplete; rit++)
+   //         {
+   //         }
+   //         mEventQueue.insert(rit.base(), move);
+   //         //mLastEventIter = mEventQueue.begin();  //all events in the queue before this are not "complete" yet
+
+   //      }break;
+   //   case eZerg_Zergling:
+   //      {
+   //         //int hatchIndex = 0;  //TODO: find right hatchery
+   //         //if (mMyState.mLarva[hatchIndex].NumLarva == 3)
+   //         //{
+   //         //   mMyState.mLarva[hatchIndex].NextLarvaSpawnFrame = gameFrame + LarvaFrameTime;
+   //         //}
+   //         //mMyState.mLarva[hatchIndex].NumLarva--;
+
+   //         QueuedMove* move = new QueuedMove(gameFrame, endBuildTime, 0, gameFrame, eZerg_Zergling);
+   //         std::list<QueuedMove*>::reverse_iterator rit = mEventQueue.rbegin();
+   //         for ( ; rit != mEventQueue.rend() && move->frameComplete < (*rit)->frameComplete; rit++)
+   //         {
+   //         }
+   //         mEventQueue.insert(rit.base(), move);
+   //         //mLastEventIter = mEventQueue.begin();  //all events in the queue before this are not "complete" yet
+
+   //      }break;
+   //   case eZerg_Overlord:
+   //      {
+   //         mMyState.mTrainingCompleteFrames[1].push_back(endBuildTime);
+   //         //int hatchIndex = 0;  //TODO: find right hatchery
+   //         //if (mMyState.mLarva[hatchIndex].NumLarva == 3)
+   //         //{
+   //         //   mMyState.mLarva[hatchIndex].NextLarvaSpawnFrame = gameFrame + LarvaFrameTime;
+   //         //}
+   //         //mMyState.mLarva[hatchIndex].NumLarva--;
+   //      }break;
+   //   case eZerg_Hatchery:
+   //      {
+   //         mMyState.mTrainingCompleteFrames[0].push_back(endBuildTime);
+   //      }break;
+   //   case eZerg_Spawning_Pool:
+   //      {
+   //         mMyState.mTrainingCompleteFrames[2].push_back(endBuildTime);
+   //      }break;
+
+   //   default:
+   //      {
+   //      }break;
+   //   };
+   //}
+
+
+}
+
 void MacroSearch::onUnitCreate(BWAPI::Unit* unit)   //first event processed when a build/train is started
 {
    if (unit->getPlayer()->getID() == BWAPI::Broodwar->self()->getID() &&
@@ -221,6 +320,19 @@ void MacroSearch::onUnitCreate(BWAPI::Unit* unit)   //first event processed when
       int buildFrames = unit->getRemainingBuildTime();
       int gameFrame = BWAPI::Broodwar->getFrameCount();
       int endBuildTime = gameFrame + buildFrames;
+
+      //if(mMyRace == eZERG)
+      //{
+      //   std::vector<Hatchery>::iterator it = mMyState.mLarva.begin();
+      //   for (; it!= mMyState.mLarva.end(); it++)
+      //   {
+      //      while (it->NumLarva < 3 && it->NextLarvaSpawnFrame <= gameFrame)
+      //      {
+      //         it->NumLarva++;
+      //         it->NextLarvaSpawnFrame += LarvaFrameTime;
+      //      }
+      //   }
+      //}
 
       switch(unit->getType().getID())
       {
@@ -282,6 +394,7 @@ void MacroSearch::onUnitCreate(BWAPI::Unit* unit)   //first event processed when
             mMyState.mTrainingCompleteFrames[2].push_back(endBuildTime);
          }break;
 
+    //case ZERG -> see onUnitMorph()
 
       default:
          {
@@ -289,6 +402,7 @@ void MacroSearch::onUnitCreate(BWAPI::Unit* unit)   //first event processed when
       };
    }
 }
+
 void MacroSearch::onUnitComplete(BWAPI::Unit* unit)
 {
       int buildFrames = unit->getRemainingBuildTime();
@@ -308,7 +422,7 @@ void MacroSearch::onUnitComplete(BWAPI::Unit* unit)
 void MacroSearch::onFrame()
 {
    //BWAPI::Broodwar->drawTextScreen(0, -64, "Macro Searched ahead: %d ms", mSearchLookAhead);
-   BWAPI::Broodwar->drawTextScreen(0,  64, "Macro Searched ahead: %d ms", mSearchLookAhead);
+   BWAPI::Broodwar->drawTextScreen(0,  64, "Macro Searched ahead: %d frames", mSearchLookAhead);
 
    //std::list<BWAPI::Event> events = BWAPI::Broodwar->getEvents();
    //std::list<BWAPI::Event>::iterator it = events.begin();
@@ -358,7 +472,7 @@ void MacroSearch::onFrame()
 }
 
 
-std::vector<QueuedMove*> MacroSearch::FindMoves(int targetFrame, int maxMilliseconds)
+std::vector<QueuedMove*> MacroSearch::FindMoves(int targetFrame, int maxMilliseconds, int maxDepth)
 {
    //BWAPI::UnitTypes::Protoss_Corsair;        //60
    //BWAPI::UnitTypes::Protoss_Dark_Templar;   //61
@@ -432,7 +546,18 @@ std::vector<QueuedMove*> MacroSearch::FindMoves(int targetFrame, int maxMillisec
     //BWAPI::UnitTypes::Terran_Missile_Turret;    //124
     //BWAPI::UnitTypes::Terran_Bunker;            //125
 
+   mMaxDepth = maxDepth;
 
+   //clear out event queue except for first null move
+   //std::list<QueuedMove*>::iterator it;
+   while (mEventQueue.size() > 1)
+   {
+      //it = mEventQueue.back();
+      //delete *it;
+      delete mEventQueue.back();
+      mEventQueue.pop_back();
+   }
+   mLastEventIter = mEventQueue.begin();  //all events in the queue before this are not "complete" yet
 
    ////////////////////////////////////////////////////////////////////////////
    // populate my state with current game values
@@ -460,66 +585,195 @@ std::vector<QueuedMove*> MacroSearch::FindMoves(int targetFrame, int maxMillisec
       mMyState.mMaxTrainingCapacity = mMyState.mTrainingCompleteFrames[0].size() * 2 +
                                       mMyState.mTrainingCompleteFrames[2].size() * 2;
    }break;
+   case eZERG:
+   {
+      //Unit* getHatchery() const;
+      ////For Zerg Larva, this returns the Hatchery, Lair, or Hive unit this Larva was spawned from. For all other unit types this function returns NULL.
+      //std::set<Unit*> getLarva() const;
+      ////Returns the set of larva spawned by this unit. If the unit has no larva, or is not a Hatchery, Lair, or Hive, this function returns an empty set. Equivalent to clicking "Select Larva" from the Starcraft GUI. 
+      mMyState.mUnitCounts[0] = me->completedUnitCount(BWAPI::UnitTypes::Zerg_Drone);
+      mMyState.mUnitCounts[1] = me->completedUnitCount(BWAPI::UnitTypes::Zerg_Zergling);
+      mMyState.mFarmBuilding = me->incompleteUnitCount(BWAPI::UnitTypes::Zerg_Overlord);
+      mMyState.mMaxTrainingCapacity = mMyState.mTrainingCompleteFrames[0].size() * 2;
+
+
+      //me->getUnits();
+      //std::set<Unit*> hatcheryUnit->getLarva();
+
+      mMyState.mTrainingCompleteFrames[0].resize(me->completedUnitCount(BWAPI::UnitTypes::Zerg_Hatchery));
+
+      std::set<BWAPI::Unit*> units = me->getUnits();
+      std::set<BWAPI::Unit*>::iterator it = units.begin();
+      int hatchIndex = 0;
+      for (;it!=units.end(); it++)
+	   {
+         BWAPI::Unit * unit = *it;
+		   // if the unit is completed
+		   if (unit->isCompleted() && unit->getType() == BWAPI::UnitTypes::Zerg_Hatchery)
+		   {
+            while (hatchIndex >= (int)mMyState.mLarva.size())
+            {
+               mMyState.mLarva.push_back(Hatchery(0, 0));   //hatchery values should be overwritten below
+            }
+            mMyState.mLarva[hatchIndex].NumLarva = unit->getLarva().size();
+            if (mMyState.mLarva[hatchIndex].NumLarva != 3)
+            {
+               mMyState.mLarva[hatchIndex].NextLarvaSpawnFrame = unit->getRemainingTrainTime() + mMyState.mGameStateFrame;
+            }
+            hatchIndex++;
+         }
+
+         if (unit->isMorphing()) // && unit->getType().getID() == eZerg_Egg)
+         {
+            int buildFrames = unit->getRemainingBuildTime();
+            int gameFrame = mMyState.mGameStateFrame;
+            int endBuildTime = gameFrame + buildFrames;
+            int startBuildTime = endBuildTime - unit->getBuildType().buildTime();
+
+            switch (unit->getBuildType().getID())
+            {
+            case eZerg_Overlord:
+            {
+               mMyState.mTrainingCompleteFrames[1].push_back(endBuildTime);
+               mMyState.mFarmBuilding++;
+
+               QueuedMove* move = new QueuedMove(startBuildTime, endBuildTime, 0, gameFrame, eZerg_Overlord);
+               std::list<QueuedMove*>::reverse_iterator rit = mEventQueue.rbegin();
+               for ( ; rit != mEventQueue.rend() && move->frameComplete < (*rit)->frameComplete; rit++)
+               {
+               }
+               mEventQueue.insert(rit.base(), move);
+               //mLastEventIter = mEventQueue.begin();  //all events in the queue before this are not "complete" yet
+            }break;
+
+            case eZerg_Drone:
+            {
+               QueuedMove* move = new QueuedMove(startBuildTime, endBuildTime, 0, gameFrame, eZerg_Drone);
+               std::list<QueuedMove*>::reverse_iterator rit = mEventQueue.rbegin();
+               for ( ; rit != mEventQueue.rend() && move->frameComplete < (*rit)->frameComplete; rit++)
+               {
+               }
+               mEventQueue.insert(rit.base(), move);
+               //mLastEventIter = mEventQueue.begin();  //all events in the queue before this are not "complete" yet
+            }break;
+
+            case eZerg_Zergling:
+            {
+               QueuedMove* move = new QueuedMove(startBuildTime, endBuildTime, 0, gameFrame, eZerg_Zergling);
+               std::list<QueuedMove*>::reverse_iterator rit = mEventQueue.rbegin();
+               for ( ; rit != mEventQueue.rend() && move->frameComplete < (*rit)->frameComplete; rit++)
+               {
+               }
+               mEventQueue.insert(rit.base(), move);
+               //mLastEventIter = mEventQueue.begin();  //all events in the queue before this are not "complete" yet
+            }break;
+
+            case eZerg_Hatchery:
+            {
+               mMyState.mTrainingCompleteFrames[0].push_back(endBuildTime);
+
+               QueuedMove* move = new QueuedMove(startBuildTime, endBuildTime, 0, gameFrame, eZerg_Hatchery);
+               std::list<QueuedMove*>::reverse_iterator rit = mEventQueue.rbegin();
+               for ( ; rit != mEventQueue.rend() && move->frameComplete < (*rit)->frameComplete; rit++)
+               {
+               }
+               mEventQueue.insert(rit.base(), move);
+               //mLastEventIter = mEventQueue.begin();  //all events in the queue before this are not "complete" yet
+            }break;
+
+            case eZerg_Spawning_Pool:
+            {
+               mMyState.mTrainingCompleteFrames[2].push_back(endBuildTime);
+               //no event needed, no extra processing done for finishing or un-finishing this building
+            }break;
+            };
+         }
+      }
+
+      //if(mMyRace == eZERG)
+      //{
+      //   std::vector<Hatchery>::iterator it = mMyState.mLarva.begin();
+      //   for (; it!= mMyState.mLarva.end(); it++)
+      //   {
+      //      while (it->NumLarva < 3 && it->NextLarvaSpawnFrame <= mMyState.mGameStateFrame)
+      //      {
+      //         it->NumLarva++;
+      //         it->NextLarvaSpawnFrame += LarvaFrameTime;
+      //      }
+      //   }
+      //}
+
+
+   }break;
    };
    mMyState.mMineralsPerMinute   = mMyState.mUnitCounts[0] * MineralsPerMinute;
    ////////////////////////////////////////////////////////////////////////////
 
    int startFrame = mMyState.mGameStateFrame;
-   int startTimer = getMilliCount();
-   int milliSecondsElapsed = 0;
-   int mark1 = 0;
-   int mark2 = 0;
-   int projectedDuration = 0;
-
-   int fullDuration = targetFrame - startFrame;
-   int currentTarget = startFrame;  //start target only 1/4 second into future  
-   // + (fullDuration/2) - (FramePerMinute/4);   //start at half the target & increment by quarter seconds
-   while (projectedDuration <= maxMilliseconds && currentTarget < targetFrame)
+   if (maxMilliseconds > 0)
    {
-      currentTarget += (FramePerMinute/4);
-      //start search from our current state
+      int startTimer = getMilliCount();
+      int milliSecondsElapsed = 0;
+      int mark1 = 0;
+      int mark2 = 0;
+      int projectedDuration = 0;
+
+      int fullDuration = targetFrame - startFrame;
+      int currentTarget = startFrame;  //start target only 1/4 second into future  
+      // + (fullDuration/2) - (FramePerMinute/4);   //start at half the target & increment by quarter seconds
+      while (projectedDuration <= maxMilliseconds && currentTarget < targetFrame)
+      {
+         currentTarget += (FramePerMinute/4);
+         //start search from our current state
+         mSearchState = mMyState;
+         mMaxScore = 0;
+         mBestMoves.clear();
+         mSearchDepth = -1;
+         FindMovesRecursive(currentTarget);
+
+         mark2 = mark1;
+         mark1 = milliSecondsElapsed;
+         milliSecondsElapsed = getMilliSpan(startTimer);
+         int elapsed1 = milliSecondsElapsed - mark1;
+         int elapsed2 = mark1 - mark2;
+         if (elapsed2 > 0)
+         {
+            projectedDuration = milliSecondsElapsed + elapsed1 * elapsed1 / elapsed2;
+         }
+         else
+         {
+            projectedDuration = milliSecondsElapsed + elapsed1 * 2;
+         }
+      }
+      mSearchLookAhead = currentTarget - startFrame;
+   }
+   else
+   {
       mSearchState = mMyState;
       mMaxScore = 0;
       mBestMoves.clear();
       mSearchDepth = -1;
-      FindMovesRecursive(currentTarget);
-
-      mark2 = mark1;
-      mark1 = milliSecondsElapsed;
-      milliSecondsElapsed = getMilliSpan(startTimer);
-      int elapsed1 = milliSecondsElapsed - mark1;
-      int elapsed2 = mark1 - mark2;
-      if (elapsed2 > 0)
-      {
-         projectedDuration = milliSecondsElapsed + elapsed1 * elapsed1 / elapsed2;
-      }
-      else
-      {
-         projectedDuration = milliSecondsElapsed + elapsed1 * 2;
-      }
+      FindMovesRecursive(targetFrame);
+      mSearchLookAhead = targetFrame - startFrame;
    }
-   mSearchLookAhead = currentTarget - startFrame;
+
    return mBestMoves;
 }
 
 
 void MacroSearch::FindMovesRecursive(int targetFrame)
 {
-   //std::vector<MoveType> moves = PossibleMoves(targetFrame);
    mSearchDepth++;
-   if (mSearchDepth > 1)
+   if (mMaxDepth > 0 && mSearchDepth > mMaxDepth)
    {
-      mSearchDepth = mSearchDepth;
+      mSearchDepth--;
+      return;
    }
 
-   //std::vector<MoveType>* movesPtr = UpdatePossibleMoves();
-   std::vector<int>* movesPtr = UpdatePossibleMoves();
-
-   //std::vector<MoveType>::iterator it;
+   std::vector<int>* movesPtr = PossibleMoves();
    std::vector<int>::iterator it;
    for (it=movesPtr->begin(); it!=movesPtr->end(); it++)
    {
-      //MoveType move = *it;
       int move = *it;
       if (DoMove(move, targetFrame))
       {
@@ -545,53 +799,14 @@ void MacroSearch::FindMovesRecursive(int targetFrame)
    return;
 }
 
-////given the current game state
-//std::vector<MoveType> MacroSearch::PossibleMoves(int targetFrame)
-//{
-//   std::vector<MoveType> moves;
-//
-//   if (mCurrentFarm < (mFarmCapacity-1+16*mFarmBuilding) &&  //have (or will have) farm available
-//       mTrainingCompleteFrames[2].size() >0) //and have a gateway to build it in
-//   {
-//      moves.push_back(BWAPI::UnitTypes::Protoss_Zealot);
-//   }
-//
-//   if (mTrainingCompleteFrames[1].size()>0 || mFarmBuilding>0 || mFarmCapacity > 18)  //need pylon
-//   {
-//      moves.push_back(BWAPI::UnitTypes::Protoss_Gateway);
-//   }
-//
-//   if ((mTrainingCompleteFrames[1].size()==0) ||
-//       ((mFarmCapacity+16*mFarmBuilding-mCurrentFarm) <= (2*mMaxTrainingCapacity)) )
-//   {
-//      moves.push_back(BWAPI::UnitTypes::Protoss_Pylon);
-//   }
-//
-//   //TODO: count mineral spots, for now... use 8
-//   if (mUnitCounts[0] < 16 && //two per mineral spot
-//       mCurrentFarm < (mFarmCapacity-1+16*mFarmBuilding) &&   //and have (or will have) farm available
-//       mTrainingCompleteFrames[0].size() >0) //and have a nexus to build it in
-//   {
-//      moves.push_back(BWAPI::UnitTypes::Protoss_Probe);
-//   }
-//
-//   if (mUnitCounts[1] > 1 && mForceMoving == false)   //dont do attack move again, if already moving
-//   {
-//      moves.push_back( BWAPI::UnitType(eAttack) );  //eAttack to represent ATTACK
-//   }
-//
-//   return moves;
-//}
 
-//std::vector<MoveType>* MacroSearch::UpdatePossibleMoves()
-std::vector<int>* MacroSearch::UpdatePossibleMoves()
+std::vector<int>* MacroSearch::PossibleMoves()
 {
    //mSearchDepth;  //int
    if (mSearchDepth >= (int)mPossibleMoves.size())
    {
       mPossibleMoves.resize(mSearchDepth+3); //just need +1, but give it a +3 in case we are going another couple levels
    }
-   //std::vector<MoveType>* movesPtr = &mPossibleMoves[mSearchDepth];
    std::vector<int>* movesPtr = &mPossibleMoves[mSearchDepth];
    movesPtr->clear();
    int mostCost = 0;
@@ -603,7 +818,6 @@ std::vector<int>* MacroSearch::UpdatePossibleMoves()
       if ((mSearchState.mCurrentFarm+4) <= (mSearchState.mFarmCapacity + 16*mSearchState.mFarmBuilding) &&  //have (or will have) farm available
           gateCnt >0) //and have a gateway to build it in
       {
-       //movesPtr->push_back(BWAPI::UnitTypes::Protoss_Zealot);
          movesPtr->push_back(eProtoss_Zealot);
          mostCost = max(mostCost,100);
       }
@@ -615,7 +829,6 @@ std::vector<int>* MacroSearch::UpdatePossibleMoves()
         //(mSearchState.mTrainingCompleteFrames[0].size()*4) > mSearchState.mTrainingCompleteFrames[2].size())
           (gateCnt == 0 || gateCnt < maxGate) )
       {
-       //movesPtr->push_back(BWAPI::UnitTypes::Protoss_Gateway);
          movesPtr->push_back(eProtoss_Gateway);
          mostCost = max(mostCost,150);
       }
@@ -623,7 +836,6 @@ std::vector<int>* MacroSearch::UpdatePossibleMoves()
       if ((mSearchState.mTrainingCompleteFrames[1].size()==0) ||
           ((mSearchState.mFarmCapacity+16*mSearchState.mFarmBuilding-mSearchState.mCurrentFarm) <= (2*mSearchState.mMaxTrainingCapacity)) )
       {
-       //movesPtr->push_back(BWAPI::UnitTypes::Protoss_Pylon);
          movesPtr->push_back(eProtoss_Pylon);
          mostCost = max(mostCost,100);
       }
@@ -634,7 +846,6 @@ std::vector<int>* MacroSearch::UpdatePossibleMoves()
           mSearchState.mTrainingCompleteFrames[0].size() >0 &&    //and have a nexus to build it in
           ((mostCost==0)||((mostCost+50)>mSearchState.mMinerals)||mSearchState.mTrainingCompleteFrames[0][0]<=mSearchState.mGameStateFrame) ) //if we could instantly build something else, & a probe is already building, dont do a probe right now
       {
-       //movesPtr->push_back(BWAPI::UnitTypes::Protoss_Probe);
          movesPtr->push_back(eProtoss_Probe);
       }
    }
@@ -682,6 +893,11 @@ std::vector<int>* MacroSearch::UpdatePossibleMoves()
       //eZerg_Drone         =  41,
       //eZerg_Overlord      =  42,
       //eZerg_Spawning_Pool = 142,
+      int larvaCnt = 0;
+      for (int i=0; i<(int)mSearchState.mLarva.size(); ++i)
+      {
+         larvaCnt += mSearchState.mLarva[i].NumLarva;
+      }
 
       int poolCnt = mSearchState.mTrainingCompleteFrames[2].size();
 
@@ -694,7 +910,7 @@ std::vector<int>* MacroSearch::UpdatePossibleMoves()
 
      //int maxRax = ((int)mSearchState.mMineralsPerMinute)/(200+50);  //max spend rate = 4 marines a minute, +1/2 depot
     //if ((mSearchState.mTrainingCompleteFrames[0].size()*4) > mSearchState.mTrainingCompleteFrames[2].size())
-      if (poolCnt<=0)// || raxCnt < maxRax)
+      if (poolCnt<=0 && mSearchState.mUnitCounts[0]>0)// || raxCnt < maxRax)
       {
          movesPtr->push_back(eZerg_Spawning_Pool);
          //mostCost = max(mostCost,200);
@@ -706,15 +922,22 @@ std::vector<int>* MacroSearch::UpdatePossibleMoves()
          //mostCost = max(mostCost,100);
       }
 
+      int hatchCnt = mSearchState.mTrainingCompleteFrames[0].size();
+      int maxHatch = ((int)mSearchState.mMineralsPerMinute)/(268);  //max spend rate = 4.2857 drones a minute, plus enough farm for that many
+      if ((hatchCnt==0 || hatchCnt < maxHatch) && mSearchState.mUnitCounts[0]>0)
+      {
+         movesPtr->push_back(eZerg_Hatchery);
+         //mostCost = max(mostCost,300);
+      }
+
       //TODO: count mineral spots, for now... use 8
       if (mSearchState.mUnitCounts[0] < 17 && //two per mineral spot +1 for building
          (mSearchState.mCurrentFarm+2) <= (mSearchState.mFarmCapacity + 16*mSearchState.mFarmBuilding) && //and have (or will have) farm available
-          mSearchState.mTrainingCompleteFrames[0].size() >0 ) //&&    //and have a command center to build it in
-          //((mostCost==0)||((mostCost+50)>mSearchState.mMinerals)||mSearchState.mTrainingCompleteFrames[0][0]<=mSearchState.mGameStateFrame) ) //if we could instantly build something else, & an scv is already building, dont do an scv right now
+          mSearchState.mTrainingCompleteFrames[0].size() >0)   //  &&   //and have a hatchery to build it from
+          //((mostCost==0)||((mostCost+50)>mSearchState.mMinerals))) //if we could instantly build something else, & a drone is already building, dont do a drone right now
       {
          movesPtr->push_back(eZerg_Drone);
       }
-
    }
 
    //if (mSearchState.mUnitCounts[1] > 1 && mSearchState.mForceMoving == false)   //dont do attack move again, if already moving
@@ -732,7 +955,6 @@ std::vector<int>* MacroSearch::UpdatePossibleMoves()
 }
 
 
-//bool MacroSearch::DoMove(MoveType aMove, int targetFrame)
 bool MacroSearch::DoMove(int aMove, int targetFrame)
 {
    //int price          = aMove.mineralPrice();
@@ -1066,7 +1288,7 @@ bool MacroSearch::DoMove(int aMove, int targetFrame)
 
          //find out at what time mMinerals are available
          //TODO: search for mGas time too
-         int moveStartTime = mSearchState.mGameStateFrame;
+         moveStartTime = mSearchState.mGameStateFrame;
          if (mSearchState.mMinerals < price) {
             moveStartTime += (int)((price-mSearchState.mMinerals)*FramePerMinute/mSearchState.mMineralsPerMinute);
          }
@@ -1094,43 +1316,59 @@ bool MacroSearch::DoMove(int aMove, int targetFrame)
          price              = 50;
          int buildTime      = 300;   //frames
          int supplyRequired = 2;
-
          //find out at what time mMinerals are available
          //TODO: search for mGas time too
          int frameMineralAvailable = mSearchState.mGameStateFrame;
          if (mSearchState.mMinerals < price) {
-            frameMineralAvailable += (int)((price-mSearchState.mMinerals)*FramePerMinute/mSearchState.mMineralsPerMinute);  //rough check, doesn't account for scv that could finish training by then
+            frameMineralAvailable += (int)((price-mSearchState.mMinerals)*FramePerMinute/mSearchState.mMineralsPerMinute);  //rough check, doesn't account for drone that could finish training by then
          }
-         //find out at what time a production building is available
-         //TODO: check all buildings of correct type, not just last one
-         int frameBuildingAvailable = mSearchState.mTrainingCompleteFrames[0][0];//.back();   //TODO find right cc
-         if (frameBuildingAvailable < mSearchState.mGameStateFrame) {
-            frameBuildingAvailable = mSearchState.mGameStateFrame;
+         //find best hatchery to build from
+         int hatchIndex = 0;
+         for (int i=1; i<(int)mSearchState.mLarva.size(); ++i)
+         {
+            if (mSearchState.mLarva[i].NumLarva > mSearchState.mLarva[hatchIndex].NumLarva ||
+                (mSearchState.mLarva[i].NumLarva == mSearchState.mLarva[hatchIndex].NumLarva &&
+                 mSearchState.mLarva[i].NextLarvaSpawnFrame < mSearchState.mLarva[hatchIndex].NextLarvaSpawnFrame))
+            {
+               hatchIndex = i;
+            }
+         }
+         //find out at what time a larva is available
+         int frameLarvaAvailable = mSearchState.mGameStateFrame;
+         if (mSearchState.mLarva[hatchIndex].NumLarva <= 0)
+         {
+            //calculate time
+            frameLarvaAvailable = max(mSearchState.mLarva[hatchIndex].NextLarvaSpawnFrame, mSearchState.mGameStateFrame);  //just in case NextLarvaSpawnFrame is way in the past & a new larva will spawn
          }
          //find out at what time farm will be available
          int farmAvailable = mSearchState.mGameStateFrame;
          if ((mSearchState.mCurrentFarm+supplyRequired)>mSearchState.mFarmCapacity)
          {
-            //find when pylon will be done
+            //find when ovie will be done
             assert(mSearchState.mFarmBuilding>0);
             assert(mSearchState.mNextFarmDoneIndex < (int)mSearchState.mTrainingCompleteFrames[1].size());
             farmAvailable = mSearchState.mTrainingCompleteFrames[1][mSearchState.mNextFarmDoneIndex];
-            //farmAvailable = mSearchState.mTrainingCompleteFrames[1].front();  //TODO - find right pylon! not necessarily front in vector
          }
          //0. find build time
          //start time is latest of these three times
-         moveStartTime = max(frameMineralAvailable, max(frameBuildingAvailable, farmAvailable));
+         moveStartTime = max(frameMineralAvailable, max(frameLarvaAvailable, farmAvailable));
          if ((moveStartTime+buildTime) > targetFrame)
          {
             return false;  //no need to search this move, its past our end search time
          }
-         //2. adjust supply
+         //adjust larva times
+         AdvanceLarvaUntil(moveStartTime);
+         //adjust supply
          mSearchState.mCurrentFarm += supplyRequired;   //supply taken when unit training started
-         newMovePtr = new QueuedMove(moveStartTime, moveStartTime+buildTime, mSearchState.mTrainingCompleteFrames[0][0], mSearchState.mGameStateFrame, aMove);
-         //3. adjust training times
-         mSearchState.mTrainingCompleteFrames[0][0] = (moveStartTime+buildTime);//TODO - find right cc
-         //mUnitCounts[0]   ++; //probe   //TODO, increment this when unit done building
-         //mMineralsPerMinute += MineralsPerMinute;       //TODO, increment this when unit done building
+         newMovePtr = new QueuedMove(moveStartTime, moveStartTime+buildTime, mSearchState.mLarva[hatchIndex].NextLarvaSpawnFrame, mSearchState.mGameStateFrame, aMove);
+
+         if (mSearchState.mLarva[hatchIndex].NumLarva == 3)
+         {
+            mSearchState.mLarva[hatchIndex].NextLarvaSpawnFrame = moveStartTime + LarvaFrameTime;
+         }
+         mSearchState.mLarva[hatchIndex].NumLarva--;
+         //mUnitCounts[0]   ++; //drone //increment this when unit done building
+         //mMineralsPerMinute += MineralsPerMinute;       //increment this when unit done building
       }break;
 
    case eZerg_Zergling: //ling //TODO: verify this ID  //100, 420, 2
@@ -1143,44 +1381,59 @@ bool MacroSearch::DoMove(int aMove, int targetFrame)
          //TODO: search for mGas time too
          int frameMineralAvailable = mSearchState.mGameStateFrame;
          if (mSearchState.mMinerals < price) {
-            frameMineralAvailable += (int)((price-mSearchState.mMinerals)*FramePerMinute/mSearchState.mMineralsPerMinute);
+            frameMineralAvailable += (int)((price-mSearchState.mMinerals)*FramePerMinute/mSearchState.mMineralsPerMinute);  //rough check, doesn't account for drone that could finish training by then
          }
-         //find out at what time a production building is available
-         int raxIndex = 0;
-         int frameBuildingAvailable = mSearchState.mTrainingCompleteFrames[2][raxIndex];
-         for (int i=1; i<(int)mSearchState.mTrainingCompleteFrames[2].size(); ++i)
+
+         //find best hatchery to build from
+         int hatchIndex = 0;
+         for (int i=1; i<(int)mSearchState.mLarva.size(); ++i)
          {
-            if (mSearchState.mTrainingCompleteFrames[2][i] < frameBuildingAvailable)
+            if (mSearchState.mLarva[i].NumLarva > mSearchState.mLarva[hatchIndex].NumLarva ||
+                (mSearchState.mLarva[i].NumLarva == mSearchState.mLarva[hatchIndex].NumLarva &&
+                     mSearchState.mLarva[i].NextLarvaSpawnFrame < mSearchState.mLarva[hatchIndex].NextLarvaSpawnFrame))
             {
-               raxIndex = i;
-               frameBuildingAvailable = mSearchState.mTrainingCompleteFrames[2][i];
+               hatchIndex = i;
             }
          }
-         //if (frameBuildingAvailable < mSearchState.mGameStateFrame) {
-         //   frameBuildingAvailable = mSearchState.mGameStateFrame;
-         //}
 
+         //find out at what time a larva is available
+         int frameLarvaAvailable = mSearchState.mGameStateFrame;
+         if (mSearchState.mLarva[hatchIndex].NumLarva <= 0) //TODO find right hatchery
+         {
+            //calculate time
+            frameLarvaAvailable = max(mSearchState.mLarva[hatchIndex].NextLarvaSpawnFrame, mSearchState.mGameStateFrame);  //just in case NextLarvaSpawnFrame is way in the past & a new larva will spawn
+         }
+         //find out at what time farm will be available
          int farmAvailable = mSearchState.mGameStateFrame;
          if ((mSearchState.mCurrentFarm+supplyRequired)>mSearchState.mFarmCapacity)
          {
-            //find when depot will be done
+            //find when ovie will be done
             assert(mSearchState.mFarmBuilding>0);
             assert(mSearchState.mNextFarmDoneIndex < (int)mSearchState.mTrainingCompleteFrames[1].size());
             farmAvailable = mSearchState.mTrainingCompleteFrames[1][mSearchState.mNextFarmDoneIndex];
-            //farmAvailable = mSearchState.mTrainingCompleteFrames[1].front();  //TODO - find right pylon! not necessarily front in vector
          }
-
+         //find out when pool done
+         int techDone = mSearchState.mTrainingCompleteFrames[2][0];
          //0. find build time
-         //start time is latest of these three times
-         moveStartTime = max(frameMineralAvailable, max(frameBuildingAvailable, farmAvailable));
-         if ((moveStartTime+buildTime) > targetFrame)
+         //start time is latest of these four times
+         moveStartTime = max(max(frameMineralAvailable,techDone), max(frameLarvaAvailable, farmAvailable));
+         int frameComplete = moveStartTime + buildTime;
+         if (frameComplete > targetFrame)
          {
             return false;  //no need to search this move, its past our end search time
          }
-         mSearchState.mCurrentFarm += supplyRequired;   //supply taken when unit building started
-         newMovePtr = new QueuedMove(moveStartTime, moveStartTime+buildTime, mSearchState.mTrainingCompleteFrames[2][raxIndex], mSearchState.mGameStateFrame, aMove);
-         mSearchState.mTrainingCompleteFrames[2][raxIndex] = (moveStartTime+buildTime);
-         //mUnitCounts[1]   ++; //zealot  //TODO, increment this when unit done building
+         //adjust larva times
+         AdvanceLarvaUntil(moveStartTime);
+         //adjust supply
+         mSearchState.mCurrentFarm += supplyRequired;   //supply taken when unit training started
+         newMovePtr = new QueuedMove(moveStartTime, frameComplete, mSearchState.mLarva[hatchIndex].NextLarvaSpawnFrame, mSearchState.mGameStateFrame, aMove);
+         if (mSearchState.mLarva[hatchIndex].NumLarva == 3)
+         {
+            mSearchState.mLarva[hatchIndex].NextLarvaSpawnFrame = moveStartTime + LarvaFrameTime;
+         }
+         mSearchState.mLarva[hatchIndex].NumLarva--;
+         //mUnitCounts[0]   ++; //drone //increment this when unit done building
+         //mMineralsPerMinute += MineralsPerMinute;       //increment this when unit done building
       }break;
 
    case eZerg_Overlord: //ovie //TODO: verify this ID //100, 600, 0
@@ -1194,18 +1447,77 @@ bool MacroSearch::DoMove(int aMove, int targetFrame)
          if (mSearchState.mMinerals < price) {
             frameMineralAvailable += (int)((price-mSearchState.mMinerals)*FramePerMinute/mSearchState.mMineralsPerMinute);
          }
-         //start time is mineral time
-         moveStartTime = frameMineralAvailable;
+
+         //find best hatchery to build from
+         int hatchIndex = 0;
+         for (int i=1; i<(int)mSearchState.mLarva.size(); ++i)
+         {
+            if (mSearchState.mLarva[i].NumLarva > mSearchState.mLarva[hatchIndex].NumLarva ||
+                (mSearchState.mLarva[i].NumLarva == mSearchState.mLarva[hatchIndex].NumLarva &&
+                     mSearchState.mLarva[i].NextLarvaSpawnFrame < mSearchState.mLarva[hatchIndex].NextLarvaSpawnFrame))
+            {
+               hatchIndex = i;
+            }
+         }
+
+         //find out at what time a larva is available
+         int frameLarvaAvailable = mSearchState.mGameStateFrame;
+         if (mSearchState.mLarva[hatchIndex].NumLarva <= 0) //TODO find right hatchery
+         {
+            //calculate time
+            frameLarvaAvailable = max(mSearchState.mLarva[hatchIndex].NextLarvaSpawnFrame, mSearchState.mGameStateFrame);  //just in case NextLarvaSpawnFrame is way in the past & a new larva will spawn
+         }
+
+         //start time is max of these two
+         moveStartTime = max(frameMineralAvailable, frameLarvaAvailable);
+         int frameComplete = moveStartTime + buildTime;
+         if (frameComplete > targetFrame)
+         {
+            return false;  //no need to search this move, its past our end search time
+         }
+         //adjust larva times
+         AdvanceLarvaUntil(moveStartTime);
+
+         newMovePtr = new QueuedMove(moveStartTime, frameComplete, mSearchState.mLarva[hatchIndex].NextLarvaSpawnFrame, mSearchState.mGameStateFrame, aMove);
+         mSearchState.mTrainingCompleteFrames[1].push_back(frameComplete);
+         mSearchState.mFarmBuilding++;
+
+         if (mSearchState.mLarva[hatchIndex].NumLarva == 3)
+         {
+            mSearchState.mLarva[hatchIndex].NextLarvaSpawnFrame = moveStartTime + LarvaFrameTime;
+         }
+         mSearchState.mLarva[hatchIndex].NumLarva--;
+
+         //mFarmCapacity += 16; //TODO, increment this when unit done building
+     }break;
+
+
+   case eZerg_Hatchery:
+      {
+         price = 300;
+         int buildTime = BWAPI::UnitTypes::Zerg_Hatchery.buildTime();   //frames
+
+         moveStartTime = mSearchState.mGameStateFrame;
+         if (mSearchState.mMinerals < price) {
+            moveStartTime += (int)((price-mSearchState.mMinerals)*FramePerMinute/mSearchState.mMineralsPerMinute);
+         }
          if ((moveStartTime+buildTime) > targetFrame)
          {
             return false;  //no need to search this move, its past our end search time
          }
          int frameComplete = moveStartTime + buildTime;
          newMovePtr = new QueuedMove(moveStartTime, frameComplete, 0, mSearchState.mGameStateFrame, aMove);
-         mSearchState.mTrainingCompleteFrames[1].push_back(frameComplete);
-         mSearchState.mFarmBuilding++;
-         //mFarmCapacity += 16; //TODO, increment this when unit done building
-     }break;
+         mSearchState.mTrainingCompleteFrames[0].push_back(frameComplete);
+
+         //adjust minerals ourselves here, & then take out drone from production
+         int dt = moveStartTime - mSearchState.mGameStateFrame;
+         mSearchState.mMinerals += ((mSearchState.mMineralsPerMinute * dt)/FramePerMinute);
+         mSearchState.mGameStateFrame = moveStartTime;
+         //take out an scv, to perform construction
+         mSearchState.mUnitCounts[0]--; //drone
+         mSearchState.mMineralsPerMinute -= MineralsPerMinute;
+
+      }break;
 
    case eZerg_Spawning_Pool: //pool //TODO: verify this ID //200, 1200, 0
       {
@@ -1214,7 +1526,7 @@ bool MacroSearch::DoMove(int aMove, int targetFrame)
 
          //find out at what time mMinerals are available
          //TODO: search for mGas time too
-         int moveStartTime = mSearchState.mGameStateFrame;
+         moveStartTime = mSearchState.mGameStateFrame;
          if (mSearchState.mMinerals < price) {
             moveStartTime += (int)((price-mSearchState.mMinerals)*FramePerMinute/mSearchState.mMineralsPerMinute);
          }
@@ -1379,6 +1691,35 @@ void MacroSearch::AdvanceQueuedEventsUntil(int targetFrame)
             mSearchState.mMinerals += ((MineralsPerMinute * dt)/FramePerMinute);
          }break;
 
+      case eZerg_Drone: //drone //TODO: verify this ID
+         {
+            mSearchState.mUnitCounts[0]++; //drone
+            mSearchState.mMineralsPerMinute += MineralsPerMinute;
+            //just add in mineral change from this drone only
+            int dt = targetFrame - movePtr->frameComplete; //should be positive
+            mSearchState.mMinerals += ((MineralsPerMinute * dt)/FramePerMinute);
+         }break;
+      case eZerg_Zergling: //zergling//TODO: verify this ID
+         {
+            mSearchState.mUnitCounts[1]++; //zergling
+         }break;
+      case eZerg_Overlord: //ovie //TODO: verify this ID
+         {
+            mSearchState.mFarmCapacity += 16;
+            mSearchState.mFarmBuilding--;
+            mSearchState.mNextFarmDoneIndex++;
+         }break;
+      case eZerg_Hatchery:
+         {
+            //we have more larva to use now
+            mSearchState.mLarva.push_back(Hatchery(1, movePtr->frameComplete + LarvaFrameTime));
+            mSearchState.mMaxTrainingCapacity += 2;
+         }break;
+      case eZerg_Spawning_Pool: //pool //TODO: verify this ID
+         {
+            //nothing?
+         }break;
+
       default:
          {
             //unknown move, shouldn't be here
@@ -1520,6 +1861,37 @@ void MacroSearch::ReverseQueuedEventsUntil(int targetFrame)
             int dt = movePtr->frameComplete - mSearchState.mGameStateFrame; //should be negative
             mSearchState.mMinerals += ((MineralsPerMinute * dt)/FramePerMinute);
          }break;
+
+
+      case eZerg_Drone: //drone //TODO: verify this ID
+         {
+            mSearchState.mUnitCounts[0]--; //drone
+            mSearchState.mMineralsPerMinute -= MineralsPerMinute;
+            //adjust mineral change from this one drone only
+            int dt = movePtr->frameComplete - mSearchState.mGameStateFrame; //should be negative
+            mSearchState.mMinerals += ((MineralsPerMinute * dt)/FramePerMinute);
+         }break;
+      case eZerg_Zergling: //zergling//TODO: verify this ID
+         {
+            mSearchState.mUnitCounts[1]--; //zergling
+         }break;
+      case eZerg_Overlord: //ovie //TODO: verify this ID
+         {
+            mSearchState.mFarmCapacity -= 16;
+            mSearchState.mFarmBuilding++;
+            mSearchState.mNextFarmDoneIndex--;
+         }break;
+      case eZerg_Hatchery:
+         {
+            //we have more larva to use now
+            mSearchState.mLarva.pop_back();
+            mSearchState.mMaxTrainingCapacity -= 2;
+         }break;
+      case eZerg_Spawning_Pool: //pool //TODO: verify this ID
+         {
+            //nothing?
+         }break;
+
       default:
          {
             //unknown move, shouldn't be here
@@ -1582,43 +1954,11 @@ void MacroSearch::UndoMove()
    // mLastEventIter will match with undoMove.prevGameTime (earlier than mSearchState.mGameStateFrame)
    ReverseQueuedEventsUntil(undoMove->prevGameTime);   //this takes off minerals from probes that finished during this "taken back" time
 
-   ////check if this event we just popped off the stack was still incomplete (only in the queue, not fully processed yet)
-   //if (mGameStateFrame < undoMove.frameComplete)
-   //{
-   //   //why does this matter?  it doesn't
-   //}
-
-   //if (mGameStateFrame >= undoMove.frameStarted &&  //should this line always be true? do we have to check here?
-   //    mGameStateFrame < undoMove.frameComplete)
-   //{
-   //   std::deque<QueuedMove> tempStack;
-   //   while (!(mEventQueue.top() == undoMove))
-   //   {
-   //      tempStack.push_back(mEventQueue.top());
-   //      mEventQueue.pop();
-   //   }
-   //   mEventQueue.pop();
-   //   while (tempStack.size() > 0)
-   //   {
-   //      mEventQueue.push(tempStack.back());
-   //      tempStack.pop_back();
-   //   }
-   //}
-
    //int price          = undoMove.move.mineralPrice();
    //int buildTime      = undoMove.move.buildTime();   //frames
    //int supplyRequired = undoMove.move.supplyRequired();
 
-   //0. find build time
-   //1. adjust mMinerals
-   //2. adjust supply
-   //3. adjust training times
-   //4. add event to queue
-   //5. adjust time
-
    int price = 0; //each case statement sets the real price, minerals adjusted at bottom
-
- //switch (undoMove.move.getID())
    switch (undoMove->move)
    {
    case eProtoss_Probe: //probe //TODO: verify this ID
@@ -1754,6 +2094,113 @@ void MacroSearch::UndoMove()
 
       }break;
 
+   case eZerg_Drone: //drone //TODO: verify this ID //50, 300, 2
+      {
+         price              = 50;
+         int buildTime      = 300;  //frames
+         int supplyRequired = 2;
+         mSearchState.mCurrentFarm -= supplyRequired;
+
+         //find proper hatchery to undo build from
+         int hatchIndex = 0;
+         int leastLarva = 4;
+         for (int i=0; i<(int)mSearchState.mLarva.size(); ++i)
+         {
+            if (mSearchState.mLarva[i].NumLarva < leastLarva &&
+                (mSearchState.mLarva[i].NextLarvaSpawnFrame == undoMove->prevFrameComplete ||
+                 mSearchState.mLarva[i].NextLarvaSpawnFrame == (undoMove->frameStarted + LarvaFrameTime)) )
+            {
+               hatchIndex = i;
+            }
+         }
+         //if (mSearchState.mLarva[hatchIndex].NumLarva == 3)
+         //{
+         //   mSearchState.mLarva[hatchIndex].NextLarvaSpawnFrame = moveStartTime + LarvaFrameTime;
+         //}
+         //mSearchState.mLarva[hatchIndex].NumLarva--;
+         mSearchState.mLarva[hatchIndex].NextLarvaSpawnFrame = undoMove->prevFrameComplete;  //could already be true, but not always
+         mSearchState.mLarva[hatchIndex].NumLarva++;
+         //call ReverseLarvaUntil() below
+      }break;
+
+   case eZerg_Zergling: //ling //TODO: verify this ID  //100, 420, 2
+      {
+         price              = 50;
+         int buildTime      = 420; //frames
+         int supplyRequired = 2;
+         mSearchState.mCurrentFarm -= supplyRequired;
+
+         //find proper hatchery to undo build from
+         int hatchIndex = 0;
+         int leastLarva = 4;
+         for (int i=0; i<(int)mSearchState.mLarva.size(); ++i)
+         {
+            if (mSearchState.mLarva[i].NumLarva < leastLarva &&
+                (mSearchState.mLarva[i].NextLarvaSpawnFrame == undoMove->prevFrameComplete ||
+                 mSearchState.mLarva[i].NextLarvaSpawnFrame == (undoMove->frameStarted + LarvaFrameTime)) )
+            {
+               hatchIndex = i;
+            }
+         }
+
+         mSearchState.mLarva[hatchIndex].NextLarvaSpawnFrame = undoMove->prevFrameComplete;  //could already be true, but not always
+         mSearchState.mLarva[hatchIndex].NumLarva++;
+         //call ReverseLarvaUntil() below
+      }break;
+
+   case eZerg_Overlord: //ovie //TODO: verify this ID //100, 600, 0
+      {
+         price              = 100;
+         int buildTime      = 600; //frames
+         mSearchState.mFarmBuilding--;
+         mSearchState.mTrainingCompleteFrames[1].pop_back(); //should remove last added ovie
+
+         //find proper hatchery to undo build from
+         int hatchIndex = 0;
+         int leastLarva = 4;
+         for (int i=0; i<(int)mSearchState.mLarva.size(); ++i)
+         {
+            if (mSearchState.mLarva[i].NumLarva < leastLarva &&
+                (mSearchState.mLarva[i].NextLarvaSpawnFrame == undoMove->prevFrameComplete ||
+                 mSearchState.mLarva[i].NextLarvaSpawnFrame == (undoMove->frameStarted + LarvaFrameTime)) )
+            {
+               hatchIndex = i;
+            }
+         }
+
+         mSearchState.mLarva[hatchIndex].NextLarvaSpawnFrame = undoMove->prevFrameComplete;  //could already be true, but not always
+         mSearchState.mLarva[hatchIndex].NumLarva++;
+         //call ReverseLarvaUntil() below
+      }break;
+
+   case eZerg_Hatchery:
+      {
+         price              = 300;
+         int buildTime      = BWAPI::UnitTypes::Zerg_Hatchery.buildTime(); //frames
+			mSearchState.mTrainingCompleteFrames[0].pop_back(); //should remove last added hatchery
+			//add back in a drone, no longer needed for this construction
+			mSearchState.mUnitCounts[0]++; //drone
+			mSearchState.mMineralsPerMinute += MineralsPerMinute;
+			//adjust mineral change from this one drone only
+			//subtraction below will take his production into account when it shouldn't, so add it in fake here
+			int dt = mSearchState.mGameStateFrame - undoMove->frameStarted;  //should be positive
+			mSearchState.mMinerals += ((MineralsPerMinute * dt)/FramePerMinute);
+      }break;
+
+   case eZerg_Spawning_Pool: //pool //TODO: verify this ID //200, 1200, 0
+      {
+         price              = 200;
+         int buildTime      = 1200; //frames
+			mSearchState.mTrainingCompleteFrames[2].pop_back(); //should remove last added pool
+			//add back in a drone, no longer needed for this construction
+			mSearchState.mUnitCounts[0]++; //drone
+			mSearchState.mMineralsPerMinute += MineralsPerMinute;
+			//adjust mineral change from this one drone only
+			//subtraction below will take his production into account when it shouldn't, so add it in fake here
+			int dt = mSearchState.mGameStateFrame - undoMove->frameStarted;  //should be positive
+			mSearchState.mMinerals += ((MineralsPerMinute * dt)/FramePerMinute);
+      }break;
+
    default:
       {
          price = 0;
@@ -1764,6 +2211,10 @@ void MacroSearch::UndoMove()
    mSearchState.mMinerals += price;
    int dt = undoMove->prevGameTime - mSearchState.mGameStateFrame;  //should be negative
    mSearchState.mMinerals += ((mSearchState.mMineralsPerMinute * dt)/FramePerMinute);
+   if (mMyRace == eZERG)
+   {
+      ReverseLarvaUntil(undoMove->prevGameTime);   //go all the way back to the previous move start time (prevGameTime)
+   }
    mSearchState.mGameStateFrame = undoMove->prevGameTime;
 
    //remove event from queue now
@@ -1776,6 +2227,43 @@ void MacroSearch::UndoMove()
          delete *it;
          mEventQueue.erase(it);
          break;
+      }
+   }
+}
+
+//assumes "mSearchState.mGameStateFrame" will be set to "targetFrame" after this method is called
+void MacroSearch::ReverseLarvaUntil(int targetFrame)
+{
+   std::vector<Hatchery>::iterator it = mSearchState.mLarva.begin();
+   for (; it!= mSearchState.mLarva.end(); it++)
+   {
+      if (mSearchState.mGameStateFrame > it->NextLarvaSpawnFrame)
+      {
+         //roll back time to right when previous larva spawned, next doesn't change, but count does
+         it->NumLarva--;
+      }
+      while ( (it->NumLarva > 0) && ((it->NextLarvaSpawnFrame - LarvaFrameTime) > targetFrame) )
+      {
+         it->NextLarvaSpawnFrame -= LarvaFrameTime;
+         it->NumLarva--;
+      }
+   }
+}
+
+
+//assumes "mSearchState.mGameStateFrame" will be set to "targetFrame" after this method is called
+void MacroSearch::AdvanceLarvaUntil(int targetFrame)
+{
+   std::vector<Hatchery>::iterator it = mSearchState.mLarva.begin();
+   for (; it!= mSearchState.mLarva.end(); it++)
+   {
+      while (it->NumLarva < 3 && it->NextLarvaSpawnFrame <= targetFrame)
+      {
+         it->NumLarva++;
+         if (it->NumLarva < 3)
+         {
+            it->NextLarvaSpawnFrame += LarvaFrameTime;
+         }
       }
    }
 }
@@ -1796,13 +2284,6 @@ int MacroSearch::EvaluateState(int targetFrame)
    {
       score += mSearchState.mUnitCounts[1] * 500;   //favor zealots + x5 cost
       score += mSearchState.mTrainingCompleteFrames[2].size() * 300;  //favor gateways + x2 cost
-      //std::vector<int>::iterator it;
-      //for (it  = mSearchState.mTrainingCompleteFrames[2].begin();
-      //     it != mSearchState.mTrainingCompleteFrames[2].end();
-      //     it ++)
-      //{
-      //   int complete = *it;
-      //}
    }break;
    case eTERRAN:
    {
@@ -1811,7 +2292,9 @@ int MacroSearch::EvaluateState(int targetFrame)
    }break;
    case eZERG:
    {
-
+      score += mSearchState.mUnitCounts[1] * 250;   //favor lings + x5 cost
+      score += mSearchState.mTrainingCompleteFrames[2].size() * 400;  //favor pool + x2 cost
+      score += mSearchState.mTrainingCompleteFrames[0].size() * 300;  //favor hatchery at cost
    }break;
    };
    return score;

@@ -5,7 +5,7 @@
 #include "..\..\StarcraftBuildOrderSearch\Source\starcraftsearch\DFBBStarcraftSearch.hpp"
 #include "..\..\StarcraftBuildOrderSearch\Source\starcraftsearch\StarcraftData.hpp"
 
-#define BOADD(N, T, B) for (int i=0; i<N; ++i) { queue.queueAsLowestPriority(MetaType(T), B); }
+//#define BOADD(N, T, B) for (int i=0; i<N; ++i) { queue.queueAsLowestPriority(MetaType(T), B); }
 
 #define GOAL_ADD(G, M, N) G.push_back(std::pair<MetaType, int>(M, N))
 
@@ -17,6 +17,7 @@ ProductionManager::ProductionManager()
 	, haveLocationForThisBuilding(false)
 	, enemyCloakedDetected(false)
 	, rushDetected(false)
+   , mLastCommandLatencyFrameDone(0)
 {
 	//populateTypeCharMap();
 
@@ -61,8 +62,10 @@ void ProductionManager::update()
 	// check the queue for stuff we can build
 	manageBuildOrderQueue();
 
+   int frame = BWAPI::Broodwar->getFrameCount();
+   
 	// if nothing is currently building, get a new goal from the strategy manager
-	if (queue.size() == 0 && BWAPI::Broodwar->getFrameCount() > 100)
+	if (queue.size() == 0 && frame > 100 && frame > mLastCommandLatencyFrameDone)
 	{
 		BWAPI::Broodwar->drawTextScreen(150, 10, "Nothing left to build, new search!");
 		//const std::vector< std::pair<MetaType, UnitCountType> > newGoal = StrategyManager::Instance().getBuildOrderGoal();
@@ -71,7 +74,10 @@ void ProductionManager::update()
 		//use our macro search instead of their strategy manager
 		int frame = BWAPI::Broodwar->getFrameCount();
       //std::vector<QueuedMove*> moves = mMacroSearch.FindMoves(frame+3600, 5000);	//2.5 minute look ahead (2.5*60*24), only search for 5 sec real-time
-      std::vector<QueuedMove*> moves = mMacroSearch.FindMoves(frame+3600, 150);   //2.5 minute look ahead (2.5*60*24), only search for 150 ms real-time
+      //std::vector<QueuedMove*> moves = mMacroSearch.FindMoves(frame+3600, 150);   //2.5 minute look ahead (2.5*60*24), only search for 150 ms real-time
+    //std::vector<QueuedMove*> moves = mMacroSearch.FindMoves(frame+2880, -1);   //2 minute look ahead (2.5*60*24), no real-time limit
+      std::vector<QueuedMove*> moves = mMacroSearch.FindMoves(frame+2880, -1, 20);   //2 minute look ahead (2.5*60*24), no real-time limit, search depth 30
+      //std::vector<QueuedMove*> moves = mMacroSearch.FindMoves(frame+3600, 2000);   //2.5 minute look ahead (2.5*60*24), 2-second time limit
 
 		//if (moves.size()>0)
 		//{
@@ -83,7 +89,7 @@ void ProductionManager::update()
 		//	}
 		//}
 		int N = moves.size()-1;
-		N = (N>3)?(3):(N);
+		N = (N>4)?(4):(N);
 		if (N>0)
 		{
 			queue.clearAll();
@@ -96,29 +102,50 @@ void ProductionManager::update()
 
 	}
 
-	// detect if there's a build order deadlock once per second
-	if ((BWAPI::Broodwar->getFrameCount() % 24 == 0) && detectBuildOrderDeadlock())
-	{
-		BWAPI::Broodwar->printf("Supply deadlock detected, building pylon!");
-		queue.queueAsHighestPriority(MetaType(BWAPI::Broodwar->self()->getRace().getSupplyProvider()), true);
-	}
+	//// detect if there's a build order deadlock once per second
+	//if ((BWAPI::Broodwar->getFrameCount() % 24 == 0) && detectBuildOrderDeadlock())
+	//{
+	//	BWAPI::Broodwar->printf("Supply deadlock detected, building pylon!");
+	//	queue.queueAsHighestPriority(MetaType(BWAPI::Broodwar->self()->getRace().getSupplyProvider()), true);
+	//}
 
 	// if they have cloaked units get a new goal asap
 	if (!enemyCloakedDetected && InformationManager::Instance().enemyHasCloakedUnits())
 	{
-		if (BWAPI::Broodwar->self()->allUnitCount(BWAPI::UnitTypes::Protoss_Photon_Cannon) < 2)
-		{
-			queue.queueAsHighestPriority(MetaType(BWAPI::UnitTypes::Protoss_Photon_Cannon), true);
-			queue.queueAsHighestPriority(MetaType(BWAPI::UnitTypes::Protoss_Photon_Cannon), true);
-		}
+      if (BWAPI::Broodwar->self()->getRace() == BWAPI::Races::Protoss)
+      {
+		   if (BWAPI::Broodwar->self()->allUnitCount(BWAPI::UnitTypes::Protoss_Photon_Cannon) < 2)
+		   {
+			   queue.queueAsHighestPriority(MetaType(BWAPI::UnitTypes::Protoss_Photon_Cannon), true);
+			   queue.queueAsHighestPriority(MetaType(BWAPI::UnitTypes::Protoss_Photon_Cannon), true);
+		   }
 
-		if (BWAPI::Broodwar->self()->allUnitCount(BWAPI::UnitTypes::Protoss_Forge) == 0)
-		{
-			queue.queueAsHighestPriority(MetaType(BWAPI::UnitTypes::Protoss_Forge), true);
-		}
+		   if (BWAPI::Broodwar->self()->allUnitCount(BWAPI::UnitTypes::Protoss_Forge) == 0)
+		   {
+			   queue.queueAsHighestPriority(MetaType(BWAPI::UnitTypes::Protoss_Forge), true);
+		   }
 
-		BWAPI::Broodwar->printf("Enemy Cloaked Unit Detected!");
-		enemyCloakedDetected = true;
+		   BWAPI::Broodwar->printf("Enemy Cloaked Unit Detected!");
+		   enemyCloakedDetected = true;
+      }
+      else if (BWAPI::Broodwar->self()->getRace() == BWAPI::Races::Terran)
+      {
+		   if (BWAPI::Broodwar->self()->allUnitCount(BWAPI::UnitTypes::Terran_Missile_Turret) < 2)
+		   {
+			   queue.queueAsHighestPriority(MetaType(BWAPI::UnitTypes::Terran_Missile_Turret), true);
+			   queue.queueAsHighestPriority(MetaType(BWAPI::UnitTypes::Terran_Missile_Turret), true);
+		   }
+		   if (BWAPI::Broodwar->self()->allUnitCount(BWAPI::UnitTypes::Terran_Engineering_Bay) == 0)
+		   {
+			   queue.queueAsHighestPriority(MetaType(BWAPI::UnitTypes::Terran_Engineering_Bay), true);
+		   }
+		   BWAPI::Broodwar->printf("Enemy Cloaked Unit Detected!");
+		   enemyCloakedDetected = true;
+      }
+      else  //zerg has detectors
+      {
+
+      }
 	}
 
 
@@ -134,10 +161,13 @@ void ProductionManager::onUnitDestroy(BWAPI::Unit * unit)
 		return;
 	}
 		
+   int need = BWAPI::Broodwar->self()->supplyUsed();
+   int have = BWAPI::Broodwar->self()->supplyTotal();
 	// if it's a worker or a building, we need to re-search for the current goal
-	if ((unit->getType().isWorker() && !WorkerManager::Instance().isWorkerScout(unit)) || unit->getType().isBuilding())
+	if ((unit->getType().isWorker() && !WorkerManager::Instance().isWorkerScout(unit)) || unit->getType().isBuilding() || 
+       (unit->getType() == BWAPI::UnitTypes::Zerg_Overlord && (have<=(need+1))))
 	{
-		BWAPI::Broodwar->printf("Critical unit died, re-searching build order");
+      BWAPI::Broodwar->printf("Critical unit died, re-searching build order");
 
 		//if (unit->getType() != BWAPI::UnitTypes::Zerg_Drone)
 		//{
@@ -145,7 +175,9 @@ void ProductionManager::onUnitDestroy(BWAPI::Unit * unit)
 		//}
 		int frame = BWAPI::Broodwar->getFrameCount();
       //std::vector<QueuedMove*> moves = mMacroSearch.FindMoves(frame+3600, 5000);	//2.5 minute look ahead (2.5*60*24), only search for 5 sec real-time
-        std::vector<QueuedMove*> moves = mMacroSearch.FindMoves(frame+3600, 150);	//2.5 minute look ahead (2.5*60*24), only search for 150 ms real-time
+      //std::vector<QueuedMove*> moves = mMacroSearch.FindMoves(frame+3600, 150);	//2.5 minute look ahead (2.5*60*24), only search for 150 ms real-time
+      std::vector<QueuedMove*> moves = mMacroSearch.FindMoves(frame+2880, 2000, 20);   //2.0 minute look ahead (2.5*60*24),no limit, search depth 30
+      //std::vector<QueuedMove*> moves = mMacroSearch.FindMoves(frame+3600, 2000);   //2.5 minute look ahead (2.5*60*24), 2-second time limit
 
 		//if (moves.size()>0)
 		//{
@@ -157,7 +189,7 @@ void ProductionManager::onUnitDestroy(BWAPI::Unit * unit)
 		//	}
 		//}
 		int N = moves.size()-1;
-		N = (N>3)?(3):(N);
+		N = (N>4)?(4):(N);
 		if (N>0)
 		{
 			queue.clearAll();
@@ -179,7 +211,10 @@ void ProductionManager::manageBuildOrderQueue()
 	}
 
 	// the current item to be used
-	BuildOrderItem<PRIORITY_TYPE> & currentItem = queue.getHighestPriorityItem();
+   //queue.setNumSkipped(0);
+	BuildOrderItem<PRIORITY_TYPE> currentItem = queue.getHighestPriorityItem();
+
+   int size = sizeof(BuildOrderItem<PRIORITY_TYPE>);
 
 	// while there is still something left in the queue
 	while (!queue.isEmpty()) 
@@ -221,7 +256,11 @@ void ProductionManager::manageBuildOrderQueue()
 			// and remove it from the queue
 			queue.removeCurrentHighestPriorityItem();
 
-			// don't actually loop around in here
+         //store this time so we dont perform any new searches until this is over
+       //mLastCommandLatencyFrameDone = BWAPI::Broodwar->getFrameCount() + BWAPI::Broodwar->getLatencyFrames() + 1;
+         mLastCommandLatencyFrameDone = BWAPI::Broodwar->getFrameCount() + 12;
+
+         // don't actually loop around in here
 			break;
 		}
 		// otherwise, if we can skip the current item

@@ -12,6 +12,7 @@
 
 const int FramePerMinute = 24*60;   //fastest game speed    //see BWAPI::Game.getFPS()
 const float MineralsPerMinute = 64.8f; //matches  "MINERALS_PER_WORKER_PER_FRAME = 0.045" assuming 24 frames a second
+const int LarvaFrameTime = 336;
 //const float MineralsPerMinute = 50.0f; //compromise
 
 enum RACEID
@@ -30,10 +31,19 @@ enum MOVEID
    eTerran_Supply_Depot = 109,
    eTerran_Barracks     = 111,
 
+   eZerg_Larva         =  35,
+   eZerg_Egg           =  36,
    eZerg_Zergling      =  37,
    eZerg_Drone         =  41,
    eZerg_Overlord      =  42,
+   eZerg_Hatchery      = 131,
+   eZerg_Lair          = 132,
+   eZerg_Hydralisk_Den = 135,
+   eZerg_Spire         = 141,
    eZerg_Spawning_Pool = 142,
+   eZerg_Extractor     = 149,
+   eZerg_Hydralisk,
+   eZerg_Mutalisk,
 
    eProtoss_Corsair = 60,
    eProtoss_Dark_Templar = 61,
@@ -70,9 +80,6 @@ enum MOVEID
    eProtoss_Shield_Battery = 172,
    eAttack = 300
 };
-
-//typedef BWSAL::BuildType MoveType;
-//typedef BWAPI::UnitType  MoveType;
 
 
 template <typename T, unsigned int capacity>
@@ -163,7 +170,6 @@ public:
       mem.free(p);
    } 
 
-   //MoveType move;
    int move;
    int frameStarted;
    int frameComplete;
@@ -172,9 +178,19 @@ public:
 };
 
 
+typedef struct Hatchery
+{
+   public:
+   Hatchery(int larva, int frame) : NumLarva(larva), NextLarvaSpawnFrame(frame) {}
+   int NumLarva;              //0-3
+   int NextLarvaSpawnFrame;
+} Hatchery;
+
+
 class GameState
 {
 public:
+
    GameState()
       :   mGameStateFrame(0)
          //,mForceAttacking(false)
@@ -190,7 +206,8 @@ public:
          ,mUnitCounts(12, 0)            //only 12 kinds of units?
          ,mTrainingCompleteFrames(14, std::vector<int>())   // 14 kinds of buildings?
    {
-      mTrainingCompleteFrames[0].push_back(0);  //start with 1 nexus
+      mTrainingCompleteFrames[0].push_back(0);  //start with 1 center (nexus/cc/hatchery)
+      mLarva.push_back(Hatchery(3,0)); //in case its a zerg player
       mUnitCounts[0] = 4;  //4 starting probes
    }
    int   mGameStateFrame;
@@ -209,6 +226,7 @@ public:
 							     // TODO: fix-> for now, decrement unit counts for scv when building something
    std::vector< std::vector<int> > mTrainingCompleteFrames;  //0=nexus, 1=pylon, 2=gateways, 3=assimilator, 4=cybercore, 5=forge, 6=robotfacility, 7=stargate, 8=citadel, 9=templar, 10=observatory, 11=arbiter, 12=fleetbeacon,  13=robotsupportbay
                                                              //0=command center, 1=supply depot, 2=barracks, 3=refinery, 4=factory, 5=engineering bay, 6=armory, 7=starport, 8=academy, 9=science, 10=
+   std::vector<Hatchery> mLarva; //only used for zerg players
 };
 
 
@@ -223,7 +241,7 @@ public:
    //virtual void onUnitHide(BWAPI::Unit* unit);   //when unit goes invisible
    //virtual void onUnitEvade(BWAPI::Unit* unit);  //inaccessible?
    virtual void onUnitDestroy( BWAPI::Unit* unit );   //unit dies/destroyed
-   //virtual void onUnitMorph(BWAPI::Unit* unit);  //unit changes type (drone to extractor, etc)
+   virtual void onUnitMorph(BWAPI::Unit* unit);  //unit changes type (drone to extractor, etc)
    virtual void onUnitCreate(BWAPI::Unit* unit);
    virtual void onUnitComplete(BWAPI::Unit* unit);
    //virtual void onUnitDiscover( BWAPI::Unit* unit );  //unit is created (training started)
@@ -232,11 +250,8 @@ public:
    virtual void onFrame();
 
    //recursive
-   std::vector<QueuedMove*> FindMoves(int targetFrame, int maxMilliseconds = 3);
-   //std::vector<MoveType> PossibleMoves(int targetFrame); //given the current game state
-   //std::vector<MoveType*>* UpdatePossibleMoves();
-   std::vector<int>* UpdatePossibleMoves();
-   //bool DoMove(MoveType aMove, int targetFrame);
+   std::vector<QueuedMove*> FindMoves(int targetFrame, int maxMilliseconds = -1, int maxDepth = -1);   //dont limit time if max is negative
+   std::vector<int>* PossibleMoves();
    bool DoMove(int aMove, int targetFrame);
    void UndoMove();
 
@@ -250,6 +265,9 @@ private:
 
    void AdvanceQueuedEventsUntil(int targetFrame);
    void ReverseQueuedEventsUntil(int targetFrame);
+
+   void ReverseLarvaUntil(int targetFrame);
+   void AdvanceLarvaUntil(int targetFrame);
 
    int mMaxScore;
    std::vector<QueuedMove*> mBestMoves;
@@ -270,9 +288,9 @@ private:
    //std::priority_queue<QueuedMove> mEventQueue; //for processing building/training moves as game-tree is searched
    std::list<QueuedMove*> mEventQueue;
    std::list<QueuedMove*>::iterator mLastEventIter;
+   int                                 mMaxDepth;
    int                                 mSearchDepth;
    int                                 mSearchLookAhead;
-   //std::vector<std::vector<MoveType> > mPossibleMoves;
    std::vector<std::vector<int> >      mPossibleMoves;
    //std::list	//stable iterators, not ordered
    //std::set	//stable iterators, ordered on insert (value is the key, all must be unique)

@@ -41,4 +41,6 @@ public:
 	void onUnitRenegade(BWAPI::Unit * unit);
 	void onUnitDestroy(BWAPI::Unit * unit);
 	void onUnitMorph(BWAPI::Unit * unit);
+
+   std::vector<BWAPI::Position> mScoutTrail;
 };
