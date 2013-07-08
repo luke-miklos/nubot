@@ -43,6 +43,7 @@ void NubotAIModule::onStart()
   m_buildOrderManager = BuildOrderManager::create( m_taskScheduler, m_taskExecutor, m_buildUnitManager );
   m_supplyManager = SupplyManager::create( m_buildOrderManager, m_taskScheduler );
   m_enhancedUI = new EnhancedUI();
+  m_influenceMap = new InfluenceMap(Broodwar->mapWidth(), Broodwar->mapHeight());
 
   m_buildEventTimeline->initialize();
   m_scoutManager->initialize();
@@ -93,13 +94,16 @@ void NubotAIModule::onStart()
 
     if (buildID == 1)
     {
-      //morph 5 lurkers (tests dependency resolver, task scheduler)
+      // Zerglings and hydras
       m_buildOrderManager->build( 8, UnitTypes::Zerg_Drone, 90 );
       m_buildOrderManager->buildAdditional( 1, UnitTypes::Zerg_Overlord, 85 );
       m_buildOrderManager->build( 12, UnitTypes::Zerg_Drone, 84 );
       m_buildOrderManager->buildAdditional( 1, UnitTypes::Zerg_Lair, 82);
-      m_buildOrderManager->buildAdditional( 5, UnitTypes::Zerg_Lurker, 80);
+      //m_buildOrderManager->buildAdditional( 1, UnitTypes::Zerg_Lurker, 80);
       m_buildOrderManager->build( 12, UnitTypes::Zerg_Drone, 30 );
+      m_buildOrderManager->build( 5, UnitTypes::Zerg_Overlord, 30 );
+      m_buildOrderManager->build( 2, UnitTypes::Zerg_Zergling, 50 );
+      m_buildOrderManager->build( 12, UnitTypes::Zerg_Hydralisk, 30 );
     }
     else if (buildID >= 2)
     {
@@ -202,10 +206,12 @@ void NubotAIModule::onStart()
          m_buildOrderManager->buildAdditional(20,UnitTypes::Protoss_Carrier,60);
      }
   }
-  m_drawTasks = true;
+  m_drawTasks = false;
   m_drawAssignments = false;
-  m_drawResources = true;
-  m_drawLarva = Broodwar->self()->getRace() == Races::Zerg;
+  m_drawResources = false;
+  m_drawLarva = false;
+  //m_drawLarva = Broodwar->self()->getRace() == Races::Zerg;
+  m_drawInfluence = false;
 }
 
 void NubotAIModule::onEnd( bool isWinner )
@@ -260,6 +266,12 @@ void NubotAIModule::onFrame()
   }
   m_enhancedUI->update();
   m_borderManager->draw();
+
+  if (Broodwar->getFrameCount() % 2 == 0) // Simple check to run every other frame
+  {
+      m_influenceMap->UpdateInfluence();
+  }
+
   if ( m_informationManager->getEnemyBases().empty() )
   {
     if ( Broodwar->getFrameCount() > 2 * 24 * 60 )
@@ -271,12 +283,6 @@ void NubotAIModule::onFrame()
   {
     m_scoutManager->setScoutCount( 0 );
   }
-
-
-
-
-
-
 
   m_buildEventTimeline->m_initialState.createUnclaimedBuildUnits();
 
@@ -292,11 +298,17 @@ void NubotAIModule::onFrame()
     m_buildEventTimeline->drawLarvaCounts();
   }
   int y = -16;
-  Broodwar->drawTextScreen( 0, y += 16, "Time: %d, Minerals: %f, Gas: %f", m_buildEventTimeline->m_initialState.getTime(), m_buildEventTimeline->m_initialState.getMinerals(), m_buildEventTimeline->m_initialState.getGas() );
+  Broodwar->drawTextScreen( 0, y += 16, "Time: %d, FPS: %d, Minerals: %f, Gas: %f", m_buildEventTimeline->m_initialState.getTime(), Broodwar->getFPS(), m_buildEventTimeline->m_initialState.getMinerals(), m_buildEventTimeline->m_initialState.getGas());
   y = 50 - 16;
   if ( m_drawTasks )
   {
     m_buildOrderManager->draw(20, y);
+  }
+
+  if (m_drawInfluence)
+  {
+     //m_influenceMap->DrawInfluenceScreen();
+     m_influenceMap->DrawInfluenceAll();
   }
 
   std::set< Unit* > units = Broodwar->self()->getUnits();
@@ -345,6 +357,10 @@ void NubotAIModule::onSendText( std::string text )
   else if ( text == "l")
   {
     m_drawLarva = !m_drawLarva;
+  }
+  else if ( text == "i")
+  {
+    m_drawInfluence = !m_drawInfluence;
   }
   else if ( text == "expand" )
   {
