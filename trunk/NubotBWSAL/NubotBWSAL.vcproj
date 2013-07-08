@@ -200,6 +200,10 @@
 				RelativePath=".\Source\EnhancedUI.cpp"
 				>
 			</File>
+                        <File
+				RelativePath=".\Source\InfluenceMap.cpp"
+				>
+			</File>
 			<File
 				RelativePath=".\Source\MacroSearch.cpp"
 				>
@@ -228,6 +232,10 @@
 			</File>
 			<File
 				RelativePath=".\Source\EnhancedUI.h"
+				>
+			</File>
+                        <File
+				RelativePath=".\Source\InfluenceMap.h"
 				>
 			</File>
 			<File
