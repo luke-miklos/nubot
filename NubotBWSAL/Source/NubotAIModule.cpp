@@ -43,7 +43,7 @@ void NubotAIModule::onStart()
   m_buildOrderManager = BuildOrderManager::create( m_taskScheduler, m_taskExecutor, m_buildUnitManager );
   m_supplyManager = SupplyManager::create( m_buildOrderManager, m_taskScheduler );
   m_enhancedUI = new EnhancedUI();
-  m_influenceMap = new InfluenceMap(Broodwar->mapWidth(), Broodwar->mapHeight());
+  m_influenceMap = new ControlInfluenceMap(Broodwar->mapWidth(), Broodwar->mapHeight());
 
   m_buildEventTimeline->initialize();
   m_scoutManager->initialize();
@@ -307,8 +307,8 @@ void NubotAIModule::onFrame()
 
   if (m_drawInfluence)
   {
-     //m_influenceMap->DrawInfluenceScreen();
-     m_influenceMap->DrawInfluenceAll();
+     m_influenceMap->DrawInfluenceScreen();
+     //m_influenceMap->DrawInfluenceAll();
   }
 
   std::set< Unit* > units = Broodwar->self()->getUnits();
