@@ -12,6 +12,7 @@ InfluenceMap::~InfluenceMap()
 {
 }
 
+/*
 void InfluenceMap::UpdateInfluence()
 {
    ClearMap();
@@ -56,6 +57,7 @@ void InfluenceMap::UpdateInfluence()
       }
    } // End enemy units
 }
+*/
 
 void InfluenceMap::DrawInfluenceScreen()
 {
@@ -70,13 +72,13 @@ void InfluenceMap::DrawInfluenceScreen()
    if (screenPosition != BWAPI::Positions::Unknown)
    {
       //for each location in the vector
-      // if the influence value is > 0.0
-      // Draw a blue square for the tile
+      // if the influence value is set
+      // Draw a color square for the tile
       int screenLeft = (screenPosition.x() / TILE_SIZE);
       int screenTop = (screenPosition.y() / TILE_SIZE);
       int screenRight = std::min(maxWidth, (screenLeft + screenWidth));
       int screenBottom = std::min(maxHeight, (screenTop + screenHeight));
-      BWAPI::Broodwar->drawTextScreen( 0, 50, "Drawing influence map from %d, %d to %d, %d", screenLeft, screenTop, screenRight, screenBottom);
+      
 
       for (int x = screenLeft; x <= screenRight; ++x) 
       {
@@ -94,14 +96,16 @@ void InfluenceMap::DrawInfluenceScreen()
             }
          }
       }
+
+      BWAPI::Broodwar->drawTextScreen( 0, 50, "Drawing influence map from %d, %d to %d, %d", screenLeft, screenTop, screenRight, screenBottom);
    } // End screen position check
 }
 
 void InfluenceMap::DrawInfluenceAll()
 {
    //for each location in the vector
-     // if the influence value is > 0.0
-       // Draw a blue square starting at the build tile position * TILE_SIZE (32) and TILE_SIZE in x and y directions
+     // if the influence value is set
+       // Draw a color square starting at the build tile position * TILE_SIZE (32) and TILE_SIZE in x and y directions
    int width = 0;
    int height = 0;
    for (std::vector< std::vector<double> >::const_iterator w = mMap.begin(); w != mMap.end();++w) 
@@ -227,19 +231,19 @@ BWAPI::Color InfluenceMap::GetInfluenceColor(double value)
    BWAPI::Color color;
    if (value > 0.0)
    {
-      if (value >= 12.0)
+      if (value >= 16.0)
       {
          color = BWAPI::Color(165); // Blue
       }
-      else if (value >= 9.0)
+      else if (value >= 8.0)
       {
          color = BWAPI::Color(123);
       }
-      else if (value >= 6.0)
+      else if (value >= 4.0)
       {
          color = BWAPI::Color(122);
       }
-      else if (value >= 3.0)
+      else if (value >= 2.0)
       {
          color = BWAPI::Color(121);
       }
@@ -254,19 +258,19 @@ BWAPI::Color InfluenceMap::GetInfluenceColor(double value)
    }
    else
    {
-      if (value <= -12.0)
+      if (value <= -16.0)
       {
          color = BWAPI::Color(111); //Red
       }
-      else if (value <= 9.0)
+      else if (value <= -8.0)
       {
          color = BWAPI::Color(174);
       }
-      else if (value <= 6.0)
+      else if (value <= -4.0)
       {
          color = BWAPI::Color(173);
       }
-      else if (value <= 3.0)
+      else if (value <= -2.0)
       {
          color = BWAPI::Color(172);
       }

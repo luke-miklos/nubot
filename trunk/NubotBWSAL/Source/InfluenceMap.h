@@ -17,30 +17,31 @@ public:
    InfluenceMap(int mapWidth, int mapHeight);
    ~InfluenceMap();
 
-   // Store influence based on tile location
-   void UpdateInfluence();
+   // Store influence based on build tile location
+   // Implemented in child classes
+   virtual void UpdateInfluence() {}
 
-   // Draw influence based on tiles for the current screen position
+   // Draw influence based on tiles only for the currently visible screen
    void DrawInfluenceScreen();
 
    // Draw influence based on tiles for the entire map
-   // Also diplays a influnce tile grid and the influence value
+   // Also displays an influnce tile grid and the influence value
    // for that position on the grid
    void DrawInfluenceAll();
    
    // Reset all values in the map to default of zero
    void ClearMap();
 
-   // Sets the influence for a circular area on the map
-   // Passed in values will be converted from pixel positions to tile positions
+   // Sets a uniform influence for a circular area on the map
+   // Passed in values will be converted from pixels to build tiles
    // poistion - unit pixel position
    // radius - distance in pixels from the unit position that is influenced, must be > 0
-   // value - the influence value to stamp
+   // value - the influence value to set, added to any existing influence value
    void SetInfluence(BWAPI::Position position, int radius, double value);
 
 private:
 
-   // Influence values map based on tiles
+   // Influence values grid based on build tiles
    std::vector< std::vector<double> > mMap;
 
    // Used to validate values and make sure we don't exceed vector bounds

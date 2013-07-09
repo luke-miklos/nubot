@@ -4,7 +4,7 @@
 #include <BWSAL.h>
 #include "EnhancedUI.h"
 #include "MacroSearch.h"
-#include "InfluenceMap.h"
+#include "ControlInfluenceMap.h"
 
 
 class NubotAIModule : public BWAPI::AIModule
@@ -44,7 +44,7 @@ class NubotAIModule : public BWAPI::AIModule
     BWSAL::BuildOrderManager*  m_buildOrderManager;
     BWSAL::SupplyManager*      m_supplyManager;
     EnhancedUI*                m_enhancedUI;
-    InfluenceMap*              m_influenceMap;
+    ControlInfluenceMap*       m_influenceMap;
     bool m_drawTasks;
     bool m_drawAssignments;
     bool m_drawResources;

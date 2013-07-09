@@ -91,7 +91,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="COPY /B $(TargetPath) /B &quot;C:/Program Files/StarCraft/bwapi-data/AI/$(TargetFileName)&quot; /Y"
+				CommandLine="COPY /B $(TargetPath) /B &quot;C:\Program Files (x86)\StarCraft\bwapi-data\AI\$(TargetFileName)&quot; /Y"
 			/>
 		</Configuration>
 		<Configuration
@@ -193,6 +193,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Source\ControlInfluenceMap.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\Source\Dll.cpp"
 				>
 			</File>
@@ -200,7 +204,7 @@
 				RelativePath=".\Source\EnhancedUI.cpp"
 				>
 			</File>
-                        <File
+			<File
 				RelativePath=".\Source\InfluenceMap.cpp"
 				>
 			</File>
@@ -227,6 +231,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Source\ControlInfluenceMap.h"
+				>
+			</File>
+			<File
 				RelativePath=".\Source\EnemyData.h"
 				>
 			</File>
@@ -234,7 +242,7 @@
 				RelativePath=".\Source\EnhancedUI.h"
 				>
 			</File>
-                        <File
+			<File
 				RelativePath=".\Source\InfluenceMap.h"
 				>
 			</File>
