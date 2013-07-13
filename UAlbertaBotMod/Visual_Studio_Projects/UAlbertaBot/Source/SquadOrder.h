@@ -10,8 +10,8 @@ public:
    enum { None, Attack, Defend, Regroup, SquadOrderTypes };
 
    int                  type;
- //BWAPI::Position      position;
-   BWAPI::TilePosition  position;
+   BWAPI::Position      position;
+ //BWAPI::TilePosition  position;
    int                  radius;
    std::string          status;
 
@@ -20,8 +20,8 @@ public:
    {
    }
 
- //SquadOrder(int type, BWAPI::Position position, int radius, std::string stat = "Default") 
-   SquadOrder(int type, BWAPI::TilePosition position, int radius, std::string stat = "Default") 
+   SquadOrder(int type, BWAPI::Position position, int radius, std::string stat = "Default") 
+ //SquadOrder(int type, BWAPI::TilePosition position, int radius, std::string stat = "Default") 
       : type(type)
       , position(position)
       , radius(radius) 

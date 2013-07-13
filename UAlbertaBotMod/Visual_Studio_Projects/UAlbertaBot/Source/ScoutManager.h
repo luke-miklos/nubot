@@ -43,5 +43,5 @@ public:
 	void onUnitDestroy(BWAPI::Unit * unit);
 	void onUnitMorph(BWAPI::Unit * unit);
 
-   std::vector<BWAPI::Position> mScoutTrail;
+   //std::vector<BWAPI::Position> mScoutTrail;
 };

@@ -44,25 +44,25 @@ void GameCommander::update()
 
 
 
-   FlowField::Instance();
-   if (flowDebug == 1)
-   {
-      std::set<BWAPI::TilePosition> starts = BWAPI::Broodwar->getStartLocations();
-      int i = flowMapIndex % starts.size();
-      std::set<BWAPI::TilePosition>::iterator it = starts.begin();
-      std::advance(it, i);
-      FlowField::Instance()->DrawFlowFieldOnMap(*it);
-      //FlowField::Instance()->DrawWalkable();
-   }
-   else if (flowDebug == 2)
-   {
-      std::set<BWAPI::TilePosition> starts = BWAPI::Broodwar->getStartLocations();
-      int i = flowMapIndex % starts.size();
-      std::set<BWAPI::TilePosition>::iterator it = starts.begin();
-      std::advance(it, i);
-      FlowField::Instance()->DrawFloodFillOnMap(*it);
-      //FlowField::Instance()->DrawWalkable();
-   }
+   //FlowField::Instance();
+   //if (flowDebug == 1)
+   //{
+   //   std::set<BWAPI::TilePosition> starts = BWAPI::Broodwar->getStartLocations();
+   //   int i = flowMapIndex % starts.size();
+   //   std::set<BWAPI::TilePosition>::iterator it = starts.begin();
+   //   std::advance(it, i);
+   //   FlowField::Instance()->DrawFlowFieldOnMap(*it);
+   //   //FlowField::Instance()->DrawWalkable();
+   //}
+   //else if (flowDebug == 2)
+   //{
+   //   std::set<BWAPI::TilePosition> starts = BWAPI::Broodwar->getStartLocations();
+   //   int i = flowMapIndex % starts.size();
+   //   std::set<BWAPI::TilePosition>::iterator it = starts.begin();
+   //   std::advance(it, i);
+   //   FlowField::Instance()->DrawFloodFillOnMap(*it);
+   //   //FlowField::Instance()->DrawWalkable();
+   //}
 
 	timerManager.startTimer(TimerManager::All);
 
@@ -322,7 +322,7 @@ void GameCommander::onUnitShow(BWAPI::Unit * unit)
 { 
 	InformationManager::Instance().onUnitShow(unit); 
 	WorkerManager::Instance().onUnitShow(unit);
-   FlowField::Instance()->onUnitShow(unit);
+   //FlowField::Instance()->onUnitShow(unit);
 }
 
 void GameCommander::onUnitHide(BWAPI::Unit * unit)			

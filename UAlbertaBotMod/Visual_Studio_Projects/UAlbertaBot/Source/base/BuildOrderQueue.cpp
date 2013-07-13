@@ -143,7 +143,7 @@ size_t BuildOrderQueue::size()
 int BuildOrderQueue::largestMineralPrice()
 {
    int max = 0;
-   for (int i=0; i<queue.size(); ++i)
+   for (int i=0; i<(int)queue.size(); ++i)
    {
       int cur = queue[i].metaType.mineralPrice();
       max = std::max(max,cur);
