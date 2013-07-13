@@ -4,13 +4,46 @@
 static int flowDebug = 0;
 static int flowMapIndex = 0;
 
+////for data logging
+//BWAPI::Unit* testUnit = 0;
+//int pixelsAhead = 0;
+//int frameCommanded = 0;
+//std::ofstream writeFile;
+
 GameCommander::GameCommander() : numWorkerScouts(0), currentScout(NULL)
 {
+   //writeFile.open("bwapi-data/testio/luke.txt", std::ios::out | std::ios::app);
+}
 
+GameCommander::~GameCommander()
+{
+   //writeFile.close();
 }
 
 void GameCommander::update()
 {
+   //if (testUnit != 0)
+   //{
+   //   int frame = BWAPI::Broodwar->getFrameCount();
+   //   BWAPI::UnitType type = testUnit->getType();
+   //   if (writeFile.good())
+   //   {
+   //      writeFile << frame << ", " << type.getName() << ", " << pixelsAhead << ", " << type.topSpeed() << ", " << type.acceleration() << ", " << testUnit->getVelocityX() << ", " << testUnit->getVelocityY() << std::endl;
+   //      writeFile.flush();
+   //   }
+
+   //   BWAPI::Position pos = testUnit->getPosition();
+   //   pos.y() += pixelsAhead;
+   //   testUnit->move(pos);
+
+   //   if ((frame - frameCommanded) > 120)
+   //   {
+   //      testUnit = 0;
+   //   }
+   //}
+
+
+
    FlowField::Instance();
    if (flowDebug == 1)
    {
@@ -21,15 +54,15 @@ void GameCommander::update()
       FlowField::Instance()->DrawFlowFieldOnMap(*it);
       //FlowField::Instance()->DrawWalkable();
    }
-   //else if (flowDebug == 2)
-   //{
-   //   std::set<BWAPI::TilePosition> starts = BWAPI::Broodwar->getStartLocations();
-   //   int i = flowMapIndex % starts.size();
-   //   std::set<BWAPI::TilePosition>::iterator it = starts.begin();
-   //   std::advance(it, i);
-   //   FlowField::Instance()->DrawFloodFillOnMap(*it);
-   //   //FlowField::Instance()->DrawWalkable();
-   //}
+   else if (flowDebug == 2)
+   {
+      std::set<BWAPI::TilePosition> starts = BWAPI::Broodwar->getStartLocations();
+      int i = flowMapIndex % starts.size();
+      std::set<BWAPI::TilePosition>::iterator it = starts.begin();
+      std::advance(it, i);
+      FlowField::Instance()->DrawFloodFillOnMap(*it);
+      //FlowField::Instance()->DrawWalkable();
+   }
 
 	timerManager.startTimer(TimerManager::All);
 
@@ -289,6 +322,7 @@ void GameCommander::onUnitShow(BWAPI::Unit * unit)
 { 
 	InformationManager::Instance().onUnitShow(unit); 
 	WorkerManager::Instance().onUnitShow(unit);
+   FlowField::Instance()->onUnitShow(unit);
 }
 
 void GameCommander::onUnitHide(BWAPI::Unit * unit)			
@@ -321,14 +355,37 @@ void GameCommander::onUnitMorph(BWAPI::Unit * unit)
 	ProductionManager::Instance().onUnitMorph(unit);
 }
 
+
+#include <string>
+#include <ostream>
+#include <fstream>
+#include "stdio.h"
+
 void GameCommander::onSendText(std::string text)
 {
+   //pixelsAhead = atoi(text.c_str());
+   //if (pixelsAhead > 0)
+   //{
+   //   const std::set<BWAPI::Unit*> units = BWAPI::Broodwar->self()->getUnits();
+   //   std::set<BWAPI::Unit*>::const_iterator it = units.begin();
+   //   for (;it!=units.end(); it++)
+   //   {
+   //      BWAPI::Unit* unit = *it;
+   //      if (unit->isSelected())
+   //      {
+   //         testUnit = unit;
+   //         frameCommanded = BWAPI::Broodwar->getFrameCount();
+   //         break;
+   //      }
+   //   }
+   //}
+
 	ProductionManager::Instance().onSendText(text);
 
 	if (text.compare("f") == 0)
    {
       flowDebug++;
-      if (flowDebug>1)
+      if (flowDebug>2)
          flowDebug = 0;
    }
 

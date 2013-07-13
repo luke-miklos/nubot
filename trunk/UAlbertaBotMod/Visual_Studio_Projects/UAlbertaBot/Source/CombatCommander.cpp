@@ -6,7 +6,7 @@ CombatCommander::CombatCommander()
 	, foundEnemy(false)
 	, attackSent(false) 
 {
-	
+   defendIdleTile = BWAPI::Broodwar->self()->getStartLocation();
 }
 
 bool CombatCommander::squadUpdateFrame()
@@ -16,6 +16,23 @@ bool CombatCommander::squadUpdateFrame()
 
 void CombatCommander::update(std::set<BWAPI::Unit *> unitsToAssign)
 {
+   if (BWAPI::Broodwar->getFrameCount() == 100)
+   {
+      BWTA::Region* region = BWTA::getRegion(BWAPI::Broodwar->self()->getStartLocation());
+      if (region != NULL)
+      {
+         std::set<BWTA::Chokepoint*> chokes = region->getChokepoints();
+         if (chokes.size() == 1)
+         {
+            defendIdleTile = BWAPI::TilePosition((*chokes.begin())->getCenter());
+         }
+         else
+         {
+            defendIdleTile = BWAPI::TilePosition(region->getCenter());
+         }
+      }
+   }
+
 	if(squadUpdateFrame())
 	{
 		// clear all squad data
@@ -42,8 +59,7 @@ void CombatCommander::assignIdleSquads(std::set<BWAPI::Unit *> & unitsToAssign)
 
 	UnitVector combatUnits(unitsToAssign.begin(), unitsToAssign.end());
 	unitsToAssign.clear();
-
-	squadData.addSquad(Squad(combatUnits, SquadOrder(SquadOrder::Defend, BWAPI::Position(BWAPI::Broodwar->self()->getStartLocation()), 1000, "Defend Idle")));
+	squadData.addSquad(Squad(combatUnits, SquadOrder(SquadOrder::Defend, defendIdleTile, 1000, "Defend Idle")));
 }
 
 void CombatCommander::assignAttackSquads(std::set<BWAPI::Unit *> & unitsToAssign)
@@ -63,13 +79,13 @@ void CombatCommander::assignAttackSquads(std::set<BWAPI::Unit *> & unitsToAssign
 	bool attackEnemy = !unitsToAssign.empty() && !workersDefending && StrategyManager::Instance().doAttack(unitsToAssign);
 
 	// if we are attacking, what area are we attacking?
-	if (attackEnemy) 
-	{	
+	if (attackEnemy)
+	{
 		assignAttackRegion(unitsToAssign);				// attack occupied enemy region
 		assignAttackKnownBuildings(unitsToAssign);		// attack known enemy buildings
 		assignAttackVisibleUnits(unitsToAssign);			// attack visible enemy units
 		assignAttackExplore(unitsToAssign);				// attack and explore for unknown units
-	} 
+	}
 }
 
 BWTA::Region * CombatCommander::getClosestEnemyRegion()
@@ -99,7 +115,20 @@ void CombatCommander::assignDefenseSquads(std::set<BWAPI::Unit *> & unitsToAssig
 	// for each of our occupied regions
 	BOOST_FOREACH(BWTA::Region * myRegion, InformationManager::Instance().getOccupiedRegions(BWAPI::Broodwar->self()))
 	{
-		BWAPI::Position regionCenter = myRegion->getCenter();
+		BWAPI::TilePosition regionCenter = BWAPI::TilePosition(myRegion->getCenter());
+
+      //use a start location if possible, so flow field can be taken advantage of
+      std::set<BWTA::BaseLocation*> locs = myRegion->getBaseLocations();
+      std::set<BWTA::BaseLocation*>::iterator it = locs.begin();
+      for (; it!= locs.end(); it++)
+      {
+         if ((*it)->isStartLocation())
+         {
+            regionCenter = (*it)->getTilePosition();
+            break;
+         }
+      }
+
 		if (!regionCenter.isValid())
 		{
 			continue;
@@ -189,8 +218,25 @@ void CombatCommander::assignAttackRegion(std::set<BWAPI::Unit *> & unitsToAssign
 
 	BWTA::Region * enemyRegion = getClosestEnemyRegion();
 
-	if (enemyRegion && enemyRegion->getCenter().isValid()) 
+	if (enemyRegion)// && enemyRegion->getCenter().isValid()) 
 	{
+		BWAPI::TilePosition regionCenter = BWAPI::TilePosition(enemyRegion->getCenter());
+      //use a start location if possible, so flow field can be taken advantage of
+      std::set<BWTA::BaseLocation*> locs = enemyRegion->getBaseLocations();
+      std::set<BWTA::BaseLocation*>::iterator it = locs.begin();
+      for (; it!= locs.end(); it++)
+      {
+         if ((*it)->isStartLocation())
+         {
+            regionCenter = (*it)->getTilePosition();
+            break;
+         }
+      }
+      if (!regionCenter.isValid())
+      {
+         return;
+      }
+
 		UnitVector oppUnitsInArea, ourUnitsInArea;
 		MapGrid::Instance().GetUnits(oppUnitsInArea, enemyRegion->getCenter(), 800, false, true);
 		MapGrid::Instance().GetUnits(ourUnitsInArea, enemyRegion->getCenter(), 200, true, false);
@@ -200,7 +246,7 @@ void CombatCommander::assignAttackRegion(std::set<BWAPI::Unit *> & unitsToAssign
 			UnitVector combatUnits(unitsToAssign.begin(), unitsToAssign.end());
 			unitsToAssign.clear();
 
-			squadData.addSquad(Squad(combatUnits, SquadOrder(SquadOrder::Attack, enemyRegion->getCenter(), 1000, "Attack Region")));
+			squadData.addSquad(Squad(combatUnits, SquadOrder(SquadOrder::Attack, regionCenter, 1000, "Attack Region")));
 		}
 	}
 }
@@ -216,7 +262,7 @@ void CombatCommander::assignAttackVisibleUnits(std::set<BWAPI::Unit *> & unitsTo
 			UnitVector combatUnits(unitsToAssign.begin(), unitsToAssign.end());
 			unitsToAssign.clear();
 
-			squadData.addSquad(Squad(combatUnits, SquadOrder(SquadOrder::Attack, unit->getPosition(), 1000, "Attack Visible")));
+			squadData.addSquad(Squad(combatUnits, SquadOrder(SquadOrder::Attack, unit->getTilePosition(), 1000, "Attack Visible")));
 
 			return;
 		}
@@ -235,7 +281,34 @@ void CombatCommander::assignAttackKnownBuildings(std::set<BWAPI::Unit *> & units
 			UnitVector combatUnits(unitsToAssign.begin(), unitsToAssign.end());
 			unitsToAssign.clear();
 
-			squadData.addSquad(Squad(combatUnits, SquadOrder(SquadOrder::Attack, ui.lastPosition, 1000, "Attack Known")));
+         BWAPI::TilePosition targetTile(ui.lastPosition);
+
+         //find region & use start locations here too? yes
+         BWTA::Region* myRegion = BWTA::getRegion(targetTile); 
+         //use a start location if possible, so flow field can be taken advantage of
+         std::set<BWTA::BaseLocation*> locs = myRegion->getBaseLocations();
+         std::set<BWTA::BaseLocation*>::iterator it = locs.begin();
+         bool found = false;
+         for (; it!= locs.end(); it++)
+         {
+            if ((*it)->isStartLocation())
+            {
+               targetTile = (*it)->getTilePosition();
+               found = true;
+               break;
+            }
+         }
+         //the region the target building exists in does not contain a start location, try nearest base location
+         if (!found)
+         {
+            BWTA::BaseLocation* base = BWTA::getNearestBaseLocation(targetTile); 
+            if (base->isStartLocation())
+            {
+               targetTile = base->getTilePosition();
+            }
+         }
+
+			squadData.addSquad(Squad(combatUnits, SquadOrder(SquadOrder::Attack, targetTile, 1000, "Attack Known")));
 			return;	
 		}
 	}
@@ -248,7 +321,9 @@ void CombatCommander::assignAttackExplore(std::set<BWAPI::Unit *> & unitsToAssig
 	UnitVector combatUnits(unitsToAssign.begin(), unitsToAssign.end());
 	unitsToAssign.clear();
 
-	squadData.addSquad(Squad(combatUnits, SquadOrder(SquadOrder::Attack, MapGrid::Instance().getLeastExplored(), 1000, "Attack Explore")));
+   //find region & use start locations here too?
+
+	squadData.addSquad(Squad(combatUnits, SquadOrder(SquadOrder::Attack, BWAPI::TilePosition(MapGrid::Instance().getLeastExplored()), 1000, "Attack Explore")));
 }
 
 BWAPI::Unit* CombatCommander::findClosestDefender(std::set<BWAPI::Unit *> & enemyUnitsInRegion, const std::set<BWAPI::Unit *> & units) 

@@ -24,6 +24,7 @@ class MicroManager
 
 protected:
 	
+   bool              dirty;
 	SquadOrder			order;
 
 	virtual void		executeMicro(const UnitVector & targets) = 0;
@@ -31,14 +32,14 @@ protected:
 	bool				drawDebugVectors;
 	void				drawOrderText();
 	void				smartAttackUnit(BWAPI::Unit * attacker, BWAPI::Unit * target) const;
-	void				smartAttackMove(BWAPI::Unit * attacker, BWAPI::Position targetPosition) const;
-	void				smartMove(BWAPI::Unit * attacker, BWAPI::Position targetPosition) const;
+	void				smartAttackMove(BWAPI::Unit * attacker, BWAPI::TilePosition targetPosition) const;
+	void				smartMove(BWAPI::Unit * attacker, BWAPI::TilePosition targetPosition) const;
 	bool				unitNearEnemy(BWAPI::Unit * unit);
 	bool				unitNearChokepoint(BWAPI::Unit * unit) const;
 	void				trainSubUnits(BWAPI::Unit * unit) const;
 
 public:
-						MicroManager() : drawDebugVectors(true), lastRegroupPerformed(0) {}
+						MicroManager() : dirty(false), drawDebugVectors(true), lastRegroupPerformed(0) {}
     virtual				~MicroManager(){}
 
 	const UnitVector &	getUnits() const { return units; }

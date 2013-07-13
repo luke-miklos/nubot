@@ -49,6 +49,8 @@ public:
 	int	getLowestPriorityValue();								// returns the lowest priority value
 	size_t size();													// returns the size of the queue
 
+   int largestMineralPrice();
+
 	bool isEmpty();
 
 	void removeAll(MetaType m);									// removes all matching meta types from queue

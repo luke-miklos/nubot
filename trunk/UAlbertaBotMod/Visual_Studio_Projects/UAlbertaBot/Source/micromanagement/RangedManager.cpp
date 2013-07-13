@@ -40,7 +40,7 @@ void RangedManager::executeMicro(const UnitVector & targets)
 			else
 			{
 				// if we're not near the order position
-				if (rangedUnit->getDistance(order.position) > 100)
+				if (rangedUnit->getDistance(BWAPI::Position(order.position)) > 100)
 				{
 					// move to it
 					smartAttackMove(rangedUnit, order.position);
@@ -103,7 +103,7 @@ void RangedManager::kiteTarget(BWAPI::Unit * rangedUnit, BWAPI::Unit * target)
 		BWAPI::Broodwar->drawLineMap(rangedUnit->getPosition().x(), rangedUnit->getPosition().y(), 
 			fleePosition.x(), fleePosition.y(), BWAPI::Colors::Cyan);
 
-		smartMove(rangedUnit, fleePosition);
+		smartMove(rangedUnit, BWAPI::TilePosition(fleePosition));
 	}
 	// otherwise shoot
 	else

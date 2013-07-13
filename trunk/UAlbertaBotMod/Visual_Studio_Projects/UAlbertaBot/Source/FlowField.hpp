@@ -38,6 +38,13 @@ public:
 
    //returns false if flow field not found for tgt location, or if tgt is not reachable
    bool GetFlowFromTo(BWAPI::Position pos, BWAPI::TilePosition tgt, double& angle);
+   bool GetFlowFromTo(BWAPI::Position pos, BWAPI::TilePosition tgt, BWAPI::Position& moveHere, int pixelsAhead=13);  //13 pixels ahead provides for max travel speed for terran infantry
+
+   void onUnitShow(BWAPI::Unit* unit); //for taking building footprints out of the flow field
+
+   bool validDestination(BWAPI::Position pos);
+
+   BWAPI::Position GetVectorFromWalls(BWAPI::Unit* unit, double scale=7.0);
 
 private:
 
@@ -46,28 +53,34 @@ private:
       TargetField()
       {
          int size = BWAPI::Broodwar->mapHeight() * BWAPI::Broodwar->mapWidth();
-         cells  = std::vector<char>(size, 0);
+         cells  = std::vector<unsigned char>(size, 0);
          moveTo = std::vector<char>(size, 0);
       }
       TargetField(int size)
       {
-         cells  = std::vector<char>(size, 0);
+         cells  = std::vector<unsigned char>(size, 0);
          moveTo = std::vector<char>(size, 0);
       }
 
       //these accessor use 'cells'
       void   setAngle(int i, double angle);
       double getAngle(int i);
+
+      void   skewAngle(int i, double angle, double scale=1.0);
+
       bool   isMovable(int i);
       //these use 'moveTo'
       bool   unExpanded(int i)             { return ((i != -1) && (moveTo[i] == 0)); };
       char   direction(int i)              { return moveTo[i]; }
 
-      std::vector<char> cells;      //stores char version of the angle
+      std::vector<unsigned char> cells;      //stores char version of the angle
       std::vector<char> moveTo;     //stores a U, D, L, or R char for move direction 
    };
 
    void Initialize();
+   void BlockOutMineralsAndGeysers();
+   void ShrinkWalkableArea(TargetField* fields, int tiles); //makes a pass over walkable tiles & shrinks it by size tiles
+   void MakeBordersUnWalkable(TargetField* fields, int tiles);
    inline int index(int col, int row)     { return row * cols + col; }  // return the index of the 1D array from (row,col)
 
    bool isWalkable(int i)                 { return walkable[i];          }
@@ -79,9 +92,12 @@ private:
    void resetFringe() { std::fill(fringe.begin(), fringe.end(), 0); }   // reset the fringe
 
    TargetField* GenerateFields(BWAPI::TilePosition pos);
+   void GenerateFields(BWAPI::TilePosition pos, TargetField* fields);
 
    FlowField(int r, int c);   //in walkable tiles
    static FlowField* mInstance;
+
+   int round(double val) { return int((val>0.0)?(val+0.5):(val-0.5)); }
 
    std::map<BWAPI::TilePosition, TargetField*> mFields; //one field for every possible starting location
 

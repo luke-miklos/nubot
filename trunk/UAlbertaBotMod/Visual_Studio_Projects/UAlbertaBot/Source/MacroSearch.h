@@ -12,6 +12,7 @@
 
 const int FramePerMinute = 24*60;   //fastest game speed    //see BWAPI::Game.getFPS()
 const float MineralsPerMinute = 64.8f; //matches  "MINERALS_PER_WORKER_PER_FRAME = 0.045" assuming 24 frames a second
+const float GasPerMinute = 302.4f; //per refinery (3 workers) ? GAS_PER_WORKER_PER_FRAME ? = 0.07;
 const int LarvaFrameTime = 336;
 //const float MineralsPerMinute = 50.0f; //compromise
 
@@ -26,10 +27,15 @@ enum MOVEID
 {
    eNull_Move = -1,
 
-   eTerran_Marine       =   0,
-   eTerran_SCV          =   7,
-   eTerran_Supply_Depot = 109,
-   eTerran_Barracks     = 111,
+   eTerran_Marine         =   0,
+   eTerran_SCV            =   7,
+   eTerran_Firebat        =  32,
+   eTerran_Medic          =  34,
+   eTerran_Command_Center = 106,
+   eTerran_Supply_Depot   = 109,
+   eTerran_Refinery       = 110,
+   eTerran_Barracks       = 111,
+   eTerran_Academy        = 112,
 
    eZerg_Larva         =  35,
    eZerg_Egg           =  36,
@@ -203,6 +209,7 @@ public:
          ,mMineralsPerMinute(4*MineralsPerMinute)  //default starting rate (4 workers * MineralsPerMinute/minute)
          ,mMaxTrainingCapacity(2)       //nexus (1 probe at a time)
          ,mNextFarmDoneIndex(0)
+         ,mGasBuildingsDone(0)
          ,mUnitCounts(12, 0)            //only 12 kinds of units?
          ,mTrainingCompleteFrames(14, std::vector<int>())   // 14 kinds of buildings?
    {
@@ -221,11 +228,12 @@ public:
    float mMineralsPerMinute;  //resource rate
    int   mMaxTrainingCapacity;   //max farm worth of units can be trained at any given time
    int   mNextFarmDoneIndex;
+   int   mGasBuildingsDone;
    std::vector<int> mUnitCounts; // 0=probe, 1=zealot, 2=dragoon, 3=templar, 4=dark templar, 5=archon, 6=dark archon, 7=observer, 8=shuttle, 9=reaver, 10=corsair, 11=scout, 12=carrier
-                                 // 0=scv, 1=marine, 2=firebat, 3=ghost, 4=vulture, 5=tank, 6=goliath, 7=
+                                 // 0=scv, 1=marine, 2=firebat, 3=medic, 4=ghost, 5=vulture, 6=tank, 7=goliath, 7=
 							     // TODO: fix-> for now, decrement unit counts for scv when building something
    std::vector< std::vector<int> > mTrainingCompleteFrames;  //0=nexus, 1=pylon, 2=gateways, 3=assimilator, 4=cybercore, 5=forge, 6=robotfacility, 7=stargate, 8=citadel, 9=templar, 10=observatory, 11=arbiter, 12=fleetbeacon,  13=robotsupportbay
-                                                             //0=command center, 1=supply depot, 2=barracks, 3=refinery, 4=factory, 5=engineering bay, 6=armory, 7=starport, 8=academy, 9=science, 10=
+                                                             //0=command center, 1=supply depot, 2=barracks, 3=refinery, 4=academy, 5=engineering bay, 6=factory, 7=armory, 8=starport, 9=science, 10=
    std::vector<Hatchery> mLarva; //only used for zerg players
 };
 
@@ -250,14 +258,14 @@ public:
    virtual void onFrame();
 
    //recursive
-   std::vector<QueuedMove*> FindMoves(int targetFrame, int maxMilliseconds = -1, int maxDepth = -1);   //dont limit time if max is negative
+   std::vector<int> FindMoves(int targetFrame, int maxMilliseconds = -1, int maxDepth = -1);   //dont limit time if max is negative
    std::vector<int>* PossibleMoves();
    bool DoMove(int aMove, int targetFrame);
    void UndoMove();
 
    int SearchLookAhead() { return mSearchLookAhead; }
 
-   int EvaluateState(int targetFrame); //provides a number to represent the "value" of the current game state
+   void EvaluateState(); //provides a number to represent the "value" of the current game state
 
 private:
 
@@ -269,8 +277,10 @@ private:
    void ReverseLarvaUntil(int targetFrame);
    void AdvanceLarvaUntil(int targetFrame);
 
-   int mMaxScore;
-   std::vector<QueuedMove*> mBestMoves;
+   float mMaxScore;
+   int mMaxScoreTime;
+ //std::vector<QueuedMove*> mBestMoves;
+   std::vector<int> mBestMoves;
 
    RACEID mMyRace;
 

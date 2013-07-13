@@ -45,10 +45,28 @@ Squad::update()
 	{
 		InformationManager::Instance().lastFrameRegroup = 1;
 
+      //if no enemy around, allow flocking to move us
+      if (order.type == order.Attack)
+      {
+    	   UnitVector nearbyEnemies;
+		   BOOST_FOREACH (BWAPI::Unit * unit, units) 
+		   {
+			   BWAPI::Unit * u = unit;
+			   BWAPI::UnitType t = u->getType();
+			   MapGrid::Instance().GetUnits(nearbyEnemies, unit->getPosition(), 800, false, true);
+		   }
+         if (nearbyEnemies.size() <= 0)
+         {
+            flockManager.execute(order);  //DO THIS INSTEAD OF melee & ranged
+		      transportManager.execute(order);
+		      detectorManager.setUnitClosestToEnemy(unitClosestToEnemy());
+		      detectorManager.execute(order);
+            return;
+         }
+      }
 		meleeManager.execute(order);
 		rangedManager.execute(order);
 		transportManager.execute(order);
-
 		detectorManager.setUnitClosestToEnemy(unitClosestToEnemy());
 		detectorManager.execute(order);
 	}
@@ -114,6 +132,7 @@ Squad::setManagerUnits()
 	UnitVector rangedUnits;
 	UnitVector detectorUnits;
 	UnitVector transportUnits;
+   UnitVector flockUnits;     //all combat (melee & ranged), special, & detector units (not transport units at this time?)
 
 	// add units to micro managers
 	BOOST_FOREACH(BWAPI::Unit * unit, units)
@@ -124,6 +143,7 @@ Squad::setManagerUnits()
 			if (unit->getType().isDetector() && !unit->getType().isBuilding())
 			{
 				detectorUnits.push_back(unit);
+            flockUnits.push_back(unit);
 			}
 			// select transport units
 			else if (unit->getType() == BWAPI::UnitTypes::Protoss_Shuttle || unit->getType() == BWAPI::UnitTypes::Terran_Dropship)
@@ -134,11 +154,13 @@ Squad::setManagerUnits()
 			else if ((unit->getType().groundWeapon().maxRange() > 32) || (unit->getType() == BWAPI::UnitTypes::Protoss_Reaver))
 			{
 				rangedUnits.push_back(unit);
+            flockUnits.push_back(unit);
 			}
 			// select melee units
 			else if (unit->getType().groundWeapon().maxRange() <= 32)
 			{
 				meleeUnits.push_back(unit);
+            flockUnits.push_back(unit);
 			}
 		}
 	}
@@ -147,6 +169,7 @@ Squad::setManagerUnits()
 	rangedManager.setUnits(rangedUnits);
 	detectorManager.setUnits(detectorUnits);
 	transportManager.setUnits(detectorUnits);
+   flockManager.setUnits(flockUnits);
 }
 
 // calculates whether or not to regroup
@@ -234,7 +257,7 @@ Squad::calcRegroupPosition()
 	{
 		if (!nearEnemy[unit])
 		{
-			int dist = unit->getDistance(order.position);
+			int dist = unit->getDistance(BWAPI::Position(order.position));
 			if (dist < minDist)
 			{
 				minDist = dist;
@@ -267,7 +290,7 @@ Squad::unitClosestToEnemy()
 		}
 
 		// the distance to the order position
-		int dist = MapTools::Instance().getGroundDistance(unit->getPosition(), order.position);
+		int dist = MapTools::Instance().getGroundDistance(unit->getPosition(), BWAPI::Position(order.position));
 
 		if (dist != -1 && (!closest || dist < closestDist))
 		{

@@ -16,6 +16,7 @@ class ScoutManager {
 	bool			scoutUnderAttack;
 	
 	void smartMove(BWAPI::Unit * attacker, BWAPI::Position targetPosition);
+	void smartMove(BWAPI::Unit * attacker, BWAPI::TilePosition targetPosition);
 	void smartAttack(BWAPI::Unit * attacker, BWAPI::Unit * target);
 	bool enemyWorkerInRadius();
 

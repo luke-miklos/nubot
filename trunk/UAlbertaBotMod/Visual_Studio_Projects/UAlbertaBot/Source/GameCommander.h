@@ -94,7 +94,7 @@ public:
 
 class GameCommander 
 {
-	CombatCommander		combatCommander;
+	CombatCommander	combatCommander;
 	ScoutManager		scoutManager;
 	TimerManager		timerManager;
 
@@ -113,7 +113,7 @@ class GameCommander
 public:
 
 	GameCommander();
-	~GameCommander() {};
+	~GameCommander();
 
 	void update();
 

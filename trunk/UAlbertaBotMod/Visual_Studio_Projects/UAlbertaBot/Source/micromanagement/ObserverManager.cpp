@@ -41,7 +41,7 @@ void ObserverManager::executeMicro(const UnitVector & targets)
 		// if we need to regroup, move the observer to that location
 		if (!observerInBattle && unitClosestToEnemy && unitClosestToEnemy->getPosition().isValid())
 		{
-			smartMove(observer, unitClosestToEnemy->getPosition());
+			smartMove(observer, unitClosestToEnemy->getTilePosition());
 			observerInBattle = true;
 		}
 		// otherwise there is no battle or no closest to enemy so we don't want our observer to die
@@ -49,7 +49,7 @@ void ObserverManager::executeMicro(const UnitVector & targets)
 		else
 		{
 			BWAPI::Position explorePosition = MapGrid::Instance().getLeastExplored();
-			smartMove(observer, explorePosition);
+			smartMove(observer, BWAPI::TilePosition(explorePosition));
 		}
 	}
 }

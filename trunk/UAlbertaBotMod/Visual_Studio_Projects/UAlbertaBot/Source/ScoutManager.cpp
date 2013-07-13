@@ -2,6 +2,8 @@
 #include "ScoutManager.h"
 #include "InformationManager.h"
 
+#include "FlowField.hpp"
+
 ScoutManager::ScoutManager() : workerScout(NULL), numWorkerScouts(0), scoutUnderAttack(false)
 {
 }
@@ -87,7 +89,15 @@ void ScoutManager::moveScouts()
 				else
 				{
 					// move to the enemy region
-					smartMove(workerScout, enemyBaseLocation->getPosition());
+               if (enemyBaseLocation->isStartLocation())
+               {
+					   smartMove(workerScout, enemyBaseLocation->getTilePosition());
+               }
+               else
+               {
+					   smartMove(workerScout, enemyBaseLocation->getPosition());
+               }
+
 					BWAPI::Broodwar->drawLineMap(workerScout->getPosition().x(), workerScout->getPosition().y(), 
 						enemyBaseLocation->getPosition().x(), enemyBaseLocation->getPosition().y(),
 						BWAPI::Colors::Yellow);
@@ -111,12 +121,20 @@ void ScoutManager::moveScouts()
 		// if the scout is not in the enemy region
 		else if (scoutUnderAttack)
 		{
-			smartMove(workerScout, BWAPI::Position(BWAPI::Broodwar->self()->getStartLocation()));
+	    //smartMove(workerScout, BWAPI::Position(BWAPI::Broodwar->self()->getStartLocation()));
+			smartMove(workerScout, BWAPI::Broodwar->self()->getStartLocation());
 		}
 		else
 		{
 			// move to the enemy region
-			smartMove(workerScout, enemyBaseLocation->getPosition());	
+         if (enemyBaseLocation->isStartLocation())
+         {
+				smartMove(workerScout, enemyBaseLocation->getTilePosition());
+         }
+         else
+         {
+				smartMove(workerScout, enemyBaseLocation->getPosition());
+         }
 		}
 		
 	}
@@ -130,7 +148,8 @@ void ScoutManager::moveScouts()
 			if (!BWAPI::Broodwar->isExplored(startLocation->getTilePosition())) 
 			{
 				// assign a zergling to go scout it
-				smartMove(workerScout, BWAPI::Position(startLocation->getTilePosition()));			
+		    //smartMove(workerScout, BWAPI::Position(startLocation->getTilePosition()));			
+				smartMove(workerScout, startLocation->getTilePosition());			
 				return;
 			}
 		}
@@ -455,6 +474,40 @@ void ScoutManager::smartMove(BWAPI::Unit * attacker, BWAPI::Position targetPosit
 	// if nothing prevents it, attack the target
 	attacker->move(targetPosition);
 }
+
+
+void ScoutManager::smartMove(BWAPI::Unit * attacker, BWAPI::TilePosition targetPosition)
+{
+	// if we have issued a command to this unit already this frame, ignore this one
+	if (attacker->getLastCommandFrame() >= BWAPI::Broodwar->getFrameCount())
+	{
+		return;
+	}
+
+   BWAPI::Position tgt(targetPosition);
+	// if nothing prevents it, move towards the target position
+   //use the flow field if possible
+   //GetFlowFromTo() does not write over the tgt position unless it succeeds
+   if (FlowField::Instance()->GetFlowFromTo(attacker->getPosition(), targetPosition, tgt))
+   {
+      //target position populated, just use it
+      BWAPI::Broodwar->drawLineMap(attacker->getPosition().x(), attacker->getPosition().y(), tgt.x(), tgt.y(), BWAPI::Colors::Red);
+      //double vx = attacker->getVelocityX();
+      //double vy = attacker->getVelocityY();
+      //double v = sqrt(vx*vx+vy*vy);
+      //BWAPI::Broodwar->drawTextScreen(100, 500, "speed: %6d, top: %6d, accel: %d", v, attacker->getType().topSpeed(), attacker->getType().acceleration());
+   }
+
+	// get the unit's current command
+	BWAPI::UnitCommand currentCommand(attacker->getLastCommand());
+	// if we've already told this unit to attack this target, ignore this command
+	if (currentCommand.getType() == BWAPI::UnitCommandTypes::Move && currentCommand.getTargetPosition() == tgt)
+	{
+		return;
+	}
+	attacker->move(tgt);
+}
+
 
 void ScoutManager::smartAttack(BWAPI::Unit * attacker, BWAPI::Unit * target)
 {

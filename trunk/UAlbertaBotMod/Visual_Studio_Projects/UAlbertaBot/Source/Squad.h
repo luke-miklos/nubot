@@ -5,6 +5,7 @@
 #include "micromanagement/RangedManager.h"
 #include "micromanagement/DetectorManager.h"
 #include "micromanagement/TransportManager.h"
+#include "FlockManager.h"
 #include "SquadOrder.h"
 #include "DistanceMap.hpp"
 #include "StrategyManager.h"
@@ -21,16 +22,18 @@ class DetectorManager;
 
 class Squad
 {
-	UnitVector			units;
-	std::string			regroupStatus;
-	int					lastFrameRegroup;
+	UnitVector		units;
+	std::string		regroupStatus;
+	int				lastFrameRegroup;
 	bool				squadObserverNear(BWAPI::Position p);
 	
 	SquadOrder			order;
 	MeleeManager		meleeManager;
 	RangedManager		rangedManager;
-	DetectorManager		detectorManager;
+	DetectorManager	detectorManager;
 	TransportManager	transportManager;
+
+   FlockManager      flockManager;
 
 	std::map<BWAPI::Unit *, bool>	nearEnemy;
 
@@ -43,10 +46,10 @@ class Squad
 	
 	bool				unitNearEnemy(BWAPI::Unit * unit);
 	bool				needsToRegroup();
-	BWAPI::Unit *		getRegroupUnit();
-	int					squadUnitsNear(BWAPI::Position p);
+	BWAPI::Unit*	getRegroupUnit();
+	int				squadUnitsNear(BWAPI::Position p);
 
-	BWAPI::Unit *		unitClosestToEnemy();
+	BWAPI::Unit*	unitClosestToEnemy();
 
 public:
 
@@ -58,10 +61,10 @@ public:
 	BWAPI::Position		calcCenter();
 	BWAPI::Position		calcRegroupPosition();
 
-	void				update();
+	void				      update();
 
 	const UnitVector &	getUnits() const;
 	const SquadOrder &	getSquadOrder()	const;
 
-	void				setSquadOrder(const SquadOrder & so);
+	void				      setSquadOrder(const SquadOrder & so);
 };
