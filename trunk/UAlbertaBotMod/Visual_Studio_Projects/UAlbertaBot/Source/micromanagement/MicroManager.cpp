@@ -1,7 +1,7 @@
 #include "Common.h"
 #include "MicroManager.h"
 
-#include "FlowField.hpp"
+//#include "FlowField.hpp"
 
 void MicroManager::setUnits(const UnitVector & u) 
 { 
@@ -71,11 +71,11 @@ void MicroManager::regroup(const BWAPI::Position & regroupPosition) const
 		{
 			// regroup it
 			BWAPI::Broodwar->drawCircleMap(unit->getPosition().x(), unit->getPosition().y(), 20, BWAPI::Colors::Yellow);
-			smartMove(unit, BWAPI::TilePosition(regroupPosition));
+			smartMove(unit, regroupPosition);
 		}
 		else
 		{
-			smartAttackMove(unit, BWAPI::TilePosition(unit->getPosition()));
+			smartAttackMove(unit, unit->getPosition());
 		}
 	}
 }
@@ -150,7 +150,7 @@ void MicroManager::smartAttackUnit(BWAPI::Unit * attacker, BWAPI::Unit * target)
 
 }
 
-void MicroManager::smartAttackMove(BWAPI::Unit * attacker, BWAPI::TilePosition targetPosition) const
+void MicroManager::smartAttackMove(BWAPI::Unit * attacker, BWAPI::Position targetPosition) const
 {
 	assert(attacker);
 
@@ -171,13 +171,13 @@ void MicroManager::smartAttackMove(BWAPI::Unit * attacker, BWAPI::TilePosition t
 
    BWAPI::Position tgt(targetPosition);
 
-   // if nothing prevents it, attack the target
-   //use the flow field if possible
-   //GetFlowFromTo() does not write over the tgt position unless it succeeds
-   if (FlowField::Instance()->GetFlowFromTo(attacker->getPosition(), targetPosition, tgt))
-   {
-      //target position populated, just use it
-   }
+   //// if nothing prevents it, attack the target
+   ////use the flow field if possible
+   ////GetFlowFromTo() does not write over the tgt position unless it succeeds
+   //if (FlowField::Instance()->GetFlowFromTo(attacker->getPosition(), targetPosition, tgt))
+   //{
+   //   //target position populated, just use it
+   //}
 	attacker->attack(tgt);
 
 	if (Options::Debug::DRAW_UALBERTABOT_DEBUG) BWAPI::Broodwar->drawLineMap(	attacker->getPosition().x(), attacker->getPosition().y(),
@@ -185,7 +185,7 @@ void MicroManager::smartAttackMove(BWAPI::Unit * attacker, BWAPI::TilePosition t
 									BWAPI::Colors::Orange );
 }
 
-void MicroManager::smartMove(BWAPI::Unit * attacker, BWAPI::TilePosition targetPosition) const
+void MicroManager::smartMove(BWAPI::Unit * attacker, BWAPI::Position targetPosition) const
 {
 	assert(attacker);
 
@@ -204,7 +204,7 @@ void MicroManager::smartMove(BWAPI::Unit * attacker, BWAPI::TilePosition targetP
 
 	// if we've already told this unit to attack this target, ignore this command
 	if (   (currentCommand.getType() == BWAPI::UnitCommandTypes::Move)
-		&& (currentCommand.getTargetTilePosition() == targetPosition) 
+		&& (currentCommand.getTargetPosition() == targetPosition) 
 		&& (BWAPI::Broodwar->getFrameCount() - attacker->getLastCommandFrame() < 5)
 		&& attacker->isMoving())
 	{
@@ -218,13 +218,13 @@ void MicroManager::smartMove(BWAPI::Unit * attacker, BWAPI::TilePosition targetP
 
    BWAPI::Position tgt(targetPosition);
 
-	// if nothing prevents it, move towards the target position
-   //use the flow field if possible
-   //GetFlowFromTo() does not write over the tgt position unless it succeeds
-   if (FlowField::Instance()->GetFlowFromTo(attacker->getPosition(), targetPosition, tgt))
-   {
-      //target position populated, just use it
-   }
+	//// if nothing prevents it, move towards the target position
+ //  //use the flow field if possible
+ //  //GetFlowFromTo() does not write over the tgt position unless it succeeds
+ //  if (FlowField::Instance()->GetFlowFromTo(attacker->getPosition(), targetPosition, tgt))
+ //  {
+ //     //target position populated, just use it
+ //  }
 	attacker->move(tgt);
 
 

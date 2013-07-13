@@ -120,8 +120,6 @@
   <ItemGroup>
     <ClCompile Include="..\Source\ClusterManager.cpp" />
     <ClCompile Include="..\Source\CombatSimulation.cpp" />
-    <ClCompile Include="..\Source\FlockManager.cpp" />
-    <ClCompile Include="..\Source\FlowField.cpp" />
     <ClCompile Include="..\Source\MacroSearch.cpp" />
     <ClCompile Include="..\Source\MicroSearchManager.cpp" />
     <ClCompile Include="..\Source\base\BuildingData.cpp" />
@@ -161,8 +159,6 @@
   <ItemGroup>
     <ClInclude Include="..\Source\ClusterManager.h" />
     <ClInclude Include="..\Source\CombatSimulation.h" />
-    <ClInclude Include="..\Source\FlockManager.h" />
-    <ClInclude Include="..\Source\FlowField.hpp" />
     <ClInclude Include="..\Source\MacroSearch.h" />
     <ClInclude Include="..\Source\MicroSearchManager.h" />
     <ClInclude Include="..\Source\base\BuildingData.h" />

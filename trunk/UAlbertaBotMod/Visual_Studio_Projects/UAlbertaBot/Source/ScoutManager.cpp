@@ -2,7 +2,7 @@
 #include "ScoutManager.h"
 #include "InformationManager.h"
 
-#include "FlowField.hpp"
+//#include "FlowField.hpp"
 
 ScoutManager::ScoutManager() : workerScout(NULL), numWorkerScouts(0), scoutUnderAttack(false)
 {
@@ -24,11 +24,11 @@ void ScoutManager::update(const std::set<BWAPI::Unit *> & scoutUnits)
 		}
 	}
 
-   std::vector<BWAPI::Position>::iterator it = mScoutTrail.begin();
-   for (; it!=mScoutTrail.end(); it++)
-   {
-      BWAPI::Broodwar->drawDotMap(it->x(), it->y(), BWAPI::Colors::White);
-   }
+   //std::vector<BWAPI::Position>::iterator it = mScoutTrail.begin();
+   //for (; it!=mScoutTrail.end(); it++)
+   //{
+   //   BWAPI::Broodwar->drawDotMap(it->x(), it->y(), BWAPI::Colors::White);
+   //}
 
 	moveScouts();
 }
@@ -40,8 +40,8 @@ void ScoutManager::moveScouts()
 		return;
 	}
 
-   //save off current scout location, for drawing
-   mScoutTrail.push_back(workerScout->getPosition());
+   ////save off current scout location, for drawing
+   //mScoutTrail.push_back(workerScout->getPosition());
 
 	// get the enemy base location, if we have one
 	BWTA::BaseLocation * enemyBaseLocation = InformationManager::Instance().getMainBaseLocation(BWAPI::Broodwar->enemy());
@@ -485,18 +485,18 @@ void ScoutManager::smartMove(BWAPI::Unit * attacker, BWAPI::TilePosition targetP
 	}
 
    BWAPI::Position tgt(targetPosition);
-	// if nothing prevents it, move towards the target position
-   //use the flow field if possible
-   //GetFlowFromTo() does not write over the tgt position unless it succeeds
-   if (FlowField::Instance()->GetFlowFromTo(attacker->getPosition(), targetPosition, tgt))
-   {
-      //target position populated, just use it
-      BWAPI::Broodwar->drawLineMap(attacker->getPosition().x(), attacker->getPosition().y(), tgt.x(), tgt.y(), BWAPI::Colors::Red);
-      //double vx = attacker->getVelocityX();
-      //double vy = attacker->getVelocityY();
-      //double v = sqrt(vx*vx+vy*vy);
-      //BWAPI::Broodwar->drawTextScreen(100, 500, "speed: %6d, top: %6d, accel: %d", v, attacker->getType().topSpeed(), attacker->getType().acceleration());
-   }
+	//// if nothing prevents it, move towards the target position
+ //  //use the flow field if possible
+ //  //GetFlowFromTo() does not write over the tgt position unless it succeeds
+ //  if (FlowField::Instance()->GetFlowFromTo(attacker->getPosition(), targetPosition, tgt))
+ //  {
+ //     //target position populated, just use it
+ //     BWAPI::Broodwar->drawLineMap(attacker->getPosition().x(), attacker->getPosition().y(), tgt.x(), tgt.y(), BWAPI::Colors::Red);
+ //     //double vx = attacker->getVelocityX();
+ //     //double vy = attacker->getVelocityY();
+ //     //double v = sqrt(vx*vx+vy*vy);
+ //     //BWAPI::Broodwar->drawTextScreen(100, 500, "speed: %6d, top: %6d, accel: %d", v, attacker->getType().topSpeed(), attacker->getType().acceleration());
+ //  }
 
 	// get the unit's current command
 	BWAPI::UnitCommand currentCommand(attacker->getLastCommand());

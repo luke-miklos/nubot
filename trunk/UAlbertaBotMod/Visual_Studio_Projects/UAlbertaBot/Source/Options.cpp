@@ -24,7 +24,7 @@ namespace Options
 
 	namespace Debug								// debugging options
 	{
-		bool DRAW_UALBERTABOT_DEBUG			= false;		// draws debug information for UAlbertaBot
+		bool DRAW_UALBERTABOT_DEBUG			= true;		// draws debug information for UAlbertaBot
 		bool DRAW_DEBUG_INTERFACE				= false;		// draws debug information for EnhancedUI
 
 		BWAPI::Color COLOR_LINE_TARGET			= BWAPI::Colors::White;

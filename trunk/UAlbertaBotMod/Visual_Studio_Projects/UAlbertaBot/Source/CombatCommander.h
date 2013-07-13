@@ -33,7 +33,7 @@ class CombatCommander
 
 	int					getNumType(UnitVector & units, BWAPI::UnitType type);
 
-   BWAPI::TilePosition defendIdleTile;
+   BWAPI::Position defendIdlePosition;
 
 	BWAPI::Unit *		findClosestDefender(std::set<BWAPI::Unit *> & enemyUnitsInRegion, const std::set<BWAPI::Unit *> & units);
 	BWTA::Region *		getClosestEnemyRegion();

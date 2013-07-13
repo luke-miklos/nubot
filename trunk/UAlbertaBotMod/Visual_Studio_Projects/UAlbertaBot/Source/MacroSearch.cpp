@@ -99,7 +99,8 @@ bool operator!= (const QueuedMove& a, const QueuedMove& b)
 
 MacroSearch::MacroSearch()
    :
-    mMaxScore(0)
+    mDiminishingReturns(true)
+   ,mMaxScore(0)
    ,mBestMoves()
    //,mGameStateFrame(0)
    //,mForceAttacking(false)
@@ -356,6 +357,24 @@ void MacroSearch::onUnitCreate(BWAPI::Unit* unit)   //first event processed when
             }
             mMyState.mTrainingCompleteFrames[2][gateIndex] = endBuildTime;
          }break;
+      case eProtoss_Dragoon:
+         {
+            int gateIndex = 0;
+            int lowest = mMyState.mTrainingCompleteFrames[2][gateIndex];
+            for (int i=1; i<(int)mMyState.mTrainingCompleteFrames[2].size(); ++i)
+            {
+               if (mMyState.mTrainingCompleteFrames[2][i] < lowest)
+               {
+                  gateIndex = i;
+                  lowest = mMyState.mTrainingCompleteFrames[2][i];
+               }
+            }
+            mMyState.mTrainingCompleteFrames[2][gateIndex] = endBuildTime;
+         }break;
+      case eProtoss_Nexus:
+         {
+            mMyState.mTrainingCompleteFrames[0].push_back(endBuildTime);
+         }break;
       case eProtoss_Pylon:
          {
             mMyState.mTrainingCompleteFrames[1].push_back(endBuildTime);
@@ -363,6 +382,22 @@ void MacroSearch::onUnitCreate(BWAPI::Unit* unit)   //first event processed when
       case eProtoss_Gateway:
          {
             mMyState.mTrainingCompleteFrames[2].push_back(endBuildTime);
+         }break;
+      case eProtoss_Assimilator:
+         {
+            mMyState.mTrainingCompleteFrames[3].push_back(endBuildTime);
+         }break;
+      case eProtoss_Cybernetics_Core:
+         {
+            mMyState.mTrainingCompleteFrames[4].push_back(endBuildTime);
+         }break;
+      case eProtoss_Forge:
+         {
+            mMyState.mTrainingCompleteFrames[5].push_back(endBuildTime);
+         }break;
+      case eProtoss_Photon_Cannon:
+         {
+            mMyState.mTrainingCompleteFrames[6].push_back(endBuildTime);
          }break;
 
       case eTerran_SCV:
@@ -618,9 +653,142 @@ std::vector<int> MacroSearch::FindMoves(int targetFrame, int maxMilliseconds, in
    {
       mMyState.mUnitCounts[0] = me->completedUnitCount(BWAPI::UnitTypes::Protoss_Probe);
       mMyState.mUnitCounts[1] = me->completedUnitCount(BWAPI::UnitTypes::Protoss_Zealot);
+      mMyState.mUnitCounts[2] = me->completedUnitCount(BWAPI::UnitTypes::Protoss_Dragoon);
       mMyState.mFarmBuilding = me->incompleteUnitCount(BWAPI::UnitTypes::Protoss_Pylon);
       mMyState.mMaxTrainingCapacity = mMyState.mTrainingCompleteFrames[0].size() * 2 +
                                       mMyState.mTrainingCompleteFrames[2].size() * 4;
+
+      //must resest these for event queing below
+      mMyState.mTrainingCompleteFrames[0].resize(me->completedUnitCount(BWAPI::UnitTypes::Protoss_Nexus),            0);
+      mMyState.mTrainingCompleteFrames[1].resize(me->completedUnitCount(BWAPI::UnitTypes::Protoss_Pylon),            0);
+      mMyState.mTrainingCompleteFrames[2].resize(me->completedUnitCount(BWAPI::UnitTypes::Protoss_Gateway),          0);
+      mMyState.mGasBuildingsDone = me->completedUnitCount(BWAPI::UnitTypes::Protoss_Assimilator);
+      mMyState.mTrainingCompleteFrames[3].resize(mMyState.mGasBuildingsDone,                                         0);
+      mMyState.mTrainingCompleteFrames[4].resize(me->completedUnitCount(BWAPI::UnitTypes::Protoss_Cybernetics_Core), 0);
+      mMyState.mTrainingCompleteFrames[5].resize(me->completedUnitCount(BWAPI::UnitTypes::Protoss_Forge),            0);
+      mMyState.mTrainingCompleteFrames[6].resize(me->completedUnitCount(BWAPI::UnitTypes::Protoss_Photon_Cannon),    0);
+
+      std::set<BWAPI::Unit*> units = me->getUnits();
+      std::set<BWAPI::Unit*>::iterator it = units.begin();
+      int raxIndex = 0;
+      int ccIndex = 0;
+      for (;it!=units.end(); it++)
+	   {
+         BWAPI::Unit * unit = *it;
+
+         if (unit->isBeingConstructed())
+         {
+            int buildFrames = unit->getRemainingBuildTime();
+            int gameFrame = mMyState.mGameStateFrame;
+            int endBuildTime = gameFrame + buildFrames;
+            int startBuildTime = endBuildTime - unit->getBuildType().buildTime();
+
+            switch (unit->getBuildType().getID())
+            {
+            case eProtoss_Pylon:
+            {
+               mMyState.mTrainingCompleteFrames[1].push_back(endBuildTime);
+               mMyState.mFarmBuilding++;
+
+               QueuedMove* move = new QueuedMove(startBuildTime, endBuildTime, 0, gameFrame, eProtoss_Pylon);
+               std::list<QueuedMove*>::reverse_iterator rit = mEventQueue.rbegin();
+               for ( ; rit != mEventQueue.rend() && move->frameComplete < (*rit)->frameComplete; rit++)
+               {
+               }
+               mEventQueue.insert(rit.base(), move);
+               //mLastEventIter = mEventQueue.begin();  //all events in the queue before this are not "complete" yet
+            }break;
+
+            case eProtoss_Probe:
+            {
+               mMyState.mTrainingCompleteFrames[0][ccIndex++] = endBuildTime;
+               QueuedMove* move = new QueuedMove(startBuildTime, endBuildTime, 0, gameFrame, eProtoss_Probe);
+               std::list<QueuedMove*>::reverse_iterator rit = mEventQueue.rbegin();
+               for ( ; rit != mEventQueue.rend() && move->frameComplete < (*rit)->frameComplete; rit++)
+               {
+               }
+               mEventQueue.insert(rit.base(), move);
+               //mLastEventIter = mEventQueue.begin();  //all events in the queue before this are not "complete" yet
+            }break;
+
+            case eProtoss_Zealot:
+            {
+               mMyState.mTrainingCompleteFrames[2][raxIndex++] = endBuildTime;
+               QueuedMove* move = new QueuedMove(startBuildTime, endBuildTime, 0, gameFrame, eProtoss_Zealot);
+               std::list<QueuedMove*>::reverse_iterator rit = mEventQueue.rbegin();
+               for ( ; rit != mEventQueue.rend() && move->frameComplete < (*rit)->frameComplete; rit++)
+               {
+               }
+               mEventQueue.insert(rit.base(), move);
+               //mLastEventIter = mEventQueue.begin();  //all events in the queue before this are not "complete" yet
+            }break;
+
+            case eProtoss_Dragoon:
+            {
+               mMyState.mTrainingCompleteFrames[2][raxIndex++] = endBuildTime;
+               QueuedMove* move = new QueuedMove(startBuildTime, endBuildTime, 0, gameFrame, eProtoss_Dragoon);
+               std::list<QueuedMove*>::reverse_iterator rit = mEventQueue.rbegin();
+               for ( ; rit != mEventQueue.rend() && move->frameComplete < (*rit)->frameComplete; rit++)
+               {
+               }
+               mEventQueue.insert(rit.base(), move);
+               //mLastEventIter = mEventQueue.begin();  //all events in the queue before this are not "complete" yet
+            }break;
+
+            case eProtoss_Nexus:
+            {
+               mMyState.mTrainingCompleteFrames[0].push_back(endBuildTime);
+               //mMyState.mMineralsPerMinute -= MineralsPerMinute;   //calculated below
+               QueuedMove* move = new QueuedMove(startBuildTime, endBuildTime, 0, gameFrame, eProtoss_Nexus);
+               std::list<QueuedMove*>::reverse_iterator rit = mEventQueue.rbegin();
+               for ( ; rit != mEventQueue.rend() && move->frameComplete < (*rit)->frameComplete; rit++)
+               {
+               }
+               mEventQueue.insert(rit.base(), move);
+               //mLastEventIter = mEventQueue.begin();  //all events in the queue before this are not "complete" yet
+            }break;
+
+            case eProtoss_Gateway:
+            {
+               mMyState.mTrainingCompleteFrames[2].push_back(endBuildTime);
+               //no event needed, no extra processing done for finishing or un-finishing this building
+            }break;
+
+            case eProtoss_Assimilator:
+            {
+               mMyState.mTrainingCompleteFrames[3].push_back(endBuildTime);
+               //mMyState.mMineralsPerMinute -= MineralsPerMinute;   //calculated below
+               QueuedMove* move = new QueuedMove(startBuildTime, endBuildTime, 0, gameFrame, eTerran_Refinery);
+               std::list<QueuedMove*>::reverse_iterator rit = mEventQueue.rbegin();
+               for ( ; rit != mEventQueue.rend() && move->frameComplete < (*rit)->frameComplete; rit++)
+               {
+               }
+               mEventQueue.insert(rit.base(), move);
+            }break;
+
+            case eProtoss_Cybernetics_Core:
+            {
+               mMyState.mTrainingCompleteFrames[4].push_back(endBuildTime);
+               //no event needed, no extra processing done for finishing or un-finishing this building
+            }break;
+
+            case eProtoss_Forge:
+            {
+               mMyState.mTrainingCompleteFrames[5].push_back(endBuildTime);
+               //no event needed, no extra processing done for finishing or un-finishing this building
+            }break;
+
+            case eProtoss_Photon_Cannon:
+            {
+               mMyState.mTrainingCompleteFrames[6].push_back(endBuildTime);
+               //no event needed, no extra processing done for finishing or un-finishing this building
+            }break;
+
+            };
+         }
+      }
+
+
    }break;
    case eTERRAN:
    {
@@ -1006,7 +1174,7 @@ std::vector<int>* MacroSearch::PossibleMoves()
 
    if (mMyRace == ePROTOSS)
    {
-     int gateCnt = mSearchState.mTrainingCompleteFrames[2].size();
+      int gateCnt = mSearchState.mTrainingCompleteFrames[2].size();
 
       if ((mSearchState.mCurrentFarm+4) <= (mSearchState.mFarmCapacity + 16*mSearchState.mFarmBuilding) &&  //have (or will have) farm available
           gateCnt >0) //and have a gateway to build it in
@@ -1015,7 +1183,16 @@ std::vector<int>* MacroSearch::PossibleMoves()
          mostCost = max(mostCost,100);
       }
 
-     int maxGate = ((int)mSearchState.mMineralsPerMinute)/(240+60);  //max spend rate = 2.4 zealots a minute, +6/10 pylon
+      if ((mSearchState.mCurrentFarm+4) <= (mSearchState.mFarmCapacity + 16*mSearchState.mFarmBuilding) &&  //have (or will have) farm available
+          gateCnt >0 && //and have a gateway to build it in
+          mSearchState.mTrainingCompleteFrames[4].size() > 0 &&  //have cycore
+          mSearchState.mTrainingCompleteFrames[3].size() > 0)     //have assimilator
+      {
+         movesPtr->push_back(eProtoss_Dragoon);
+         mostCost = max(mostCost,150);
+      }
+
+      int maxGate = ((int)mSearchState.mMineralsPerMinute)/(240+60);  //max spend rate = 2.4 zealots a minute, +6/10 pylon
       if ((mSearchState.mTrainingCompleteFrames[1].size()>0 || 
            mSearchState.mFarmBuilding>0                     || 
            mSearchState.mFarmCapacity > 18) &&
@@ -1033,8 +1210,43 @@ std::vector<int>* MacroSearch::PossibleMoves()
          mostCost = max(mostCost,100);
       }
 
+      if (mSearchState.mTrainingCompleteFrames[3].size() <= 0 && //if dont have assimilator yet
+          mSearchState.mUnitCounts[0] >= 9)                      //have at least 9 workers
+      {
+         movesPtr->push_back(eProtoss_Assimilator);
+         mostCost = max(mostCost,100);
+      }
+
+      if (mSearchState.mTrainingCompleteFrames[2].size() > 0 &&   //have rax
+          mSearchState.mTrainingCompleteFrames[4].size() <= 0)    //dont have cyber core yet
+      {
+         movesPtr->push_back(eProtoss_Cybernetics_Core);
+         mostCost = max(mostCost,200);
+      }
+
+      //wait to build an extra CC until you have at least 12 workers per existing CC
+      if (mSearchState.mUnitCounts[0] >= (int)(12*mSearchState.mTrainingCompleteFrames[0].size()))
+      {
+         movesPtr->push_back(eProtoss_Nexus);
+         mostCost = max(mostCost,400);
+      }
+
+      if ((mSearchState.mTrainingCompleteFrames[1].size()>0 || mSearchState.mFarmBuilding>0) && //have pylon
+          mSearchState.mTrainingCompleteFrames[5].size()<=0)   //no forge yet
+      {
+         movesPtr->push_back(eProtoss_Forge);
+         mostCost = max(mostCost,150);
+      }
+
+      if ((mSearchState.mTrainingCompleteFrames[1].size()>0 || mSearchState.mFarmBuilding>0) && //have pylon
+          mSearchState.mTrainingCompleteFrames[5].size()>0)   //have forge
+      {
+         movesPtr->push_back(eProtoss_Photon_Cannon);
+         mostCost = max(mostCost,150);
+      }
+
       //TODO: count mineral spots, for now... use 8
-      if (mSearchState.mUnitCounts[0] < 16 && //two per mineral spot
+      if (mSearchState.mUnitCounts[0] < 20 && //two per mineral spot + 3 gas + 1 scout
          (mSearchState.mCurrentFarm+2) <= (mSearchState.mFarmCapacity + 16*mSearchState.mFarmBuilding) && //and have (or will have) farm available
           mSearchState.mTrainingCompleteFrames[0].size() >0 &&    //and have a nexus to build it in
           ((mostCost==0)||((mostCost+50)>mSearchState.mMinerals)||mSearchState.mTrainingCompleteFrames[0][0]<=mSearchState.mGameStateFrame) ) //if we could instantly build something else, & a probe is already building, dont do a probe right now
@@ -1202,7 +1414,7 @@ bool MacroSearch::DoMove(int aMove, int targetFrame)
    //switch (aMove.getID())
    switch (aMove)
    {
-   case eProtoss_Probe: //probe //TODO: verify this ID //50, 300, 2
+   case eProtoss_Probe:
       {
          price              = 50;
          int buildTime      = 300;   //frames
@@ -1251,7 +1463,7 @@ bool MacroSearch::DoMove(int aMove, int targetFrame)
          //mMineralsPerMinute += MineralsPerMinute;       //TODO, increment this when unit done building
       }break;
 
-   case eProtoss_Zealot: //zealot //TODO: verify this ID  //100, 600, 4
+   case eProtoss_Zealot:
       {
          price              = 100;
          int buildTime      = 600;   //frames
@@ -1305,7 +1517,69 @@ bool MacroSearch::DoMove(int aMove, int targetFrame)
          //mUnitCounts[1]   ++; //zealot  //TODO, increment this when unit done building
       }break;
 
-   case eProtoss_Pylon: //pylon  //TODO: verify this ID //100, 450, 0
+   case eProtoss_Dragoon:
+      {
+         price              = BWAPI::UnitTypes::Protoss_Dragoon.mineralPrice();
+         gasprice           = BWAPI::UnitTypes::Protoss_Dragoon.gasPrice();
+         int buildTime      = BWAPI::UnitTypes::Protoss_Dragoon.buildTime();
+         int supplyRequired = 4;
+         supplyRequired = BWAPI::UnitTypes::Protoss_Dragoon.supplyRequired();
+
+         //int buildingIndex = 2;  //gateway
+         //find out at what time mMinerals are available
+         //TODO: search for mGas time too
+         int frameMineralAvailable = mSearchState.mGameStateFrame;
+         if (mSearchState.mMinerals < price) {
+            frameMineralAvailable += (int)((price-mSearchState.mMinerals)*FramePerMinute/mSearchState.mMineralsPerMinute);
+         }
+
+         int frameGasAvailable = mSearchState.mGameStateFrame;
+         if (mSearchState.mGas < gasprice) {
+          //frameGasAvailable += (int)((gasprice-mSearchState.mGas)*FramePerMinute/(GasPerMinute*mSearchState.mTrainingCompleteFrames[3].size()));  //assumes refineries have 3 workers each
+            frameGasAvailable += (int)((gasprice-mSearchState.mGas)*FramePerMinute/(GasPerMinute*mSearchState.mGasBuildingsDone));  //assumes assimilators have 3 workers each
+         }
+         moveStartTime = max(frameMineralAvailable, frameGasAvailable);
+
+         //find out at what time a production building is available
+         int gateIndex = 0;
+         int frameBuildingAvailable = mSearchState.mTrainingCompleteFrames[2][gateIndex];
+         for (int i=1; i<(int)mSearchState.mTrainingCompleteFrames[2].size(); ++i)
+         {
+            if (mSearchState.mTrainingCompleteFrames[2][i] < frameBuildingAvailable)
+            {
+               gateIndex = i;
+               frameBuildingAvailable = mSearchState.mTrainingCompleteFrames[2][i];
+            }
+         }
+         moveStartTime = max(moveStartTime, frameBuildingAvailable);
+
+         if ((mSearchState.mCurrentFarm+supplyRequired)>mSearchState.mFarmCapacity)
+         {
+            //find when pylon will be done
+            assert(mSearchState.mFarmBuilding>0);
+            assert(mSearchState.mNextFarmDoneIndex < (int)mSearchState.mTrainingCompleteFrames[1].size());
+            int farmAvailable = mSearchState.mTrainingCompleteFrames[1][mSearchState.mNextFarmDoneIndex];
+            //farmAvailable = mSearchState.mTrainingCompleteFrames[1].front();  //TODO - find right pylon! not necessarily front in vector
+            moveStartTime = max(moveStartTime, farmAvailable);
+         }
+
+         //0. find build time
+         //start time is latest of these three times
+         //moveStartTime = max(frameMineralAvailable, max(frameBuildingAvailable, farmAvailable));
+         if ((moveStartTime+buildTime) > targetFrame)
+         {
+            return false;  //no need to search this move, its past our end search time
+         }
+
+         mSearchState.mCurrentFarm += supplyRequired;   //supply taken when unit building started
+
+         newMovePtr = new QueuedMove(moveStartTime, moveStartTime+buildTime, mSearchState.mTrainingCompleteFrames[2][gateIndex], mSearchState.mGameStateFrame, aMove);
+
+         mSearchState.mTrainingCompleteFrames[2][gateIndex] = (moveStartTime+buildTime);
+         //mUnitCounts[1]   ++; //zealot  //TODO, increment this when unit done building
+      }break;
+
+   case eProtoss_Pylon:
       {
          price              = 100;
          int buildTime      = 450;   //frames
@@ -1330,7 +1604,7 @@ bool MacroSearch::DoMove(int aMove, int targetFrame)
          //mFarmCapacity += 16; //TODO, increment this when unit done building
       }break;
 
-   case eProtoss_Gateway: //gateway   //TODO: verify this ID //150, 900, 0
+   case eProtoss_Gateway:
       {
          price              = 150;
          int buildTime      = 900;   //frames
@@ -1362,6 +1636,145 @@ bool MacroSearch::DoMove(int aMove, int targetFrame)
          //mMaxTrainingCapacity += 2;  //for a zealot, what is a goon? 2?   //TODO, increment this when unit done building
       }break;
 
+   case eProtoss_Nexus:
+      {
+         price              = 400;
+         int buildTime      = BWAPI::UnitTypes::Protoss_Nexus.buildTime();
+
+         //find out at what time mMinerals are available
+         //TODO: search for mGas time too
+         int frameMineralAvailable = mSearchState.mGameStateFrame;
+         if (mSearchState.mMinerals < price) {
+            frameMineralAvailable += (int)((price-mSearchState.mMinerals)*FramePerMinute/mSearchState.mMineralsPerMinute);
+         }
+         //start time is mineral time
+         moveStartTime = frameMineralAvailable;
+         if ((moveStartTime+buildTime) > targetFrame)
+         {
+            return false;  //no need to search this move, its past our end search time
+         }
+
+         newMovePtr = new QueuedMove(moveStartTime, moveStartTime+buildTime, 0, mSearchState.mGameStateFrame, aMove);
+
+         mSearchState.mTrainingCompleteFrames[0].push_back(moveStartTime+buildTime);
+
+
+         //TODO what else?
+
+      }break;
+
+   case eProtoss_Cybernetics_Core:
+      {
+         price              = 200;
+         price              = BWAPI::UnitTypes::Protoss_Cybernetics_Core.mineralPrice();
+         int buildTime      = BWAPI::UnitTypes::Protoss_Cybernetics_Core.buildTime();
+
+         //find out at what time mMinerals are available
+         //TODO: search for mGas time too
+         int frameMineralAvailable = mSearchState.mGameStateFrame;
+         if (mSearchState.mMinerals < price) {
+            frameMineralAvailable += (int)((price-mSearchState.mMinerals)*FramePerMinute/mSearchState.mMineralsPerMinute);
+         }
+         //start time is mineral time
+         moveStartTime = frameMineralAvailable;
+         if ((moveStartTime+buildTime) > targetFrame)
+         {
+            return false;  //no need to search this move, its past our end search time
+         }
+
+         newMovePtr = new QueuedMove(moveStartTime, moveStartTime+buildTime, 0, mSearchState.mGameStateFrame, aMove);
+
+         mSearchState.mTrainingCompleteFrames[4].push_back(moveStartTime+buildTime);
+
+
+         //TODO what else?
+
+
+      }break;
+
+   case eProtoss_Assimilator:
+      {
+         price              = 100;
+         price              = BWAPI::UnitTypes::Protoss_Assimilator.mineralPrice();
+         int buildTime      = BWAPI::UnitTypes::Protoss_Assimilator.buildTime();
+
+         //find out at what time mMinerals are available
+         //TODO: search for mGas time too
+         int frameMineralAvailable = mSearchState.mGameStateFrame;
+         if (mSearchState.mMinerals < price) {
+            frameMineralAvailable += (int)((price-mSearchState.mMinerals)*FramePerMinute/mSearchState.mMineralsPerMinute);
+         }
+         //start time is mineral time
+         moveStartTime = frameMineralAvailable;
+         if ((moveStartTime+buildTime) > targetFrame)
+         {
+            return false;  //no need to search this move, its past our end search time
+         }
+
+         newMovePtr = new QueuedMove(moveStartTime, moveStartTime+buildTime, 0, mSearchState.mGameStateFrame, aMove);
+
+         mSearchState.mTrainingCompleteFrames[3].push_back(moveStartTime+buildTime);
+
+         //TODO what else?
+      }break;
+
+   case eProtoss_Forge:
+      {
+         price              = 150;
+         price              = BWAPI::UnitTypes::Protoss_Forge.mineralPrice();
+         int buildTime      = BWAPI::UnitTypes::Protoss_Forge.buildTime();
+
+         //find out at what time mMinerals are available
+         //TODO: search for mGas time too
+         int frameMineralAvailable = mSearchState.mGameStateFrame;
+         if (mSearchState.mMinerals < price) {
+            frameMineralAvailable += (int)((price-mSearchState.mMinerals)*FramePerMinute/mSearchState.mMineralsPerMinute);
+         }
+         //start time is mineral time
+         moveStartTime = frameMineralAvailable;
+         if ((moveStartTime+buildTime) > targetFrame)
+         {
+            return false;  //no need to search this move, its past our end search time
+         }
+
+         newMovePtr = new QueuedMove(moveStartTime, moveStartTime+buildTime, 0, mSearchState.mGameStateFrame, aMove);
+
+         mSearchState.mTrainingCompleteFrames[5].push_back(moveStartTime+buildTime);
+
+
+         //TODO what else?
+
+
+      }break;
+
+   case eProtoss_Photon_Cannon:
+      {
+         price              = 150;
+         price              = BWAPI::UnitTypes::Protoss_Photon_Cannon.mineralPrice();
+         int buildTime      = BWAPI::UnitTypes::Protoss_Photon_Cannon.buildTime();
+
+         //find out at what time mMinerals are available
+         //TODO: search for mGas time too
+         int frameMineralAvailable = mSearchState.mGameStateFrame;
+         if (mSearchState.mMinerals < price) {
+            frameMineralAvailable += (int)((price-mSearchState.mMinerals)*FramePerMinute/mSearchState.mMineralsPerMinute);
+         }
+         //start time is mineral time
+         moveStartTime = frameMineralAvailable;
+         if ((moveStartTime+buildTime) > targetFrame)
+         {
+            return false;  //no need to search this move, its past our end search time
+         }
+
+         newMovePtr = new QueuedMove(moveStartTime, moveStartTime+buildTime, 0, mSearchState.mGameStateFrame, aMove);
+
+         mSearchState.mTrainingCompleteFrames[6].push_back(moveStartTime+buildTime);
+
+
+         //TODO what else?
+
+      }break;
+
    //case eAttack:
    //   {
    //      price = 0;
@@ -1387,7 +1800,7 @@ bool MacroSearch::DoMove(int aMove, int targetFrame)
    //   }break;
 
 
-   case eTerran_SCV: //scv //TODO: verify this ID //50, 300, 2
+   case eTerran_SCV:
       {
          price              = 50;
          int buildTime      = 300;   //frames
@@ -1432,7 +1845,7 @@ bool MacroSearch::DoMove(int aMove, int targetFrame)
          //mMineralsPerMinute += MineralsPerMinute;       //TODO, increment this when unit done building
       }break;
 
-   case eTerran_Marine: //marine //TODO: verify this ID  //100, 360, 2
+   case eTerran_Marine:
       {
          price              = 50;
          int buildTime      = 360; //frames
@@ -1676,7 +2089,7 @@ bool MacroSearch::DoMove(int aMove, int targetFrame)
 
      }break;
 
-   case eTerran_Supply_Depot: //depot //TODO: verify this ID //100, 450, 0
+   case eTerran_Supply_Depot:
       {
          price              = 100;
          int buildTime      = 600; //frames
@@ -1711,7 +2124,7 @@ bool MacroSearch::DoMove(int aMove, int targetFrame)
 
      }break;
 
-   case eTerran_Barracks: //rax //TODO: verify this ID //150, 900, 0
+   case eTerran_Barracks:
       {
          price              = 150;
          int buildTime      = 1200; //frames
@@ -1742,7 +2155,7 @@ bool MacroSearch::DoMove(int aMove, int targetFrame)
       }break;
 
 
-   case eZerg_Drone: //drone //TODO: verify this ID //50, 300, 2
+   case eZerg_Drone:
       {
          price              = 50;
          int buildTime      = 300;   //frames
@@ -1802,7 +2215,7 @@ bool MacroSearch::DoMove(int aMove, int targetFrame)
          //mMineralsPerMinute += MineralsPerMinute;       //increment this when unit done building
       }break;
 
-   case eZerg_Zergling: //ling //TODO: verify this ID  //100, 420, 2
+   case eZerg_Zergling:
       {
          price              = 50;
          int buildTime      = 420; //frames
@@ -1867,7 +2280,7 @@ bool MacroSearch::DoMove(int aMove, int targetFrame)
          //mMineralsPerMinute += MineralsPerMinute;       //increment this when unit done building
       }break;
 
-   case eZerg_Overlord: //ovie //TODO: verify this ID //100, 600, 0
+   case eZerg_Overlord:
       {
          price              = 100;
          int buildTime      = 600; //frames
@@ -1950,7 +2363,7 @@ bool MacroSearch::DoMove(int aMove, int targetFrame)
 
       }break;
 
-   case eZerg_Spawning_Pool: //pool //TODO: verify this ID //200, 1200, 0
+   case eZerg_Spawning_Pool:
       {
          price              = 200;
          int buildTime      = 1200; //frames
@@ -2059,7 +2472,7 @@ void MacroSearch::AdvanceQueuedEventsUntil(int targetFrame)
     //switch (mLastEventIter->move.getID())
       switch (movePtr->move)
       {
-      case eProtoss_Probe: //probe //TODO: verify this ID
+      case eProtoss_Probe:
          {
             mSearchState.mUnitCounts[0]++; //probe
             mSearchState.mMineralsPerMinute += MineralsPerMinute;
@@ -2067,17 +2480,17 @@ void MacroSearch::AdvanceQueuedEventsUntil(int targetFrame)
             int dt = targetFrame - movePtr->frameComplete; //should be positive
             mSearchState.mMinerals += ((MineralsPerMinute * dt)/FramePerMinute);
          }break;
-      case eProtoss_Zealot: //zealot //TODO: verify this ID
+      case eProtoss_Zealot:
          {
             mSearchState.mUnitCounts[1]++; //zealot
          }break;
-      case eProtoss_Pylon: //pylon  //TODO: verify this ID
+      case eProtoss_Pylon:
          {
             mSearchState.mFarmCapacity += 16;
             mSearchState.mFarmBuilding--;
             mSearchState.mNextFarmDoneIndex++;
          }break;
-      case eProtoss_Gateway: //gateway   //TODO: verify this ID
+      case eProtoss_Gateway:
          {
             mSearchState.mMaxTrainingCapacity += 4;  //zealot? //TODO: find largest unit buildable by this building
          }break;
@@ -2085,8 +2498,44 @@ void MacroSearch::AdvanceQueuedEventsUntil(int targetFrame)
       //   {
       //      mSearchState.mForceAttacking = true;
       //   }
+      case eProtoss_Dragoon:
+         {
+            mSearchState.mUnitCounts[2]++; //dragoon
+         }break;
 
-      case eTerran_SCV: //scv //TODO: verify this ID
+      case eProtoss_Assimilator:
+         {
+            mSearchState.mGasBuildingsDone++;
+            int dt = targetFrame - movePtr->frameComplete; //should be positive
+            mSearchState.mGas += (GasPerMinute * dt / FramePerMinute);  //add gas in now
+            mSearchState.mMineralsPerMinute -= (3*MineralsPerMinute);   //take 3 probes away from minerals to mine gas
+            //just add in mineral change from these probes only
+            mSearchState.mMinerals -= ((3*MineralsPerMinute * dt)/FramePerMinute);  //just take out mineral change from the three probes put on gas only
+         }break;
+
+      case eProtoss_Photon_Cannon:
+         {
+            //mSearchState.mTrainingCompleteFrames[6].pop_back(); //should remove last added cannon
+         }break;
+
+      case eProtoss_Cybernetics_Core:
+         {
+            //mSearchState.mTrainingCompleteFrames[4].pop_back(); //should remove last added cycore
+         }break;
+
+      case eProtoss_Nexus:
+         {
+            mSearchState.mMaxTrainingCapacity += 2;  //probe?
+            //mSearchState.mTrainingCompleteFrames[0].pop_back(); //should remove last added nexus
+         }break;
+
+      case eProtoss_Forge:
+         {
+            //mSearchState.mTrainingCompleteFrames[5].pop_back(); //should remove last added forge
+         }break;
+
+
+      case eTerran_SCV:
          {
             mSearchState.mUnitCounts[0]++; //scv
             mSearchState.mMineralsPerMinute += MineralsPerMinute;
@@ -2155,7 +2604,7 @@ void MacroSearch::AdvanceQueuedEventsUntil(int targetFrame)
             mSearchState.mMinerals += ((MineralsPerMinute * dt)/FramePerMinute);
          }break;
 
-      case eTerran_Barracks: //rax  //TODO: verify this ID
+      case eTerran_Barracks:
          {
             mSearchState.mMaxTrainingCapacity += 2;  //marine? //TODO: find largest unit buildable by this building
 
@@ -2167,7 +2616,7 @@ void MacroSearch::AdvanceQueuedEventsUntil(int targetFrame)
             mSearchState.mMinerals += ((MineralsPerMinute * dt)/FramePerMinute);
          }break;
 
-      case eZerg_Drone: //drone //TODO: verify this ID
+      case eZerg_Drone:
          {
             mSearchState.mUnitCounts[0]++; //drone
             mSearchState.mMineralsPerMinute += MineralsPerMinute;
@@ -2175,11 +2624,11 @@ void MacroSearch::AdvanceQueuedEventsUntil(int targetFrame)
             int dt = targetFrame - movePtr->frameComplete; //should be positive
             mSearchState.mMinerals += ((MineralsPerMinute * dt)/FramePerMinute);
          }break;
-      case eZerg_Zergling: //zergling//TODO: verify this ID
+      case eZerg_Zergling:
          {
             mSearchState.mUnitCounts[1]++; //zergling
          }break;
-      case eZerg_Overlord: //ovie //TODO: verify this ID
+      case eZerg_Overlord:
          {
             mSearchState.mFarmCapacity += 16;
             mSearchState.mFarmBuilding--;
@@ -2191,7 +2640,7 @@ void MacroSearch::AdvanceQueuedEventsUntil(int targetFrame)
             mSearchState.mLarva.push_back(Hatchery(1, movePtr->frameComplete + LarvaFrameTime));
             mSearchState.mMaxTrainingCapacity += 2;
          }break;
-      case eZerg_Spawning_Pool: //pool //TODO: verify this ID
+      case eZerg_Spawning_Pool:
          {
             //nothing?
          }break;
@@ -2219,7 +2668,7 @@ void MacroSearch::ReverseQueuedEventsUntil(int targetFrame)
     //switch (mLastEventIter->move.getID())
       switch (movePtr->move)
       {
-      case eProtoss_Probe: //probe //TODO: verify this ID
+      case eProtoss_Probe:
          {
             mSearchState.mUnitCounts[0]--; //probe
             mSearchState.mMineralsPerMinute -= MineralsPerMinute;
@@ -2227,25 +2676,65 @@ void MacroSearch::ReverseQueuedEventsUntil(int targetFrame)
             int dt = movePtr->frameComplete - mSearchState.mGameStateFrame; //should be negative
             mSearchState.mMinerals += ((MineralsPerMinute * dt)/FramePerMinute);
          }break;
-      case eProtoss_Zealot: //zealot //TODO: verify this ID
+      case eProtoss_Zealot:
          {
             mSearchState.mUnitCounts[1]--; //zealot
          }break;
-      case eProtoss_Pylon: //pylon  //TODO: verify this ID
+      case eProtoss_Pylon:
          {
             mSearchState.mFarmCapacity -= 16;
             mSearchState.mFarmBuilding++;
             mSearchState.mNextFarmDoneIndex--;
          }break;
-      case eProtoss_Gateway: //gateway   //TODO: verify this ID
+      case eProtoss_Gateway:
          {
             mSearchState.mMaxTrainingCapacity -= 4;  //zealot? //TODO: find largest unit buildable by this building
          }break;
+
+      case eProtoss_Dragoon:
+         {
+            mSearchState.mUnitCounts[2]--; //dragoon
+         }break;
+
+      case eProtoss_Assimilator:
+         {
+            //whatever changes we make to 'mMineralsPerMinute' or 'mGasBuildingsDone' here will be added into the WHOLE calculation in UndoMove()
+            //if we reduce either rate,   then take out their production for 'dt' here, because it wont be taken out in UndoMove()
+            //if we increase either rate, then add back in their production for 'dt' here, because too much will be taken out in UndoMove()
+            mSearchState.mGasBuildingsDone--;
+            int dt = movePtr->frameComplete - mSearchState.mGameStateFrame; //should be negative
+            mSearchState.mGas += (GasPerMinute * dt / FramePerMinute);  //(negative dt)
+            mSearchState.mMineralsPerMinute += (3*MineralsPerMinute);   //take 3 probes back from gas to mine minerals
+            mSearchState.mMinerals -= ((3*MineralsPerMinute * dt)/FramePerMinute);  //(negative dt)
+         }break;
+
+      case eProtoss_Photon_Cannon:
+         {
+            //mSearchState.mTrainingCompleteFrames[6].pop_back(); //should remove last added cannon
+         }break;
+
+      case eProtoss_Cybernetics_Core:
+         {
+            //mSearchState.mTrainingCompleteFrames[4].pop_back(); //should remove last added cycore
+         }break;
+
+      case eProtoss_Nexus:
+         {
+            mSearchState.mMaxTrainingCapacity -= 2;  //probe?
+            //mSearchState.mTrainingCompleteFrames[0].pop_back(); //should remove last added nexus
+         }break;
+
+      case eProtoss_Forge:
+         {
+            //mSearchState.mTrainingCompleteFrames[5].pop_back(); //should remove last added forge
+         }break;
+
+
       //case eAttack:
       //   {
       //      mSearchState.mForceAttacking = false;
       //   }
-      case eTerran_SCV: //scv //TODO: verify this ID
+      case eTerran_SCV:
          {
             mSearchState.mUnitCounts[0]--; //scv
             mSearchState.mMineralsPerMinute -= MineralsPerMinute;
@@ -2253,7 +2742,7 @@ void MacroSearch::ReverseQueuedEventsUntil(int targetFrame)
             int dt = movePtr->frameComplete - mSearchState.mGameStateFrame; //should be negative
             mSearchState.mMinerals += ((MineralsPerMinute * dt)/FramePerMinute);
          }break;
-      case eTerran_Marine: //marine //TODO: verify this ID
+      case eTerran_Marine:
          {
             mSearchState.mUnitCounts[1]--; //marine
          }break;
@@ -2304,7 +2793,7 @@ void MacroSearch::ReverseQueuedEventsUntil(int targetFrame)
             //adjust mineral change from this one scv only (because we changed mMineralsPerMinute)
             mSearchState.mMinerals += ((MineralsPerMinute * dt)/FramePerMinute); //negative dt
          }break;
-      case eTerran_Supply_Depot: //depot  //TODO: verify this ID
+      case eTerran_Supply_Depot:
          {
             mSearchState.mFarmCapacity -= 16;
             mSearchState.mFarmBuilding++;
@@ -2320,7 +2809,7 @@ void MacroSearch::ReverseQueuedEventsUntil(int targetFrame)
             //adjust mineral change from this one scv only
             mSearchState.mMinerals += ((MineralsPerMinute * dt)/FramePerMinute); //negative dt
          }break;
-      case eTerran_Barracks: //rax //TODO: verify this ID
+      case eTerran_Barracks:
          {
             mSearchState.mMaxTrainingCapacity -= 2;  //marine? //TODO: find largest unit buildable by this building
 
@@ -2336,7 +2825,7 @@ void MacroSearch::ReverseQueuedEventsUntil(int targetFrame)
          }break;
 
 
-      case eZerg_Drone: //drone //TODO: verify this ID
+      case eZerg_Drone:
          {
             mSearchState.mUnitCounts[0]--; //drone
             mSearchState.mMineralsPerMinute -= MineralsPerMinute;
@@ -2344,11 +2833,11 @@ void MacroSearch::ReverseQueuedEventsUntil(int targetFrame)
             int dt = movePtr->frameComplete - mSearchState.mGameStateFrame; //should be negative
             mSearchState.mMinerals += ((MineralsPerMinute * dt)/FramePerMinute);
          }break;
-      case eZerg_Zergling: //zergling//TODO: verify this ID
+      case eZerg_Zergling:
          {
             mSearchState.mUnitCounts[1]--; //zergling
          }break;
-      case eZerg_Overlord: //ovie //TODO: verify this ID
+      case eZerg_Overlord:
          {
             mSearchState.mFarmCapacity -= 16;
             mSearchState.mFarmBuilding++;
@@ -2360,7 +2849,7 @@ void MacroSearch::ReverseQueuedEventsUntil(int targetFrame)
             mSearchState.mLarva.pop_back();
             mSearchState.mMaxTrainingCapacity -= 2;
          }break;
-      case eZerg_Spawning_Pool: //pool //TODO: verify this ID
+      case eZerg_Spawning_Pool:
          {
             //nothing?
          }break;
@@ -2395,10 +2884,10 @@ void MacroSearch::UndoMove()
    int gasprice = 0;
    switch (undoMove->move)
    {
-   case eProtoss_Probe: //probe //TODO: verify this ID
+   case eProtoss_Probe:
 	   {
          price              = 50;
-         int buildTime      = 300;   //frames
+       //int buildTime      = 300;   //frames
          int supplyRequired = 2;
 
          //int buildingIndex = 0;  //nexus
@@ -2418,10 +2907,10 @@ void MacroSearch::UndoMove()
          //mUnitCounts[0]--; //probe
       }break;
 
-   case eProtoss_Zealot: //zealot //TODO: verify this ID
+   case eProtoss_Zealot:
       {
          price              = 100;
-         int buildTime      = 600;   //frames
+       //int buildTime      = 600;   //frames
          int supplyRequired = 4;
 
          //int buildingIndex = 2;  //gateway
@@ -2441,10 +2930,10 @@ void MacroSearch::UndoMove()
          //mUnitCounts[1]--; //zealot  //TODO, increment this when unit done building
       }break;
 
-   case eProtoss_Pylon: //pylon  //TODO: verify this ID
+   case eProtoss_Pylon:
       {
          price              = 100;
-         int buildTime      = 450;   //frames
+       //int buildTime      = 450;   //frames
          mSearchState.mFarmBuilding--;
          //TODO: adjust mGas too
          mSearchState.mTrainingCompleteFrames[1].pop_back(); //should remove last added pylon
@@ -2452,15 +2941,87 @@ void MacroSearch::UndoMove()
          //mFarmCapacity -= 16;
       }break;
 
-   case eProtoss_Gateway: //gateway   //TODO: verify this ID
+   case eProtoss_Gateway:
       {
          price              = 150;
-         int buildTime      = 900;   //frames
-
+       //int buildTime      = 900;   //frames
          //TODO: adjust mGas too
          mSearchState.mTrainingCompleteFrames[2].pop_back(); //should remove last added gateway
          //mMaxTrainingCapacity -= 4;  //zealot? //TODO: find largest unit buildable by this building
       }break;
+
+   case eProtoss_Dragoon:
+      {
+         price              = BWAPI::UnitTypes::Protoss_Dragoon.mineralPrice();
+         gasprice           = BWAPI::UnitTypes::Protoss_Dragoon.gasPrice();
+       //int buildTime      = BWAPI::UnitTypes::Protoss_Dragoon.buildTime();
+         int supplyRequired = 4;
+         supplyRequired = BWAPI::UnitTypes::Protoss_Dragoon.supplyRequired();
+
+         //int buildingIndex = 2;  //gateway
+
+         //TODO: adjust mGas too
+         mSearchState.mCurrentFarm -= supplyRequired;
+         int gateIndex = 0;
+         for (int i=0; i<(int)mSearchState.mTrainingCompleteFrames[2].size(); ++i)
+         {
+            if (mSearchState.mTrainingCompleteFrames[2][i] == undoMove->frameComplete)
+            {
+               gateIndex = i;
+               break;
+            }
+         }
+         mSearchState.mTrainingCompleteFrames[2][gateIndex] = undoMove->prevFrameComplete;
+         //mUnitCounts[1]--; //zealot  //TODO, increment this when unit done building
+      }break;
+
+   case eProtoss_Assimilator:
+      {
+         price              = 100;
+       //int buildTime      = BWAPI::UnitTypes::Protoss_Assimilator.buildTime();
+         //TODO: adjust mGas too
+         mSearchState.mTrainingCompleteFrames[3].pop_back(); //should remove last added assimilator
+      }break;
+
+   case eProtoss_Photon_Cannon:
+      {
+         price              = 150;
+         //int buildTime      = BWAPI::UnitTypes::Protoss_Photon_Cannon.buildTime();
+         //TODO: adjust mGas too
+         mSearchState.mTrainingCompleteFrames[6].pop_back(); //should remove last added cannon
+      }break;
+
+   case eProtoss_Cybernetics_Core:
+      {
+         price              = 200;
+         price              = BWAPI::UnitTypes::Protoss_Cybernetics_Core.mineralPrice();
+       //int buildTime      = BWAPI::UnitTypes::Protoss_Cybernetics_Core.buildTime();
+         //TODO: adjust mGas too
+         mSearchState.mTrainingCompleteFrames[4].pop_back(); //should remove last added cycore
+      }break;
+
+   case eProtoss_Nexus:
+      {
+         price              = 400;
+       //int buildTime      = BWAPI::UnitTypes::Protoss_Nexus.buildTime();
+         //TODO: adjust mGas too
+         mSearchState.mTrainingCompleteFrames[0].pop_back(); //should remove last added nexus
+      }break;
+
+   case eProtoss_Forge:
+      {
+         price              = 150;
+       //int buildTime      = BWAPI::UnitTypes::Protoss_Forge.buildTime();
+         //TODO: adjust mGas too
+         mSearchState.mTrainingCompleteFrames[5].pop_back(); //should remove last added forge
+      }break;
+
+   //eProtoss_Dragoon = 66,
+   //eProtoss_Assimilator = 157,
+   //eProtoss_Photon_Cannon = 162,
+   //eProtoss_Cybernetics_Core = 164,
+   //eProtoss_Nexus = 154,
+   //eProtoss_Forge = 166,
 
    //case eAttack:
    //   {
@@ -2469,16 +3030,16 @@ void MacroSearch::UndoMove()
    //      mSearchState.mForceAttacking = false;
    //   }break;
 
-   case eTerran_SCV: //scv //TODO: verify this ID
+   case eTerran_SCV:
       {
          price              = 50;
-         int buildTime      = 300;  //frames
+       //int buildTime      = 300;  //frames
          int supplyRequired = 2;
          mSearchState.mCurrentFarm -= supplyRequired;
          mSearchState.mTrainingCompleteFrames[0][0] = undoMove->prevFrameComplete; //TODO - find right cc
       }break;
 
-   case eTerran_Marine: //marine //TODO: verify this ID
+   case eTerran_Marine:
       {
          price              = 50;
          int supplyRequired = 2;
@@ -2515,7 +3076,7 @@ void MacroSearch::UndoMove()
          mSearchState.mTrainingCompleteFrames[2][raxIndex] = undoMove->prevFrameComplete;
       }break;
 
-   case eTerran_Medic: //medic //TODO: verify this ID
+   case eTerran_Medic:
       {
          price              = 50;   //BWAPI::UnitTypes::Terran_Medic.mineralPrice();//50?
          gasprice           = 25;   //BWAPI::UnitTypes::Terran_Medic.gasPrice();    //25?
@@ -2580,7 +3141,7 @@ void MacroSearch::UndoMove()
 			mSearchState.mMinerals += ((MineralsPerMinute * dt)/FramePerMinute);
      }break;
 
-   case eTerran_Supply_Depot: //depot  //TODO: verify this ID
+   case eTerran_Supply_Depot:
       {
          price              = 100;
          mSearchState.mFarmBuilding--;
@@ -2595,7 +3156,7 @@ void MacroSearch::UndoMove()
          mSearchState.mMinerals += ((MineralsPerMinute * dt)/FramePerMinute);
       }break;
 
-   case eTerran_Barracks: //rax   //TODO: verify this ID
+   case eTerran_Barracks:
       {
 		   price              = 150;
 			mSearchState.mTrainingCompleteFrames[2].pop_back(); //should remove last added rax
@@ -2610,7 +3171,7 @@ void MacroSearch::UndoMove()
 
       }break;
 
-   case eZerg_Drone: //drone //TODO: verify this ID //50, 300, 2
+   case eZerg_Drone:
       {
          price              = 50;
          int supplyRequired = 2;
@@ -2638,7 +3199,7 @@ void MacroSearch::UndoMove()
          //call ReverseLarvaUntil() below
       }break;
 
-   case eZerg_Zergling: //ling //TODO: verify this ID  //100, 420, 2
+   case eZerg_Zergling:
       {
          price              = 50;
          int supplyRequired = 2;
@@ -2662,7 +3223,7 @@ void MacroSearch::UndoMove()
          //call ReverseLarvaUntil() below
       }break;
 
-   case eZerg_Overlord: //ovie //TODO: verify this ID //100, 600, 0
+   case eZerg_Overlord:
       {
          price              = 100;
          mSearchState.mFarmBuilding--;
@@ -2699,7 +3260,7 @@ void MacroSearch::UndoMove()
 			mSearchState.mMinerals += ((MineralsPerMinute * dt)/FramePerMinute);
       }break;
 
-   case eZerg_Spawning_Pool: //pool //TODO: verify this ID //200, 1200, 0
+   case eZerg_Spawning_Pool:
       {
          price              = 200;
 			mSearchState.mTrainingCompleteFrames[2].pop_back(); //should remove last added pool
@@ -2789,7 +3350,6 @@ void MacroSearch::EvaluateState()
    if (mMoveStack.size()>0)
    {
       float score = mSearchState.mMinerals;
-      score += mSearchState.mGas;
       score += mSearchState.mUnitCounts[0] * 50;
       score += mSearchState.mMineralsPerMinute;
       score += mSearchState.mTrainingCompleteFrames[1].size() * 100; //supply providers
@@ -2798,8 +3358,31 @@ void MacroSearch::EvaluateState()
       {
       case ePROTOSS:
       {
-         score += mSearchState.mUnitCounts[1] * 500;   //favor zealots + x5 cost
-         score += mSearchState.mTrainingCompleteFrames[2].size() * 300;  //favor gateways + x2 cost
+         if (mSearchState.mTrainingCompleteFrames[4].size() > 0)
+         {
+            score += mSearchState.mGas * 0.642857f; //scale down because of increase mining rate (make equivalent with minerals)
+            score += 200; //cybercore
+         }
+         //score += mSearchState.mUnitCounts[1] * 500;   //favor zealots + x5 cost
+         //score += mSearchState.mTrainingCompleteFrames[2].size() * 300;  //favor gateways + x2 cost
+         score += mSearchState.mUnitCounts[1] * 100;
+         score += mSearchState.mUnitCounts[2] * 175 * 1.25;  //125 min, 50 gas   //account for longer build time
+         score += mSearchState.mTrainingCompleteFrames[0].size() * 400; //nexus
+         score += mSearchState.mTrainingCompleteFrames[2].size() * 150; //gateway
+         score += mSearchState.mTrainingCompleteFrames[3].size() * 100; //assimilator
+         score += mSearchState.mTrainingCompleteFrames[5].size() * 150; //forge
+         score += mSearchState.mTrainingCompleteFrames[6].size() * 150; //cannons
+
+         if (mDiminishingReturns)   //linear diminishing returns for now
+         {
+            //zealots worth nothing after we have 50 of them
+            score -= min(mSearchState.mUnitCounts[1] * mSearchState.mUnitCounts[1], 2500);
+            ////dragoons worth nothing after we have 50 of them
+            //score -= min(1.75f * mSearchState.mUnitCounts[2] * mSearchState.mUnitCounts[2], 4375.0f);
+            //cannons worth nothing after we have 10 of them
+            score -= min(7.5f * mSearchState.mTrainingCompleteFrames[6].size() * mSearchState.mTrainingCompleteFrames[6].size(), 750.0f);
+         }
+
       }break;
       case eTERRAN:
       {
@@ -2814,6 +3397,7 @@ void MacroSearch::EvaluateState()
          score += mSearchState.mTrainingCompleteFrames[3].size() * 100;   //refinery
          if (mSearchState.mTrainingCompleteFrames[4].size() > 0)
          {
+            score += mSearchState.mGas * 0.642857f; //scale down because of increase mining rate (make equivalent with minerals)
             score += 200;   //academy
          }
       }break;

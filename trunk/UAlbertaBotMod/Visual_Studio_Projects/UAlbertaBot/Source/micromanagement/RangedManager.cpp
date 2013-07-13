@@ -103,7 +103,7 @@ void RangedManager::kiteTarget(BWAPI::Unit * rangedUnit, BWAPI::Unit * target)
 		BWAPI::Broodwar->drawLineMap(rangedUnit->getPosition().x(), rangedUnit->getPosition().y(), 
 			fleePosition.x(), fleePosition.y(), BWAPI::Colors::Cyan);
 
-		smartMove(rangedUnit, BWAPI::TilePosition(fleePosition));
+		smartMove(rangedUnit, fleePosition);
 	}
 	// otherwise shoot
 	else

@@ -51,12 +51,20 @@ enum MOVEID
    eZerg_Hydralisk,
    eZerg_Mutalisk,
 
+   eProtoss_Probe = 64,
+   eProtoss_Zealot = 65,
+   eProtoss_Pylon = 156,
+   eProtoss_Gateway = 160,
+   eProtoss_Dragoon = 66,
+   eProtoss_Assimilator = 157,
+   eProtoss_Photon_Cannon = 162,
+   eProtoss_Cybernetics_Core = 164,
+   eProtoss_Nexus = 154,
+   eProtoss_Forge = 166,
+
    eProtoss_Corsair = 60,
    eProtoss_Dark_Templar = 61,
    eProtoss_Dark_Archon = 63,
-   eProtoss_Probe = 64,
-   eProtoss_Zealot = 65,
-   eProtoss_Dragoon = 66,
    eProtoss_High_Templar = 67,
    eProtoss_Archon = 68,
    eProtoss_Shuttle = 69,
@@ -67,17 +75,10 @@ enum MOVEID
    eProtoss_Reaver = 83,
    eProtoss_Observer = 84,
    eProtoss_Scarab = 85,
-   eProtoss_Nexus = 154,
    eProtoss_Robotics_Facility = 155,
-   eProtoss_Pylon = 156,
-   eProtoss_Assimilator = 157,
    eProtoss_Observatory = 159,
-   eProtoss_Gateway = 160,
-   eProtoss_Photon_Cannon = 162,
    eProtoss_Citadel_of_Adun = 163,
-   eProtoss_Cybernetics_Core = 164,
    eProtoss_Templar_Archives = 165,
-   eProtoss_Forge = 166,
    eProtoss_Stargate = 167,
    eSpecial_Stasis_Cell_Prison = 168,
    eProtoss_Fleet_Beacon = 169,
@@ -229,11 +230,13 @@ public:
    int   mMaxTrainingCapacity;   //max farm worth of units can be trained at any given time
    int   mNextFarmDoneIndex;
    int   mGasBuildingsDone;
-   std::vector<int> mUnitCounts; // 0=probe, 1=zealot, 2=dragoon, 3=templar, 4=dark templar, 5=archon, 6=dark archon, 7=observer, 8=shuttle, 9=reaver, 10=corsair, 11=scout, 12=carrier
-                                 // 0=scv, 1=marine, 2=firebat, 3=medic, 4=ghost, 5=vulture, 6=tank, 7=goliath, 7=
-							     // TODO: fix-> for now, decrement unit counts for scv when building something
-   std::vector< std::vector<int> > mTrainingCompleteFrames;  //0=nexus, 1=pylon, 2=gateways, 3=assimilator, 4=cybercore, 5=forge, 6=robotfacility, 7=stargate, 8=citadel, 9=templar, 10=observatory, 11=arbiter, 12=fleetbeacon,  13=robotsupportbay
-                                                             //0=command center, 1=supply depot, 2=barracks, 3=refinery, 4=academy, 5=engineering bay, 6=factory, 7=armory, 8=starport, 9=science, 10=
+   std::vector<int> mUnitCounts; // 0=probe, 1=zealot, 2=dragoon, 3=templar, 4=dark templar, 5=archon,  6=dark archon, 7=observer, 8=shuttle, 9=reaver, 10=corsair, 11=scout, 12=carrier
+                                 // 0=scv,   1=marine, 2=firebat, 3=medic,   4=ghost,        5=vulture, 6=tank,        7=goliath,  8=
+                                 // TODO: fix-> for now, decrement unit counts for scv when building something
+
+   std::vector< std::vector<int> > mTrainingCompleteFrames;  //0=nexus,          1=pylon,        2=gateways, 3=assimilator, 4=cybercore, 5=forge,           6=cannon,  7=robotfacility, 8=stargate, 9=citadel, 10=templar, 11=observatory, 12=arbiter, 13=fleetbeacon,  14=robotsupportbay
+                                                             //0=command center, 1=supply depot, 2=barracks, 3=refinery,    4=academy,   5=engineering bay, 6=factory, 7=armory, 8=starport, 9=science, 10=
+
    std::vector<Hatchery> mLarva; //only used for zerg players
 };
 
@@ -276,6 +279,8 @@ private:
 
    void ReverseLarvaUntil(int targetFrame);
    void AdvanceLarvaUntil(int targetFrame);
+
+   bool mDiminishingReturns;
 
    float mMaxScore;
    int mMaxScoreTime;
