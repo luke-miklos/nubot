@@ -308,7 +308,17 @@ const bool StrategyManager::doAttack(const std::set<BWAPI::Unit *> & freeUnits)
 {
 	int ourForceSize = (int)freeUnits.size();
 
-	int numUnitsNeededForAttack = 3;
+ //if (BWAPI::Broodwar->self()->getRace() == BWAPI::Races::Protoss)
+	int numUnitsNeededForAttack = 2;
+   if (BWAPI::Broodwar->self()->getRace() == BWAPI::Races::Terran)
+   {
+    //numUnitsNeededForAttack = 8;
+      numUnitsNeededForAttack = 5;
+   }
+   else if (BWAPI::Broodwar->self()->getRace() == BWAPI::Races::Zerg)
+   {
+      numUnitsNeededForAttack = 6;
+   }
 
 	bool doAttack  = BWAPI::Broodwar->self()->completedUnitCount(BWAPI::UnitTypes::Protoss_Dark_Templar) >= 1
 					|| ourForceSize >= numUnitsNeededForAttack;

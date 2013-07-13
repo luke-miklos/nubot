@@ -40,7 +40,7 @@ void MeleeManager::executeMicro(const UnitVector & targets)
 			else
 			{
 				// if we're not near the order position
-				if (meleeUnit->getDistance(order.position) > 100)
+				if (meleeUnit->getDistance(BWAPI::Position(order.position)) > 100)
 				{
 					// move to it
 					smartAttackMove(meleeUnit, order.position);

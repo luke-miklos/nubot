@@ -8,8 +8,6 @@ class SquadData
 	// All squads. Indexed by SquadOrder enum
 	std::vector<Squad>	squads;
 
-	void				updateAllSquads();
-
 public:
 
 	SquadData();

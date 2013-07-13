@@ -1,9 +1,12 @@
 #include "Common.h"
 #include "MicroManager.h"
 
+#include "FlowField.hpp"
+
 void MicroManager::setUnits(const UnitVector & u) 
 { 
-	units = u; 
+	units = u;
+   dirty = true;
 }
 
 BWAPI::Position MicroManager::calcCenter() const
@@ -35,12 +38,12 @@ void MicroManager::execute(const SquadOrder & inputOrder)
 	// if the order is to defend, we only care about units in the radius of the defense
 	if (order.type == order.Defend)
 	{
-		MapGrid::Instance().GetUnits(nearbyEnemies, order.position, 800, false, true);
+		MapGrid::Instance().GetUnits(nearbyEnemies, BWAPI::Position(order.position), 800, false, true);
 	
 	} // otherwise we want to see everything on the way
 	else if (order.type == order.Attack) 
 	{
-		MapGrid::Instance().GetUnits(nearbyEnemies, order.position, 800, false, true);
+		MapGrid::Instance().GetUnits(nearbyEnemies, BWAPI::Position(order.position), 800, false, true);
 		BOOST_FOREACH (BWAPI::Unit * unit, units) 
 		{
 			BWAPI::Unit * u = unit;
@@ -68,11 +71,11 @@ void MicroManager::regroup(const BWAPI::Position & regroupPosition) const
 		{
 			// regroup it
 			BWAPI::Broodwar->drawCircleMap(unit->getPosition().x(), unit->getPosition().y(), 20, BWAPI::Colors::Yellow);
-			smartMove(unit, regroupPosition);
+			smartMove(unit, BWAPI::TilePosition(regroupPosition));
 		}
 		else
 		{
-			smartAttackMove(unit, unit->getPosition());
+			smartAttackMove(unit, BWAPI::TilePosition(unit->getPosition()));
 		}
 	}
 }
@@ -147,7 +150,7 @@ void MicroManager::smartAttackUnit(BWAPI::Unit * attacker, BWAPI::Unit * target)
 
 }
 
-void MicroManager::smartAttackMove(BWAPI::Unit * attacker, BWAPI::Position targetPosition) const
+void MicroManager::smartAttackMove(BWAPI::Unit * attacker, BWAPI::TilePosition targetPosition) const
 {
 	assert(attacker);
 
@@ -161,20 +164,28 @@ void MicroManager::smartAttackMove(BWAPI::Unit * attacker, BWAPI::Position targe
 	BWAPI::UnitCommand currentCommand(attacker->getLastCommand());
 
 	// if we've already told this unit to attack this target, ignore this command
-	if (currentCommand.getType() == BWAPI::UnitCommandTypes::Attack_Move &&	currentCommand.getTargetPosition() == targetPosition)
+	if (currentCommand.getType() == BWAPI::UnitCommandTypes::Attack_Move &&	currentCommand.getTargetTilePosition() == targetPosition)
 	{
 		return;
 	}
 
-	// if nothing prevents it, attack the target
-	attacker->attack(targetPosition);
+   BWAPI::Position tgt(targetPosition);
+
+   // if nothing prevents it, attack the target
+   //use the flow field if possible
+   //GetFlowFromTo() does not write over the tgt position unless it succeeds
+   if (FlowField::Instance()->GetFlowFromTo(attacker->getPosition(), targetPosition, tgt))
+   {
+      //target position populated, just use it
+   }
+	attacker->attack(tgt);
 
 	if (Options::Debug::DRAW_UALBERTABOT_DEBUG) BWAPI::Broodwar->drawLineMap(	attacker->getPosition().x(), attacker->getPosition().y(),
-									targetPosition.x(), targetPosition.y(),
+									targetPosition.x()*32, targetPosition.y()*32,
 									BWAPI::Colors::Orange );
 }
 
-void MicroManager::smartMove(BWAPI::Unit * attacker, BWAPI::Position targetPosition) const
+void MicroManager::smartMove(BWAPI::Unit * attacker, BWAPI::TilePosition targetPosition) const
 {
 	assert(attacker);
 
@@ -193,19 +204,29 @@ void MicroManager::smartMove(BWAPI::Unit * attacker, BWAPI::Position targetPosit
 
 	// if we've already told this unit to attack this target, ignore this command
 	if (   (currentCommand.getType() == BWAPI::UnitCommandTypes::Move)
-		&& (currentCommand.getTargetPosition() == targetPosition) 
+		&& (currentCommand.getTargetTilePosition() == targetPosition) 
 		&& (BWAPI::Broodwar->getFrameCount() - attacker->getLastCommandFrame() < 5)
 		&& attacker->isMoving())
 	{
 		if (attacker->isSelected())
 		{
-			BWAPI::Broodwar->printf("Previous Command Frame=%d Pos=(%d, %d)", attacker->getLastCommandFrame(), currentCommand.getTargetPosition().x(), currentCommand.getTargetPosition().y());
+			//BWAPI::Broodwar->printf("Previous Command Frame=%d Pos=(%d, %d)", attacker->getLastCommandFrame(), currentCommand.getTargetPosition().x(), currentCommand.getTargetPosition().y());
 		}
 		return;
 	}
 
-	// if nothing prevents it, attack the target
-	attacker->move(targetPosition);
+
+   BWAPI::Position tgt(targetPosition);
+
+	// if nothing prevents it, move towards the target position
+   //use the flow field if possible
+   //GetFlowFromTo() does not write over the tgt position unless it succeeds
+   if (FlowField::Instance()->GetFlowFromTo(attacker->getPosition(), targetPosition, tgt))
+   {
+      //target position populated, just use it
+   }
+	attacker->move(tgt);
+
 
 	if (Options::Debug::DRAW_UALBERTABOT_DEBUG) 
 	{

@@ -21,16 +21,16 @@ public:
        }
    };
 
-   static std::vector<BWSAL::UnitGroup> GetClustersByCount(BWSAL::UnitGroup& group, int numClusters);
-   static std::vector<BWSAL::UnitGroup> GetClustersByDistance(BWSAL::UnitGroup& group, int distThreshold);
+   static std::vector<std::vector<BWAPI::Unit*> > GetClustersByCount(const std::vector<BWAPI::Unit*>& group, int numClusters);
+   static std::vector<std::vector<BWAPI::Unit*> > GetClustersByDistance(const std::vector<BWAPI::Unit*>& group, int distThreshold);
 
 private:
 
-   static std::vector<ClusterNode>      GenerateDendrogram(BWSAL::UnitGroup& group);
+   static std::vector<ClusterNode>      GenerateDendrogram(const std::vector<BWAPI::Unit*>& group);
 
-   static std::vector<BWSAL::UnitGroup> SplitDendrogramIntoClusters(BWSAL::UnitGroup& group, 
-                                                                    std::vector<ClusterNode> dendrogram,
-                                                                    int numClusters);
+   static std::vector<std::vector<BWAPI::Unit*>> SplitDendrogramIntoClusters(const std::vector<BWAPI::Unit*>& group, 
+                                                                             std::vector<ClusterNode> dendrogram,
+                                                                             int numClusters);
 
    static int                             mLastN;
    static std::vector< std::vector<int> > mDistMatrix;

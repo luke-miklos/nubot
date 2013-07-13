@@ -129,10 +129,10 @@ void UAlbertaBotModule::onSendText(std::string text)
 			#endif
 		}
 	}
-	else if (text.compare("sim") != 0)
-	{
-		BWAPI::Broodwar->setLocalSpeed(atoi(text.c_str()));
-	}
+	//else if (text.compare("sim") != 0)
+	//{
+	//	BWAPI::Broodwar->setLocalSpeed(atoi(text.c_str()));
+	//}
 }
 
 void UAlbertaBotModule::onUnitCreate(BWAPI::Unit * unit)

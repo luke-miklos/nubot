@@ -8,7 +8,10 @@ SquadData::SquadData()
 
 void SquadData::update()
 {
-	updateAllSquads();
+	BOOST_FOREACH (Squad & squad, squads)
+	{
+		squad.update();
+	}
 }
 
 void SquadData::clearSquadData()
@@ -19,14 +22,6 @@ void SquadData::clearSquadData()
 void SquadData::addSquad(const Squad & squad)
 {
 	squads.push_back(squad);
-}
-
-void SquadData::updateAllSquads()
-{
-	BOOST_FOREACH (Squad & squad, squads)
-	{
-		squad.update();
-	}
 }
 
 void SquadData::drawSquadInformation(int x, int y) 

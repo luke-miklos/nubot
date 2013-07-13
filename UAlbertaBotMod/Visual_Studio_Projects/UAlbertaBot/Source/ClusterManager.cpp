@@ -11,7 +11,7 @@ int                             ClusterManager::mLastN = 0;
 std::vector< std::vector<int> > ClusterManager::mDistMatrix;
 
 //static
-std::vector<ClusterManager::ClusterNode> ClusterManager::GenerateDendrogram(BWSAL::UnitGroup& group)
+std::vector<ClusterManager::ClusterNode> ClusterManager::GenerateDendrogram(const std::vector<BWAPI::Unit*>& group)
 {
    //distance matrix (holds distance squared between each unit in the group)
    //int distmatrix[512][512];
@@ -27,8 +27,8 @@ std::vector<ClusterManager::ClusterNode> ClusterManager::GenerateDendrogram(BWSA
       mLastN = N;
    }
 
-   BWSAL::UnitGroup::iterator it = group.begin();
-   BWSAL::UnitGroup::iterator jt;
+   std::vector<BWAPI::Unit*>::const_iterator it = group.begin();
+   std::vector<BWAPI::Unit*>::const_iterator jt;
    BWAPI::Position pi, pj;
    for (int i=0; i<N; ++i, it++)
    {
@@ -114,19 +114,19 @@ std::vector<ClusterManager::ClusterNode> ClusterManager::GenerateDendrogram(BWSA
 
 
 //static
-std::vector<BWSAL::UnitGroup> ClusterManager::SplitDendrogramIntoClusters(BWSAL::UnitGroup&        group, 
-                                                                          std::vector<ClusterNode> dendrogram,
-                                                                          int                      numClusters )
+std::vector<std::vector<BWAPI::Unit*> > ClusterManager::SplitDendrogramIntoClusters(const std::vector<BWAPI::Unit*>& group, 
+                                                                                   std::vector<ClusterNode>   dendrogram,
+                                                                                   int                        numClusters )
 {
    std::vector<BWAPI::Unit*> groupArray;
-   BWSAL::UnitGroup::iterator it;
+   std::vector<BWAPI::Unit*>::const_iterator it;
    for (it = group.begin(); it != group.end(); it++)
    {
       groupArray.push_back(*it);
    }
 
    int i, j, k;
-   std::vector<BWSAL::UnitGroup> clusters = std::vector<BWSAL::UnitGroup>(numClusters);
+   std::vector<std::vector<BWAPI::Unit*> > clusters = std::vector<std::vector<BWAPI::Unit*> >(numClusters);
    int icluster = 0;
    int N = group.size();
    const int n = N-numClusters; //number of nodes to join
@@ -136,13 +136,15 @@ std::vector<BWSAL::UnitGroup> ClusterManager::SplitDendrogramIntoClusters(BWSAL:
       k = dendrogram[i].left;
       if (k>=0)
       {
-         clusters[icluster].insert(groupArray[k]);
+         //clusters[icluster].insert(groupArray[k]);
+         clusters[icluster].push_back(groupArray[k]);
          icluster++;
       }
       k = dendrogram[i].right;
       if (k>=0)
       { 
-         clusters[icluster].insert(groupArray[k]);
+         //clusters[icluster].insert(groupArray[k]);
+         clusters[icluster].push_back(groupArray[k]);
          icluster++;
       }
    }
@@ -166,7 +168,8 @@ std::vector<BWSAL::UnitGroup> ClusterManager::SplitDendrogramIntoClusters(BWSAL:
       }
       else
       {
-         clusters[j].insert(groupArray[k]);
+         //clusters[j].insert(groupArray[k]);
+         clusters[j].push_back(groupArray[k]);
       }
       k = dendrogram[i].right;
       if (k<0)
@@ -175,7 +178,8 @@ std::vector<BWSAL::UnitGroup> ClusterManager::SplitDendrogramIntoClusters(BWSAL:
       }
       else
       {
-         clusters[j].insert(groupArray[k]);
+         //clusters[j].insert(groupArray[k]);
+         clusters[j].push_back(groupArray[k]);
       }
    }
    return clusters;
@@ -184,7 +188,7 @@ std::vector<BWSAL::UnitGroup> ClusterManager::SplitDendrogramIntoClusters(BWSAL:
 
 
 //static 
-std::vector<BWSAL::UnitGroup> ClusterManager::GetClustersByCount(BWSAL::UnitGroup& group, int numClusters)
+std::vector<std::vector<BWAPI::Unit*> > ClusterManager::GetClustersByCount(const std::vector<BWAPI::Unit*>& group, int numClusters)
 {
    std::vector<ClusterNode> dendrogram = GenerateDendrogram(group);
    return SplitDendrogramIntoClusters(group, dendrogram, numClusters);
@@ -193,7 +197,7 @@ std::vector<BWSAL::UnitGroup> ClusterManager::GetClustersByCount(BWSAL::UnitGrou
 
 
 //static 
-std::vector<BWSAL::UnitGroup> ClusterManager::GetClustersByDistance(BWSAL::UnitGroup& group, int distThreshold)
+std::vector<std::vector<BWAPI::Unit*> > ClusterManager::GetClustersByDistance(const std::vector<BWAPI::Unit*>& group, int distThreshold)
 {
    std::vector<ClusterNode> dendrogram = GenerateDendrogram(group);
    //count how many tree splits are necessary because of distance threshold
@@ -202,7 +206,7 @@ std::vector<BWSAL::UnitGroup> ClusterManager::GetClustersByDistance(BWSAL::UnitG
  //for (int i = dendrogram.size()-1; i >= 0; i--)
    for (int i = N-2;                 i >= 0; i--)
    { 
-      if (dendrogram[i].distance > distThreshold)
+      if (dendrogram[i].distance > (distThreshold*distThreshold))
       {
          numClusters++;
       }

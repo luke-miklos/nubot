@@ -159,6 +159,12 @@
     <ClCompile Include="..\Source\FlowField.cpp">
       <Filter>game\util\map</Filter>
     </ClCompile>
+    <ClCompile Include="..\Source\FlockManager.cpp">
+      <Filter>game\combat\micro\generic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\ClusterManager.cpp">
+      <Filter>game\combat\micro\squad</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Source\CombatCommander.h">
@@ -283,6 +289,12 @@
     </ClInclude>
     <ClInclude Include="..\Source\FlowField.hpp">
       <Filter>game\util\map</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\FlockManager.h">
+      <Filter>game\combat\micro\generic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\ClusterManager.h">
+      <Filter>game\combat\micro\squad</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
