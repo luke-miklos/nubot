@@ -120,6 +120,8 @@
   <ItemGroup>
     <ClCompile Include="..\Source\ClusterManager.cpp" />
     <ClCompile Include="..\Source\CombatSimulation.cpp" />
+    <ClCompile Include="..\Source\influence_map\ControlInfluenceMap.cpp" />
+    <ClCompile Include="..\Source\influence_map\InfluenceMap.cpp" />
     <ClCompile Include="..\Source\MacroSearch.cpp" />
     <ClCompile Include="..\Source\MicroSearchManager.cpp" />
     <ClCompile Include="..\Source\base\BuildingData.cpp" />
@@ -159,6 +161,8 @@
   <ItemGroup>
     <ClInclude Include="..\Source\ClusterManager.h" />
     <ClInclude Include="..\Source\CombatSimulation.h" />
+    <ClInclude Include="..\Source\influence_map\ControlInfluenceMap.h" />
+    <ClInclude Include="..\Source\influence_map\InfluenceMap.h" />
     <ClInclude Include="..\Source\MacroSearch.h" />
     <ClInclude Include="..\Source\MicroSearchManager.h" />
     <ClInclude Include="..\Source\base\BuildingData.h" />

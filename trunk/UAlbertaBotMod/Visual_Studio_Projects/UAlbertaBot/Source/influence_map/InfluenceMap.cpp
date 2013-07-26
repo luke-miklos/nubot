@@ -1,63 +1,17 @@
 
 #include "InfluenceMap.h"
 
-InfluenceMap::InfluenceMap(int mapWidth, int mapHeight)
-   : maxWidth(mapWidth - 1),
-     maxHeight(mapHeight - 1)
+InfluenceMap::InfluenceMap(int mapWidth, int mapHeight, int scale)
+   : maxWidth(mapWidth / scale - 1),
+     maxHeight(mapHeight / scale - 1),
+     scale(scale)
 {
-   mMap.resize(mapWidth, std::vector<double> (mapHeight, 0.0));
+   mMap.resize(mapWidth / scale , std::vector<double> (mapHeight / scale, 0.0));
 }
 
 InfluenceMap::~InfluenceMap()
 {
 }
-
-/*
-void InfluenceMap::UpdateInfluence()
-{
-   ClearMap();
-
-   std::set< BWAPI::Unit* > units = BWAPI::Broodwar->self()->getUnits();
-   for (std::set< BWAPI::Unit* >::iterator it = units.begin(); it != units.end(); it++)
-   {
-      BWAPI::Unit* unit = *it;
-      if (unit->exists())
-      {
-         // Use pixel position here as it is more accurate, gives unit center
-         BWAPI::Position pixelPos = unit->getPosition();
-         // Set the influence for the unit based on unis sight range
-         SetInfluence(pixelPos, unit->getType().sightRange(), 1.0);
-
-         // DEBUG - drawing to help visualization
-         //BWAPI::Color color = BWAPI::Colors::Orange;
-         // Draw a circle showing the unit's vision range
-         //int radius = unit->getType().sightRange() + unit->getType().dimensionUp();
-         //BWAPI::Broodwar->drawCircleMap(pixelPos.x(), pixelPos.y(), radius, color);
-
-         // Box unit
-         //int left = (pixelPos.x() - unit->getType().dimensionLeft());
-         //int top = (pixelPos.y() - unit->getType().dimensionUp());
-         //int right = (pixelPos.x() + unit->getType().dimensionRight());
-         //int bottom = (pixelPos.y() + unit->getType().dimensionDown());
-         //BWAPI::Broodwar->drawBoxMap(left, top, right, bottom, color);
-         // DEBUG
-      }
-   } // End my units
-
-   std::set< BWAPI::Unit* > enemyUnits = BWAPI::Broodwar->enemy()->getUnits();
-   for (std::set< BWAPI::Unit* >::iterator it = enemyUnits.begin(); it != enemyUnits.end(); it++)
-   {
-      BWAPI::Unit* unit = *it;
-      if (unit->exists())
-      {
-         // Use pixel position here as it is more accurate, gives unit center
-         BWAPI::Position pixelPos = unit->getPosition();
-         // Set the influence for the unit based on unis sight range
-         SetInfluence(pixelPos, unit->getType().sightRange(), -1.0);
-      }
-   } // End enemy units
-}
-*/
 
 void InfluenceMap::DrawInfluenceScreen()
 {
@@ -114,15 +68,15 @@ void InfluenceMap::DrawInfluenceAll()
       {
          if (*h > 0.01 || *h < -0.01)
          {
-            int left = (width * TILE_SIZE);
-            int top = (height * TILE_SIZE);
-            int right = left + TILE_SIZE;
-            int bottom = top + TILE_SIZE;
+            int left = (width * TILE_SIZE * scale);
+            int top = (height * TILE_SIZE * scale);
+            int right = left + TILE_SIZE * scale;
+            int bottom = top + TILE_SIZE * scale;
             BWAPI::Color color = GetInfluenceColor(*h);
             BWAPI::Broodwar->drawBoxMap(left, top, right, bottom, color, true);
 
             // Display influence value, center of tile
-            BWAPI::Broodwar->drawTextMap(left + 16, top + 16, "%d", (int)*h);
+            BWAPI::Broodwar->drawTextMap(left + 16 * scale, top + 16 * scale, "%d", (int)*h);
          }
          height++;
       }
@@ -137,11 +91,11 @@ void InfluenceMap::DrawInfluenceAll()
    BWAPI::Color gridColor = BWAPI::Colors::Green;
    for (int x = 0; x < width; ++x)
    {
-      BWAPI::Broodwar->drawLineMap((x * TILE_SIZE), 0, (x * TILE_SIZE), (height * TILE_SIZE), gridColor);
+      BWAPI::Broodwar->drawLineMap((x * TILE_SIZE* scale), 0, (x * TILE_SIZE* scale), (height * TILE_SIZE* scale), gridColor);
    }
    for (int y = 0; y < height; ++y)
    {
-      BWAPI::Broodwar->drawLineMap(0, (y * TILE_SIZE), (width * TILE_SIZE), (y * TILE_SIZE), gridColor);
+      BWAPI::Broodwar->drawLineMap(0, (y * TILE_SIZE* scale), (width * TILE_SIZE* scale), (y * TILE_SIZE* scale), gridColor);
    }
 
    BWAPI::Broodwar->drawTextScreen( 0, 50, "Drawing influence map, size is %d x %d", width, height);
@@ -166,10 +120,13 @@ void InfluenceMap::ClearMap()
 // Modifications are to prevent double counting influence
 void InfluenceMap::SetInfluence(BWAPI::Position position, int radius, double value)
 {
-   // Convert from pixels to build tiles
-   int cX = position.x()/TILE_SIZE;
-   int cY = position.y()/TILE_SIZE;
-   radius = radius/TILE_SIZE + 1;
+   // Convert from pixels to grid tiles
+   int cX = position.x()/(TILE_SIZE * scale);
+   int cY = position.y()/(TILE_SIZE * scale);
+   
+   //Simple single tile store: StoreValue(cX, cY, value);
+
+   radius = radius/(TILE_SIZE * scale);
 
    int x = radius;
    int y = 0;

@@ -14,7 +14,8 @@ public:
    // Create a new influence map
    // mapWidth - map width in build tiles
    // mapHeight - map height in build tiles
-   InfluenceMap(int mapWidth, int mapHeight);
+   // scale - tile multiplier factor to increase the grid size and reduce overall map size
+   InfluenceMap(int mapWidth, int mapHeight, int scale = 1);
    ~InfluenceMap();
 
    // Store influence based on build tile location
@@ -39,6 +40,12 @@ public:
    // value - the influence value to set, added to any existing influence value
    void SetInfluence(BWAPI::Position position, int radius, double value);
 
+   // TODO
+   // Find the nearest position to me with a influnce greater then or equal to requested value
+   // BWAPI::Position FindNearestPosition(BWAPI::Position myPosition, double value);
+   // Find strongest influence position
+   // Find weakest influence position 
+
 private:
 
    // Influence values grid based on build tiles
@@ -47,6 +54,10 @@ private:
    // Used to validate values and make sure we don't exceed vector bounds
    const int maxWidth;
    const int maxHeight;
+
+   // Used a a divisor to make the tiles on the grid larger
+   // e.g. '2' would make a grid tile of 2x2 build tiles
+   const int scale;
 
    // Stores a contributing influence value for a line of tiles
    // Uses StoreValue() to set individual values in the line
