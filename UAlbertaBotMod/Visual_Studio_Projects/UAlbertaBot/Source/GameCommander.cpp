@@ -389,6 +389,11 @@ void GameCommander::onSendText(std::string text)
          flowDebug = 0;
    }
 
+   if (text.compare("i") == 0)
+   {
+      InformationManager::Instance().drawInfluence = !(InformationManager::Instance().drawInfluence);
+   }
+
    if (text.compare("m") == 0)
    {
       flowMapIndex++;

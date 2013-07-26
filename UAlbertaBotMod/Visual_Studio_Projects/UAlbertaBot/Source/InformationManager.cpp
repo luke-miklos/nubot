@@ -7,7 +7,9 @@
 // constructor
 InformationManager::InformationManager() 
 	: goForIt(false)
+   , drawInfluence(false)
 	, map(BWAPI::Broodwar)
+   , ctrlMap(BWAPI::Broodwar->mapWidth(), BWAPI::Broodwar->mapHeight())
 	, lastFrameRegroup(false)
 {
 	initializeRegionInformation();
@@ -26,6 +28,16 @@ void InformationManager::update()
 	updateBaseLocationInfo();
 	map.setUnitData(BWAPI::Broodwar);
 	map.setBuildingData(BWAPI::Broodwar);
+
+   // The incluence map depends on the unit info being updated first
+   if (BWAPI::Broodwar->getFrameCount() >= 100)
+   {
+      ctrlMap.UpdateInfluence(&selfUnitData, &enemyUnitData);
+   }
+   if (drawInfluence)
+   {
+      ctrlMap.DrawInfluenceAll();
+   }
 }
 
 void InformationManager::updateUnitInfo() 

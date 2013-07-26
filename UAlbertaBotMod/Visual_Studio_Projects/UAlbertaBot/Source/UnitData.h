@@ -8,11 +8,12 @@ struct UnitInfo
 	// we need to store all of this data because if the unit is not visible, we
 	// can't reference it from the unit pointer
 
-	int					unitID;
-	int					lastHealth;
-	BWAPI::Unit *		unit;
-	BWAPI::Position		lastPosition;
-	BWAPI::UnitType		type;
+   int               unitID;
+   int               lastHealth;
+   BWAPI::Unit *     unit;
+   BWAPI::Position   lastPosition;     // Last position seen
+   BWAPI::Position   previousPosition; // Position immideately before last position, used to determine if unit is moving
+   BWAPI::UnitType   type;
 
 	bool canCloak() const
 	{
@@ -36,6 +37,7 @@ struct UnitInfo
 		, lastHealth(0)
 		, unit(NULL)
 		, lastPosition(BWAPI::Positions::None)
+      , previousPosition(BWAPI::Positions::None)
 		, type(BWAPI::UnitTypes::None)
 	{
 
@@ -47,6 +49,7 @@ struct UnitInfo
 		unit = u;
 		lastHealth = u->getHitPoints() + u->getShields();
 		lastPosition = last;
+      previousPosition = BWAPI::Positions::None;
 		type = t;
 	}
 

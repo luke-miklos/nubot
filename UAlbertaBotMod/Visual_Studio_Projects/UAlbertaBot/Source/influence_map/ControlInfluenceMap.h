@@ -1,6 +1,7 @@
 
 #pragma once
 #include "InfluenceMap.h"
+#include "..\UnitData.h"
 
 // Defines a "control" influence map that apoximates what areas
 // on thte map are controlled by which side. Influence values 
@@ -16,7 +17,8 @@ public:
    ControlInfluenceMap(int mapWidth, int mapHeight);
    ~ControlInfluenceMap();
 
-   // Store influence of unit vision range based on tile location
-   virtual void UpdateInfluence();
+   // Store influence as unit vision range based on tile location
+   virtual void UpdateInfluence(UnitData* myUnits, UnitData* enemyUnits);
+
 };
 

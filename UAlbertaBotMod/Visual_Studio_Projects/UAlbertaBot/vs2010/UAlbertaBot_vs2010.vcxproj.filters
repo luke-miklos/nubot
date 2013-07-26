@@ -159,6 +159,12 @@
     <ClCompile Include="..\Source\ClusterManager.cpp">
       <Filter>game\combat\micro\squad</Filter>
     </ClCompile>
+    <ClCompile Include="..\Source\influence_map\ControlInfluenceMap.cpp">
+      <Filter>game\util\map</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\influence_map\InfluenceMap.cpp">
+      <Filter>game\util\map</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Source\CombatCommander.h">
@@ -283,6 +289,12 @@
     </ClInclude>
     <ClInclude Include="..\Source\ClusterManager.h">
       <Filter>game\combat\micro\squad</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\influence_map\ControlInfluenceMap.h">
+      <Filter>game\util\map</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\influence_map\InfluenceMap.h">
+      <Filter>game\util\map</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

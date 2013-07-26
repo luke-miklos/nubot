@@ -6,6 +6,7 @@
 #include "UnitData.h"
 
 #include "..\..\AdversarialSearch\source\Map.hpp"
+#include "influence_map\ControlInfluenceMap.h"
 
 struct BaseInfo;
 typedef std::vector<BaseInfo> BaseInfoVector;
@@ -14,7 +15,9 @@ class InformationManager {
 
 	InformationManager();
 
-	MicroSearch::Map					map;
+	MicroSearch::Map           map;
+
+   ControlInfluenceMap        ctrlMap;
 
 	UnitData							enemyUnitData;
 	UnitData							selfUnitData;
@@ -40,6 +43,7 @@ class InformationManager {
 public:
 
 	bool goForIt;
+   bool drawInfluence;
 	int lastFrameRegroup;
 
 	// yay for singletons!

@@ -24,7 +24,11 @@ void UnitData::updateUnit(BWAPI::Unit * unit)
 	{
 		UnitInfo & ui = unitMap.find(unit)->second;
 
-		ui.lastPosition = unit->getPosition();
+      // Save off the previous last position seen
+      // comparison with lastPosition will determine if unit is moving
+      ui.previousPosition = ui.lastPosition;
+      // Store the most up to date last position seen
+      ui.lastPosition = unit->getPosition();
 		ui.lastHealth = unit->getHitPoints() + unit->getShields();
 		ui.unitID = unit->getID();
 		ui.type = unit->getType();
