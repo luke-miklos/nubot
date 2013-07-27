@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="game">
@@ -159,6 +159,12 @@
     <ClCompile Include="..\Source\ClusterManager.cpp">
       <Filter>game\combat\micro\squad</Filter>
     </ClCompile>
+    <ClCompile Include="..\Source\FlowField.cpp">
+      <Filter>game\util\map</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\FlockManager.cpp">
+      <Filter>game\combat\micro\squad</Filter>
+    </ClCompile>
     <ClCompile Include="..\Source\influence_map\ControlInfluenceMap.cpp">
       <Filter>game\util\map</Filter>
     </ClCompile>
@@ -288,6 +294,12 @@
       <Filter>game\macro\managers</Filter>
     </ClInclude>
     <ClInclude Include="..\Source\ClusterManager.h">
+      <Filter>game\combat\micro\squad</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\FlowField.hpp">
+      <Filter>game\util\map</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\FlockManager.h">
       <Filter>game\combat\micro\squad</Filter>
     </ClInclude>
     <ClInclude Include="..\Source\influence_map\ControlInfluenceMap.h">
