@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -120,6 +120,8 @@
   <ItemGroup>
     <ClCompile Include="..\Source\ClusterManager.cpp" />
     <ClCompile Include="..\Source\CombatSimulation.cpp" />
+    <ClCompile Include="..\Source\FlockManager.cpp" />
+    <ClCompile Include="..\Source\FlowField.cpp" />
     <ClCompile Include="..\Source\influence_map\ControlInfluenceMap.cpp" />
     <ClCompile Include="..\Source\influence_map\InfluenceMap.cpp" />
     <ClCompile Include="..\Source\MacroSearch.cpp" />
@@ -161,6 +163,8 @@
   <ItemGroup>
     <ClInclude Include="..\Source\ClusterManager.h" />
     <ClInclude Include="..\Source\CombatSimulation.h" />
+    <ClInclude Include="..\Source\FlockManager.h" />
+    <ClInclude Include="..\Source\FlowField.hpp" />
     <ClInclude Include="..\Source\influence_map\ControlInfluenceMap.h" />
     <ClInclude Include="..\Source\influence_map\InfluenceMap.h" />
     <ClInclude Include="..\Source\MacroSearch.h" />
