@@ -22,8 +22,13 @@ public:
 	void onUnitDestroy(BWAPI::Unit * unit)
 	{
 		typedef std::map<BWAPI::Key, std::set<BWAPI::Unit *>> mapType;
-		BOOST_FOREACH (mapType::value_type & t, keyMap)
-		{
+
+      std::map<BWAPI::Key, std::set<BWAPI::Unit *>>::iterator it = keyMap.begin();
+      for (; it != keyMap.end(); it++)
+      {
+         mapType::value_type t = *it;
+		//BOOST_FOREACH (mapType::value_type & t, keyMap)
+		//{
 			t.second.erase(unit);
 		}
 	}
@@ -35,8 +40,10 @@ public:
 
 		keyMap[k] = std::set<BWAPI::Unit *>();
 
-		BOOST_FOREACH (BWAPI::Unit * unit, BWAPI::Broodwar->getSelectedUnits())
-		{
+      std::set<BWAPI::Unit*>::const_iterator it = BWAPI::Broodwar->getSelectedUnits().begin();
+      for (; it != BWAPI::Broodwar->getSelectedUnits().end(); it++)
+      {
+         BWAPI::Unit * unit = *it;
 			if (unit->getPlayer() == BWAPI::Broodwar->self())
 			{
 				keyMap[k].insert(unit);
@@ -53,8 +60,10 @@ public:
 			keyMap[k] = std::set<BWAPI::Unit *>();
 		}
 
-		BOOST_FOREACH (BWAPI::Unit * unit, BWAPI::Broodwar->getSelectedUnits())
-		{
+      std::set<BWAPI::Unit*>::const_iterator it = BWAPI::Broodwar->getSelectedUnits().begin();
+      for (; it != BWAPI::Broodwar->getSelectedUnits().end(); it++)
+      {
+         BWAPI::Unit * unit = *it;
 			if (unit->getPlayer() == BWAPI::Broodwar->self())
 			{
 				keyMap[k].insert(unit);
@@ -157,8 +166,11 @@ public:
 
 	void processKeyboardEvents()
 	{
-		BOOST_FOREACH (BWAPI::Key k, keys)
-		{
+
+      std::vector<BWAPI::Key>::iterator it = keys.begin();
+      for (; it != keys.end(); it++)
+      {
+         BWAPI::Key k = *it;
 			if (BWAPI::Broodwar->getKeyState(k))
 			{
 				keyboardEvent(k);
@@ -183,8 +195,10 @@ public:
 		{
 			if (selectedUnits)
 			{
-				BOOST_FOREACH (BWAPI::Unit * unit, *selectedUnits)
-				{
+            std::set<BWAPI::Unit*>::const_iterator it = selectedUnits->begin();
+            for (; it != selectedUnits->end(); it++)
+            {
+               BWAPI::Unit * unit = *it;
 					unit->rightClick(BWAPI::Position(mouseMapX, mouseMapY));
 				}
 			}
@@ -257,8 +271,10 @@ public:
 		int yy = y;
 
 
-		BOOST_FOREACH (BWAPI::Unit * unit, *selectedUnits)
-		{
+      std::set<BWAPI::Unit*>::const_iterator it = selectedUnits->begin();
+      for (; it != selectedUnits->end(); it++)
+      {
+         BWAPI::Unit * unit = *it;
 			xx = x + (col%cols) * 22;
 			yy = y + (col/cols) * 26;
 

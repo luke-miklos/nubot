@@ -67,8 +67,10 @@ void CombatCommander::assignAttackSquads(std::set<BWAPI::Unit *> & unitsToAssign
 	if (unitsToAssign.empty()) { return; }
 
 	bool workersDefending = false;
-	BOOST_FOREACH (BWAPI::Unit * unit, unitsToAssign)
-	{
+   std::set<BWAPI::Unit*>::const_iterator it = unitsToAssign.begin();
+   for (; it != unitsToAssign.end(); it++)
+   {
+      BWAPI::Unit * unit = *it;
 		if (unit->getType().isWorker())
 		{
 			workersDefending = true;
@@ -94,8 +96,10 @@ BWTA::Region * CombatCommander::getClosestEnemyRegion()
 	double closestDistance = 100000;
 
 	// for each region that our opponent occupies
-	BOOST_FOREACH (BWTA::Region * region, InformationManager::Instance().getOccupiedRegions(BWAPI::Broodwar->enemy()))
-	{
+   std::set<BWTA::Region*>::const_iterator it = InformationManager::Instance().getOccupiedRegions(BWAPI::Broodwar->enemy()).begin();
+   for (; it != InformationManager::Instance().getOccupiedRegions(BWAPI::Broodwar->enemy()).end(); it++)
+   {
+      BWTA::Region* region = *it;
 		double distance = region->getCenter().getDistance(BWAPI::Position(BWAPI::Broodwar->self()->getStartLocation()));
 
 		if (!closestEnemyRegion || distance < closestDistance)
@@ -113,9 +117,12 @@ void CombatCommander::assignDefenseSquads(std::set<BWAPI::Unit *> & unitsToAssig
 	if (unitsToAssign.empty()) { return; }
 
 	// for each of our occupied regions
-	BOOST_FOREACH(BWTA::Region * myRegion, InformationManager::Instance().getOccupiedRegions(BWAPI::Broodwar->self()))
-	{
-		BWAPI::Position regionCenter = myRegion->getCenter();
+   std::set<BWTA::Region*>::const_iterator it = InformationManager::Instance().getOccupiedRegions(BWAPI::Broodwar->self()).begin();
+   for (; it != InformationManager::Instance().getOccupiedRegions(BWAPI::Broodwar->self()).end(); it++)
+   {
+      BWTA::Region* myRegion = *it;
+
+      BWAPI::Position regionCenter = myRegion->getCenter();
 
 		//BWAPI::TilePosition regionCenter = BWAPI::TilePosition(myRegion->getCenter());
   //    //use a start location if possible, so flow field can be taken advantage of
@@ -140,8 +147,10 @@ void CombatCommander::assignDefenseSquads(std::set<BWAPI::Unit *> & unitsToAssig
 
 		// all of the enemy units in this region
 		std::set<BWAPI::Unit *> enemyUnitsInRegion;
-		BOOST_FOREACH (BWAPI::Unit * enemyUnit, BWAPI::Broodwar->enemy()->getUnits())
-		{			
+      std::set<BWAPI::Unit*>::const_iterator it = BWAPI::Broodwar->enemy()->getUnits().begin();
+      for (; it != BWAPI::Broodwar->enemy()->getUnits().end(); it++)
+      {
+         BWAPI::Unit * enemyUnit = *it;
 			if (BWTA::getRegion(BWAPI::TilePosition(enemyUnit->getPosition())) == myRegion)
 			{
 				enemyUnitsInRegion.insert(enemyUnit);
@@ -164,8 +173,10 @@ void CombatCommander::assignDefenseSquads(std::set<BWAPI::Unit *> & unitsToAssig
 			std::set<BWAPI::Unit *> flyingDefenders;
 			std::set<BWAPI::Unit *> groundDefenders;
 
-			BOOST_FOREACH (BWAPI::Unit * unit, unitsToAssign)
-			{
+         std::set<BWAPI::Unit*>::const_iterator it = unitsToAssign.begin();
+         for (; it != unitsToAssign.end(); it++)
+         {
+            BWAPI::Unit * unit = *it;
 				if (unit->getType().airWeapon() != BWAPI::WeaponTypes::None)
 				{
 					flyingDefenders.insert(unit);
@@ -258,8 +269,10 @@ void CombatCommander::assignAttackVisibleUnits(std::set<BWAPI::Unit *> & unitsTo
 {
 	if (unitsToAssign.empty()) { return; }
 
-	BOOST_FOREACH (BWAPI::Unit * unit, BWAPI::Broodwar->enemy()->getUnits())
-	{
+   std::set<BWAPI::Unit*>::const_iterator it = BWAPI::Broodwar->enemy()->getUnits().begin();
+   for (; it != BWAPI::Broodwar->enemy()->getUnits().end(); it++)
+   {
+      BWAPI::Unit * unit = *it;
 		if (unit->isVisible())
 		{
 			UnitVector combatUnits(unitsToAssign.begin(), unitsToAssign.end());
@@ -335,10 +348,14 @@ BWAPI::Unit* CombatCommander::findClosestDefender(std::set<BWAPI::Unit *> & enem
 	BWAPI::Unit * closestUnit = NULL;
 	double minDistance = 1000000;
 
-	BOOST_FOREACH (BWAPI::Unit * enemyUnit, enemyUnitsInRegion) 
-	{
-		BOOST_FOREACH (BWAPI::Unit * unit, units)
-		{
+   std::set<BWAPI::Unit*>::const_iterator it = enemyUnitsInRegion.begin();
+   for (; it != enemyUnitsInRegion.end(); it++)
+   {
+      BWAPI::Unit * enemyUnit = *it;
+      std::set<BWAPI::Unit*>::const_iterator uit = units.begin();
+      for (; uit != units.end(); uit++)
+      {
+         BWAPI::Unit * unit = *uit;
 			double dist = unit->getDistance(enemyUnit);
 			if (!closestUnit || dist < minDistance) 
 			{

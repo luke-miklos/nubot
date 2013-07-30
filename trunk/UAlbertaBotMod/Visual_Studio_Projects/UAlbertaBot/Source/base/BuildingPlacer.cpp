@@ -26,8 +26,10 @@ void BuildingPlacer::computeResourceBox()
 	BWAPI::Position start(BWAPI::Broodwar->self()->getStartLocation());
 	std::vector<BWAPI::Unit *> unitsAroundNexus;
 
-	BOOST_FOREACH(BWAPI::Unit * unit, BWAPI::Broodwar->getAllUnits())
-	{
+   std::set<BWAPI::Unit*>::const_iterator it = BWAPI::Broodwar->getAllUnits().begin();
+   for (; it != BWAPI::Broodwar->getAllUnits().end(); it++)
+   {
+      BWAPI::Unit * unit = *it;
 		// if the units are less than 400 away add them if they are resources
 		if (unit->getDistance(start) < 400 && unit->getType().isResourceContainer())
 		{
@@ -35,8 +37,10 @@ void BuildingPlacer::computeResourceBox()
 		}
 	}
 
-	BOOST_FOREACH(BWAPI::Unit * unit, unitsAroundNexus)
-	{
+   UnitVector::const_iterator nit = unitsAroundNexus.begin();
+   for (; nit != unitsAroundNexus.end(); nit++)
+   {
+      BWAPI::Unit * unit = *nit;
 		int x = unit->getPosition().x();
 		int y = unit->getPosition().y();
 
@@ -158,8 +162,10 @@ bool BuildingPlacer::canBuildHereWithSpace(BWAPI::TilePosition position, const B
 		{
 			for(int y = starty; y < endy; y++)
 			{
-				BOOST_FOREACH(BWAPI::Unit * unit, BWAPI::Broodwar->getUnitsOnTile(x, y))
-				{
+            std::set<BWAPI::Unit*>::const_iterator it = BWAPI::Broodwar->getUnitsOnTile(x, y).begin();
+            for (; it != BWAPI::Broodwar->getUnitsOnTile(x, y).end(); it++)
+            {
+               BWAPI::Unit * unit = *it;
 					if (!unit->isLifted())
 					{
 						BWAPI::UnitType type(unit->getType());
@@ -278,8 +284,10 @@ bool BuildingPlacer::tileOverlapsBaseLocation(BWAPI::TilePosition tile, BWAPI::U
 	int ty2 = ty1 + type.tileHeight();
 
 	// for each base location
-	BOOST_FOREACH (BWTA::BaseLocation * base, BWTA::getBaseLocations())
-	{
+   std::set<BWTA::BaseLocation*>::const_iterator it = BWTA::getBaseLocations().begin();
+   for (; it != BWTA::getBaseLocations().end(); it++)
+   {
+      BWTA::BaseLocation* base = *it;
 		// dimensions of the base location
 		int bx1 = base->getTilePosition().x();
 		int by1 = base->getTilePosition().y();
@@ -308,8 +316,10 @@ bool BuildingPlacer::buildable(int x, int y) const
 		return false;
 	}
 
-	BOOST_FOREACH (BWAPI::Unit * unit, BWAPI::Broodwar->getUnitsOnTile(x, y))
-	{
+   std::set<BWAPI::Unit*>::const_iterator it = BWAPI::Broodwar->getUnitsOnTile(x, y).begin();
+   for (; it != BWAPI::Broodwar->getUnitsOnTile(x, y).end(); it++)
+   {
+      BWAPI::Unit * unit = *it;
 		if (unit->getType().isBuilding() && !unit->isLifted()) 
 		{
 			return false;
@@ -327,8 +337,10 @@ bool BuildingPlacer::buildable(int x, int y) const
 				continue;
 			}
 
-			BOOST_FOREACH (BWAPI::Unit * unit, BWAPI::Broodwar->getUnitsOnTile(i, j))
-			{
+         std::set<BWAPI::Unit*>::const_iterator it = BWAPI::Broodwar->getUnitsOnTile(i, j).begin();
+         for (; it != BWAPI::Broodwar->getUnitsOnTile(i, j).end(); it++)
+         {
+            BWAPI::Unit * unit = *it;
 				if (unit->getType() == BWAPI::UnitTypes::Protoss_Gateway) 
 				{
 					return false;
@@ -402,14 +414,18 @@ int BuildingPlacer::getBuildDistance() const
 BWAPI::TilePosition BuildingPlacer::getRefineryPosition()
 {
 	// for each of our units
-	BOOST_FOREACH (BWAPI::Unit * depot, BWAPI::Broodwar->self()->getUnits())
-	{
+   std::set<BWAPI::Unit*>::const_iterator it = BWAPI::Broodwar->self()->getUnits().begin();
+   for (; it != BWAPI::Broodwar->self()->getUnits().end(); it++)
+   {
+      BWAPI::Unit * depot = *it;
 		// if it's a resource depot
 		if (depot->getType().isResourceDepot())
 		{
 			// for all units around it
-			BOOST_FOREACH (BWAPI::Unit * unit, BWAPI::Broodwar->getAllUnits())
-			{
+         std::set<BWAPI::Unit*>::const_iterator ait = BWAPI::Broodwar->getAllUnits().begin();
+         for (; ait != BWAPI::Broodwar->getAllUnits().end(); ait++)
+         {
+            BWAPI::Unit * unit = *ait;
 				// if it's a geyser around it
 				if (unit->getType() == BWAPI::UnitTypes::Resource_Vespene_Geyser && unit->getDistance(depot) < 300)
 				{

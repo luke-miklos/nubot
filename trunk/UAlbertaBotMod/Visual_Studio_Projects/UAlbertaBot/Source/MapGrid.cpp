@@ -155,15 +155,19 @@ void MapGrid::update()
 	//BWAPI::Broodwar->printf("MapGrid info: WH(%d, %d)  CS(%d)  RC(%d, %d)  C(%d)", mapWidth, mapHeight, cellSize, rows, cols, cells.size());
 
 	// add our units to the appropriate cell
-	BOOST_FOREACH(BWAPI::Unit * unit, BWAPI::Broodwar->self()->getUnits()) 
-	{
+   std::set<BWAPI::Unit*>::const_iterator it = BWAPI::Broodwar->self()->getUnits().begin();
+   for (; it != BWAPI::Broodwar->self()->getUnits().end(); it++)
+   {
+      BWAPI::Unit * unit = *it;
 		getCell(unit).ourUnits.push_back(unit);
 		getCell(unit).timeLastVisited = BWAPI::Broodwar->getFrameCount();
 	}
 
 	// add enemy units to the appropriate cell
-	BOOST_FOREACH(BWAPI::Unit * unit, BWAPI::Broodwar->enemy()->getUnits()) 
-	{
+   std::set<BWAPI::Unit*>::const_iterator eit = BWAPI::Broodwar->enemy()->getUnits().begin();
+   for (; eit != BWAPI::Broodwar->enemy()->getUnits().end(); eit++)
+   {
+      BWAPI::Unit * unit = *eit;
 		if (unit->getHitPoints() > 0) 
 		{
 			getCell(unit).oppUnits.push_back(unit);
@@ -189,8 +193,10 @@ void MapGrid::GetUnits(UnitVector & units, BWAPI::Position center, int radius, b
 			GridCell & cell(getCellByIndex(row,col));
 			if(ourUnits)
 			{
-				BOOST_FOREACH(BWAPI::Unit * unit, cell.ourUnits)
-				{
+            UnitVector::const_iterator it = cell.ourUnits.begin();
+            for (; it != cell.ourUnits.end(); it++)
+            {
+               BWAPI::Unit * unit = *it;
 					BWAPI::Position d(unit->getPosition() - center);
 					if(d.x() * d.x() + d.y() * d.y() <= radiusSq)
 					{
@@ -203,17 +209,22 @@ void MapGrid::GetUnits(UnitVector & units, BWAPI::Position center, int radius, b
 			}
 			if(oppUnits)
 			{
-				BOOST_FOREACH(BWAPI::Unit * unit, cell.oppUnits) if (unit->getType() != BWAPI::UnitTypes::Unknown && unit->isVisible())
-				{
-					BWAPI::Position d(unit->getPosition() - center);
-					if(d.x() * d.x() + d.y() * d.y() <= radiusSq)
-					{
-						if (!contains(units, unit)) 
-						{ 
-							units.push_back(unit); 
-						}
-					}
-				}
+            UnitVector::const_iterator it = cell.oppUnits.begin();
+            for (; it != cell.oppUnits.end(); it++)
+            {
+               BWAPI::Unit * unit = *it;
+               if (unit->getType() != BWAPI::UnitTypes::Unknown && unit->isVisible())
+				   {
+					   BWAPI::Position d(unit->getPosition() - center);
+					   if(d.x() * d.x() + d.y() * d.y() <= radiusSq)
+					   {
+						   if (!contains(units, unit)) 
+						   { 
+							   units.push_back(unit); 
+						   }
+					   }
+				   }
+            }
 			}
 		}
 	}

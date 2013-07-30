@@ -2408,7 +2408,7 @@ bool MacroSearch::DoMove(int aMove, int targetFrame)
 
    AddMove(newMovePtr);
    //assert(moveStartTime >= mSearchState.mGameStateFrame);
-   AdvanceQueuedEventsUntil(moveStartTime);
+   AdvanceQueuedEventsUntil( moveStartTime );
    mSearchState.mGameStateFrame = moveStartTime;
    return true;
 }
@@ -3366,7 +3366,7 @@ void MacroSearch::EvaluateState()
          //score += mSearchState.mUnitCounts[1] * 500;   //favor zealots + x5 cost
          //score += mSearchState.mTrainingCompleteFrames[2].size() * 300;  //favor gateways + x2 cost
          score += mSearchState.mUnitCounts[1] * 100;
-         score += mSearchState.mUnitCounts[2] * 175 * 1.25;  //125 min, 50 gas   //account for longer build time
+         score += mSearchState.mUnitCounts[2] * 175 * 1.25f;  //125 min, 50 gas   //account for longer build time
          score += mSearchState.mTrainingCompleteFrames[0].size() * 400; //nexus
          score += mSearchState.mTrainingCompleteFrames[2].size() * 150; //gateway
          score += mSearchState.mTrainingCompleteFrames[3].size() * 100; //assimilator

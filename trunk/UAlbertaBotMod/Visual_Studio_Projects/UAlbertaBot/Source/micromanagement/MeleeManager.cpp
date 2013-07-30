@@ -23,8 +23,10 @@ void MeleeManager::executeMicro(const UnitVector & targets)
 	}
 
 	// for each meleeUnit
-	BOOST_FOREACH(BWAPI::Unit * meleeUnit, meleeUnits)
-	{
+   UnitVector::const_iterator it = meleeUnits.begin();
+   for (; it != meleeUnits.end(); it++)
+   {
+      BWAPI::Unit * meleeUnit = *it;
 		// if the order is to attack or defend
 		if (order.type == order.Attack || order.type == order.Defend) {
 
@@ -64,8 +66,10 @@ BWAPI::Unit * MeleeManager::getTarget(BWAPI::Unit * meleeUnit, UnitVector & targ
 	BWAPI::Unit * closestTarget = NULL;
 
 	// for each target possiblity
-	BOOST_FOREACH(BWAPI::Unit * unit, targets)
-	{
+   UnitVector::const_iterator it = targets.begin();
+   for (; it != targets.end(); it++)
+   {
+      BWAPI::Unit * unit = *it;
 		int priority = getAttackPriority(unit);
 		if (meleeUnit->getType() == BWAPI::UnitTypes::Protoss_Dark_Templar && unit->getType().isWorker())
 		{
@@ -134,8 +138,11 @@ BWAPI::Unit * MeleeManager::closestMeleeUnit(BWAPI::Unit * target, std::set<BWAP
 	double minDistance = 0;
 	BWAPI::Unit * closest = NULL;
 
-	BOOST_FOREACH (BWAPI::Unit * meleeUnit, meleeUnitsToAssign)
-	{
+   std::set<BWAPI::Unit*>::const_iterator it = meleeUnitsToAssign.begin();
+   for (; it != meleeUnitsToAssign.end(); it++)
+   {
+      BWAPI::Unit * meleeUnit = *it;
+
 		double distance = meleeUnit->getDistance(target);
 		if (!closest || distance < minDistance)
 		{

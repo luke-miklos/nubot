@@ -38,8 +38,9 @@ const MoveTuple	MicroSearchManager::getMoveTuple(MicroSearch::GameState & state,
 	//ab.doSearch(state);
 
 	// get the player based on the player model
-	boost::shared_ptr<MicroSearch::Player> player(new MicroSearch::Player_Kiter(playerID));
-	
+	//boost::shared_ptr<MicroSearch::Player> player(new MicroSearch::Player_Kiter(playerID));
+	MicroSearch::Player* player = new MicroSearch::Player_Kiter(playerID);
+
 	MicroSearch::MoveArray moves;
 	state.generateMoves(moves, player->ID());
 	MoveTuple nm = player->getMoveTuple(state, moves);
@@ -58,6 +59,7 @@ const MoveTuple	MicroSearchManager::getMoveTuple(MicroSearch::GameState & state,
 
 	//BWAPI::Broodwar->printf("Best Move Tuple %d - %d - %d %d %d %d", (int)m, (int)nm, (int)ab.getResults().nodesExpanded, (int)ab.getResults().maxDepthReached, (int)ab.getResults().abValue, (int)state.evalSumDPS(0));
 
+   delete player;
 	// return the move tuple
 	return nm;
 }
@@ -78,8 +80,10 @@ MicroSearch::GameState MicroSearchManager::extractGameState()
 	state.setTime(BWAPI::Broodwar->getFrameCount());
 
 	// add each of our fighting units
-	BOOST_FOREACH (BWAPI::Unit * unit, BWAPI::Broodwar->self()->getUnits())
-	{
+   std::set<BWAPI::Unit*>::const_iterator it = BWAPI::Broodwar->self()->getUnits().begin();
+   for (; it != BWAPI::Broodwar->self()->getUnits().end(); it++)
+   {
+      BWAPI::Unit * unit = *it;
 		if (isCombatUnit(unit))
 		{
 			MicroSearch::Unit u(unit, getPlayerID(unit->getPlayer()), BWAPI::Broodwar->getFrameCount());
@@ -89,8 +93,10 @@ MicroSearch::GameState MicroSearchManager::extractGameState()
 		}
 	}
 
-	BOOST_FOREACH (BWAPI::Unit * unit, BWAPI::Broodwar->enemy()->getUnits())
-	{
+   std::set<BWAPI::Unit*>::const_iterator eit = BWAPI::Broodwar->enemy()->getUnits().begin();
+   for (; eit != BWAPI::Broodwar->enemy()->getUnits().end(); eit++)
+   {
+      BWAPI::Unit * unit = *eit;
 		if (isCombatUnit(unit))
 		{
 			MicroSearch::Unit u(unit, getPlayerID(unit->getPlayer()), BWAPI::Broodwar->getFrameCount());
@@ -149,8 +155,10 @@ void MicroSearchManager::update()
 	if (!gameOver)
 	{
 		// for each unit that we control, do some book keeping
-		BOOST_FOREACH (BWAPI::Unit * unit, BWAPI::Broodwar->self()->getUnits())
-		{
+   std::set<BWAPI::Unit*>::const_iterator it = BWAPI::Broodwar->self()->getUnits().begin();
+   for (; it != BWAPI::Broodwar->self()->getUnits().end(); it++)
+   {
+      BWAPI::Unit * unit = *it;
 			// if it is a combat unit
 			if (isCombatUnit(unit))
 			{
@@ -190,8 +198,10 @@ void MicroSearchManager::drawAttackDebug()
 	char * trueFix = "\x07";
 	char * falseFix = "\x06";
 
-	BOOST_FOREACH(BWAPI::Unit * unit, BWAPI::Broodwar->self()->getUnits())
-	{
+   std::set<BWAPI::Unit*>::const_iterator it = BWAPI::Broodwar->self()->getUnits().begin();
+   for (; it != BWAPI::Broodwar->self()->getUnits().end(); it++)
+   {
+      BWAPI::Unit * unit = *it;
 		int x = unit->getPosition().x();
 		int y = unit->getPosition().y() + 9;
 

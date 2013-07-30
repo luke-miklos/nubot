@@ -9,8 +9,10 @@ BuildOrderGoalManager::BuildOrderGoalManager()
 bool BuildOrderGoalManager::isCompleted(const BuildOrderGoal & bog) const
 {
 	// for each item in the goal
-	BOOST_FOREACH (const BuildOrderGoalItem & bogi, bog.getGoal())
-	{
+   std::vector<BuildOrderGoalItem>::const_iterator it = bog.getGoal().begin();
+   for (; it != bog.getGoal().end(); it++)
+   {
+      BuildOrderGoalItem bogi = *it;
 		if (bogi.metaType().type == MetaType::Unit)
 		{
 			// if we do not have that many of the unit type, return false

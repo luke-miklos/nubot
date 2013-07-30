@@ -110,8 +110,10 @@ void ScoutManager::moveScouts()
 				BWAPI::Position fleeTo = calcFleePosition(groundThreats, NULL);
 				if (Options::Debug::DRAW_UALBERTABOT_DEBUG) BWAPI::Broodwar->drawCircleMap(fleeTo.x(), fleeTo.y(), 10, BWAPI::Colors::Red);
 
-				BOOST_FOREACH (BWAPI::Unit * unit, BWAPI::Broodwar->getUnitsInRadius(fleeTo, 10))
-				{
+            std::set<BWAPI::Unit*>::const_iterator it = BWAPI::Broodwar->getUnitsInRadius(fleeTo, 10).begin();
+            for (; it != BWAPI::Broodwar->getUnitsInRadius(fleeTo, 10).end(); it++)
+            {
+               BWAPI::Unit * unit = *it;
 					if (Options::Debug::DRAW_UALBERTABOT_DEBUG) BWAPI::Broodwar->drawCircleMap(unit->getPosition().x(), unit->getPosition().y(), 5, BWAPI::Colors::Cyan, true);
 				}
 
@@ -142,8 +144,10 @@ void ScoutManager::moveScouts()
 	// for each start location in the level
 	if (!enemyRegion)
 	{
-		BOOST_FOREACH (BWTA::BaseLocation * startLocation, BWTA::getStartLocations()) 
-		{
+      std::set<BWTA::BaseLocation*>::const_iterator it = BWTA::getStartLocations().begin();
+      for (; it != BWTA::getStartLocations().end(); it++)
+      {
+         BWTA::BaseLocation* startLocation = *it;
 			// if we haven't explored it yet
 			if (!BWAPI::Broodwar->isExplored(startLocation->getTilePosition())) 
 			{
@@ -235,9 +239,10 @@ BWAPI::Position ScoutManager::calcFleePosition(const std::vector<GroundThreat> &
 double2 ScoutManager::getFleeVector(const std::vector<GroundThreat> & threats)
 {
 	double2 fleeVector(0,0);
-
-	BOOST_FOREACH (const GroundThreat & threat, threats)
-	{
+   std::vector<GroundThreat>::const_iterator it = threats.begin();
+   for (; it != threats.end(); it++)
+   {
+      GroundThreat threat = *it;
 		// Get direction from enemy to mutalisk
 		const double2 direction(workerScout->getPosition() - threat.unit->getPosition());
 
@@ -281,8 +286,11 @@ bool ScoutManager::isValidFleePosition(BWAPI::Position pos)
 	if (!good) return false;
 	
 	// for each of those units, if it's a building or an attacking enemy unit we don't want to go there
-	BOOST_FOREACH(BWAPI::Unit * unit, BWAPI::Broodwar->getUnitsOnTile(x/32, y/32)) 
-	{
+   std::set<BWAPI::Unit*>::const_iterator it = BWAPI::Broodwar->getUnitsOnTile(x/32, y/32).begin();
+   for (; it != BWAPI::Broodwar->getUnitsOnTile(x/32, y/32).end(); it++)
+   {
+      BWAPI::Unit * unit = *it;
+
 		if	(unit->getType().isBuilding() || unit->getType().isResourceContainer() || 
 			(unit->getPlayer() != BWAPI::Broodwar->self() && unit->getType().groundWeapon() != BWAPI::WeaponTypes::None)) 
 		{		
@@ -303,8 +311,10 @@ bool ScoutManager::isValidFleePosition(BWAPI::Position pos)
 		return false;
 	}
 
-	BOOST_FOREACH (BWAPI::Unit * mineral, enemyLocation->getMinerals())
-	{
+   std::set<BWAPI::Unit*>::const_iterator mit = enemyLocation->getMinerals().begin();
+   for (; mit != enemyLocation->getMinerals().end(); mit++)
+   {
+      BWAPI::Unit * mineral = *mit;
 		if (mineral->getDistance(pos) < mineralDist)
 		{
 			return false;
@@ -330,8 +340,11 @@ void ScoutManager::fillGroundThreats(std::vector<GroundThreat> & threats, BWAPI:
 
 	// for each of the candidate units
 	const std::set<BWAPI::Unit*> & candidates(BWAPI::Broodwar->enemy()->getUnits());
-	BOOST_FOREACH (BWAPI::Unit * e, candidates)
-	{
+
+   std::set<BWAPI::Unit*>::const_iterator it = candidates.begin();
+   for (; it != candidates.end(); it++)
+   {
+      BWAPI::Unit * e = *it;
 		// if they're not within the radius of caring, who cares?
 		const BWAPI::Position delta(e->getPosition() - target);
 		if(delta.x() * delta.x() + delta.y() * delta.y() > radiusSq)
@@ -371,8 +384,10 @@ BWAPI::Unit * ScoutManager::closestEnemyWorker()
 	
 	BWAPI::Unit * geyser = getEnemyGeyser();
 	
-	BOOST_FOREACH(BWAPI::Unit * unit, BWAPI::Broodwar->enemy()->getUnits())
-	{
+   std::set<BWAPI::Unit*>::const_iterator it = BWAPI::Broodwar->enemy()->getUnits().begin();
+   for (; it != BWAPI::Broodwar->enemy()->getUnits().end(); it++)
+   {
+      BWAPI::Unit * unit = *it;
 		if (unit->getType().isWorker() && unit->isConstructing())
 		{
 			return unit;
@@ -380,8 +395,10 @@ BWAPI::Unit * ScoutManager::closestEnemyWorker()
 	}
 
 	// for each enemy worker
-	BOOST_FOREACH(BWAPI::Unit * unit, BWAPI::Broodwar->enemy()->getUnits())
-	{
+   it = BWAPI::Broodwar->enemy()->getUnits().begin();
+   for (; it != BWAPI::Broodwar->enemy()->getUnits().end(); it++)
+   {
+      BWAPI::Unit * unit = *it;
 		if (unit->getType().isWorker())
 		{
 			double dist = unit->getDistance(geyser);
@@ -402,8 +419,10 @@ BWAPI::Unit * ScoutManager::getEnemyGeyser()
 	BWAPI::Unit * geyser = NULL;
 	BWTA::BaseLocation * enemyBaseLocation = InformationManager::Instance().getMainBaseLocation(BWAPI::Broodwar->enemy());
 
-	BOOST_FOREACH (BWAPI::Unit * unit, enemyBaseLocation->getGeysers())
-	{
+   std::set<BWAPI::Unit*>::const_iterator it = enemyBaseLocation->getGeysers().begin();
+   for (; it != enemyBaseLocation->getGeysers().end(); it++)
+   {
+      BWAPI::Unit * unit = *it;
 		geyser = unit;
 	}
 
@@ -412,8 +431,10 @@ BWAPI::Unit * ScoutManager::getEnemyGeyser()
 
 bool ScoutManager::enemyWorkerInRadius()
 {
-	BOOST_FOREACH(BWAPI::Unit * unit, BWAPI::Broodwar->enemy()->getUnits())
-	{
+   std::set<BWAPI::Unit*>::const_iterator it = BWAPI::Broodwar->enemy()->getUnits().begin();
+   for (; it != BWAPI::Broodwar->enemy()->getUnits().end(); it++)
+   {
+      BWAPI::Unit * unit = *it;
 		if (unit->getType().isWorker() && (unit->getDistance(workerScout) < 300))
 		{
 			return true;
@@ -426,8 +447,11 @@ bool ScoutManager::enemyWorkerInRadius()
 bool ScoutManager::immediateThreat()
 {
 	UnitVector enemyAttackingWorkers;
-	BOOST_FOREACH(BWAPI::Unit * unit, BWAPI::Broodwar->enemy()->getUnits())
-	{
+
+   std::set<BWAPI::Unit*>::const_iterator it = BWAPI::Broodwar->enemy()->getUnits().begin();
+   for (; it != BWAPI::Broodwar->enemy()->getUnits().end(); it++)
+   {
+      BWAPI::Unit * unit = *it;
 		if (unit->getType().isWorker() && unit->isAttacking())
 		{
 			enemyAttackingWorkers.push_back(unit);
@@ -440,8 +464,10 @@ bool ScoutManager::immediateThreat()
 		return true;
 	}
 
-	BOOST_FOREACH(BWAPI::Unit * unit, BWAPI::Broodwar->enemy()->getUnits())
-	{
+   std::set<BWAPI::Unit*>::const_iterator eit = BWAPI::Broodwar->enemy()->getUnits().begin();
+   for (; eit != BWAPI::Broodwar->enemy()->getUnits().end(); eit++)
+   {
+      BWAPI::Unit * unit = *eit;
 		double dist = unit->getDistance(workerScout);
 		double range = unit->getType().groundWeapon().maxRange();
 

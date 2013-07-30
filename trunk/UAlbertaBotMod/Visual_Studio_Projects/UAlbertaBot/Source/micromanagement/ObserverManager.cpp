@@ -21,8 +21,10 @@ void ObserverManager::executeMicro(const UnitVector & targets)
 	UnitVector cloakedUnits;
 
 	// figure out targets
-	BOOST_FOREACH (BWAPI::Unit * unit, BWAPI::Broodwar->enemy()->getUnits())
-	{
+   std::set<BWAPI::Unit*>::const_iterator it = BWAPI::Broodwar->enemy()->getUnits().begin();
+   for (; it != BWAPI::Broodwar->enemy()->getUnits().end(); it++)
+   {
+      BWAPI::Unit * unit = *it;
 		// conditions for targeting
 		if (unit->getType() == BWAPI::UnitTypes::Zerg_Lurker ||
 			unit->getType() == BWAPI::UnitTypes::Protoss_Dark_Templar ||
@@ -36,9 +38,12 @@ void ObserverManager::executeMicro(const UnitVector & targets)
 	bool observerInBattle = false;
 
 	// for each observer
-	BOOST_FOREACH(BWAPI::Unit * observer, observers)
-	{
-		// if we need to regroup, move the observer to that location
+   UnitVector::const_iterator oit = observers.begin();
+   for (; oit != observers.end(); oit++)
+   {
+      BWAPI::Unit * observer = *oit;
+
+      // if we need to regroup, move the observer to that location
 		if (!observerInBattle && unitClosestToEnemy && unitClosestToEnemy->getPosition().isValid())
 		{
 			smartMove(observer, unitClosestToEnemy->getPosition());
@@ -60,9 +65,12 @@ BWAPI::Unit * ObserverManager::closestCloakedUnit(const UnitVector & cloakedUnit
 	BWAPI::Unit * closestCloaked = NULL;
 	double closestDist = 100000;
 
-	BOOST_FOREACH (BWAPI::Unit * unit, cloakedUnits)
-	{
-		// if we haven't already assigned an observer to this cloaked unit
+   UnitVector::const_iterator it = cloakedUnits.begin();
+   for (; it != cloakedUnits.end(); it++)
+   {
+      BWAPI::Unit * unit = *it;
+
+      // if we haven't already assigned an observer to this cloaked unit
 		if (!cloakedUnitMap[unit])
 		{
 			double dist = unit->getDistance(observer);

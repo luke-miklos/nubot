@@ -83,8 +83,10 @@ BuildOrderSearch::StarcraftState StarcraftBuildOrderSearchManager::getCurrentSta
 	int numLarva(0);
 
 	// for each unit we have
-	BOOST_FOREACH(BWAPI::Unit * unit, BWAPI::Broodwar->self()->getUnits())
-	{
+   std::set<BWAPI::Unit*>::const_iterator it = BWAPI::Broodwar->self()->getUnits().begin();
+   for (; it != BWAPI::Broodwar->self()->getUnits().end(); it++)
+   {
+      BWAPI::Unit * unit = *it;
 		if (unit->getType() == BWAPI::UnitTypes::Zerg_Larva)
 		{
 			numLarva++;
@@ -137,8 +139,10 @@ BuildOrderSearch::StarcraftState StarcraftBuildOrderSearchManager::getCurrentSta
 
 	s.setNumLarva(numLarva);
 
-	BOOST_FOREACH (BWAPI::UpgradeType type, BWAPI::UpgradeTypes::allUpgradeTypes())
-	{
+   std::set<BWAPI::UpgradeType>::const_iterator uit = BWAPI::UpgradeTypes::allUpgradeTypes().begin();
+   for (; uit != BWAPI::UpgradeTypes::allUpgradeTypes().end(); uit++)
+   {
+      BWAPI::UpgradeType type = *uit;
 		if (BWAPI::Broodwar->self()->getUpgradeLevel(type) > 0)
 		{
 			//BWAPI::Broodwar->printf("I have %s", type.getName().c_str());
@@ -146,8 +150,10 @@ BuildOrderSearch::StarcraftState StarcraftBuildOrderSearchManager::getCurrentSta
 		}
 	}
 
-	BOOST_FOREACH (BWAPI::TechType type, BWAPI::TechTypes::allTechTypes())
-	{
+   std::set<BWAPI::TechType>::const_iterator tit = BWAPI::TechTypes::allTechTypes().begin();
+   for (; tit != BWAPI::TechTypes::allTechTypes().end(); tit++)
+   {
+      BWAPI::TechType type = *tit;
 		if (BWAPI::Broodwar->self()->hasResearched(type))
 		{
 		//	BWAPI::Broodwar->printf("I have %s", type.getName().c_str());

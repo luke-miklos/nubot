@@ -45,30 +45,35 @@ Squad::update()
 	{
 		InformationManager::Instance().lastFrameRegroup = 1;
 
-     // //if no enemy around, allow flocking to move us
-     // if (order.type == order.Attack)
-     // {
-    	//   UnitVector nearbyEnemies;
-		   //BOOST_FOREACH (BWAPI::Unit * unit, units) 
-		   //{
-			  // BWAPI::Unit * u = unit;
-			  // BWAPI::UnitType t = u->getType();
-			  // MapGrid::Instance().GetUnits(nearbyEnemies, unit->getPosition(), 800, false, true);
-		   //}
-     //    if (nearbyEnemies.size() <= 0)
-     //    {
-     //       //flockManager.execute(order);  //DO THIS INSTEAD OF melee & ranged
-		   //   transportManager.execute(order);
-		   //   detectorManager.setUnitClosestToEnemy(unitClosestToEnemy());
-		   //   detectorManager.execute(order);
-     //       return;
-     //    }
-     // }
-		meleeManager.execute(order);
-		rangedManager.execute(order);
-		transportManager.execute(order);
-		detectorManager.setUnitClosestToEnemy(unitClosestToEnemy());
-		detectorManager.execute(order);
+      //if no enemy around, allow flocking to move us
+      UnitVector nearbyEnemies;
+      if (order.type == order.Attack)
+      {
+         UnitVector::const_iterator it = units.begin();
+         for (; it != units.end(); it++)
+         {
+            BWAPI::Unit* unit = *it;
+			   BWAPI::UnitType t = unit->getType();
+			   MapGrid::Instance().GetUnits(nearbyEnemies, unit->getPosition(), 800, false, true);
+		   }
+      }
+
+      if (order.type == order.Attack && nearbyEnemies.size() <= 0)
+      {
+         flockManager.execute(order);  //DO THIS INSTEAD OF melee & ranged
+		   transportManager.execute(order);
+		   detectorManager.setUnitClosestToEnemy(unitClosestToEnemy());
+		   detectorManager.execute(order);
+         return;
+      }
+      else
+      {
+		   meleeManager.execute(order);
+		   rangedManager.execute(order);
+		   transportManager.execute(order);
+		   detectorManager.setUnitClosestToEnemy(unitClosestToEnemy());
+		   detectorManager.execute(order);
+      }
 	}
 }
 
@@ -85,8 +90,12 @@ Squad::setAllUnits()
 {
 	// clean up the units vector just in case one of them died
 	UnitVector goodUnits;
-	BOOST_FOREACH(BWAPI::Unit * unit, units)
-	{
+
+   UnitVector::const_iterator it = units.begin();
+   for (; it != units.end(); it++)
+   {
+      BWAPI::Unit * unit = *it;
+
 		if( unit->isCompleted() && 
 			unit->getHitPoints() > 0 && 
 			unit->exists() &&
@@ -103,8 +112,10 @@ void
 Squad::setNearEnemyUnits()
 {
 	nearEnemy.clear();
-	BOOST_FOREACH(BWAPI::Unit * unit, units)
-	{
+   UnitVector::const_iterator it = units.begin();
+   for (; it != units.end(); it++)
+   {
+      BWAPI::Unit * unit = *it;
 		int x = unit->getPosition().x();
 		int y = unit->getPosition().y();
 
@@ -132,18 +143,20 @@ Squad::setManagerUnits()
 	UnitVector rangedUnits;
 	UnitVector detectorUnits;
 	UnitVector transportUnits;
-   //UnitVector flockUnits;     //all combat (melee & ranged), special, & detector units (not transport units at this time?)
+   UnitVector flockUnits;     //all combat (melee & ranged), special, & detector units (not transport units at this time?)
 
 	// add units to micro managers
-	BOOST_FOREACH(BWAPI::Unit * unit, units)
-	{
+   UnitVector::const_iterator it = units.begin();
+   for (; it != units.end(); it++)
+   {
+      BWAPI::Unit * unit = *it;
 		if(unit->isCompleted() && unit->getHitPoints() > 0 && unit->exists())
 		{
 			// select dector units
 			if (unit->getType().isDetector() && !unit->getType().isBuilding())
 			{
 				detectorUnits.push_back(unit);
-            //flockUnits.push_back(unit);
+            flockUnits.push_back(unit);
 			}
 			// select transport units
 			else if (unit->getType() == BWAPI::UnitTypes::Protoss_Shuttle || unit->getType() == BWAPI::UnitTypes::Terran_Dropship)
@@ -154,13 +167,13 @@ Squad::setManagerUnits()
 			else if ((unit->getType().groundWeapon().maxRange() > 32) || (unit->getType() == BWAPI::UnitTypes::Protoss_Reaver))
 			{
 				rangedUnits.push_back(unit);
-            //flockUnits.push_back(unit);
+            flockUnits.push_back(unit);
 			}
 			// select melee units
 			else if (unit->getType().groundWeapon().maxRange() <= 32)
 			{
 				meleeUnits.push_back(unit);
-            //flockUnits.push_back(unit);
+            flockUnits.push_back(unit);
 			}
 		}
 	}
@@ -169,7 +182,7 @@ Squad::setManagerUnits()
 	rangedManager.setUnits(rangedUnits);
 	detectorManager.setUnits(detectorUnits);
 	transportManager.setUnits(detectorUnits);
-   //flockManager.setUnits(flockUnits);
+   flockManager.setUnits(flockUnits);
 }
 
 // calculates whether or not to regroup
@@ -239,8 +252,10 @@ BWAPI::Position
 Squad::calcCenter()
 {
 	BWAPI::Position accum(0,0);
-	BOOST_FOREACH(BWAPI::Unit * unit, units)
-	{
+   UnitVector::const_iterator it = units.begin();
+   for (; it != units.end(); it++)
+   {
+      BWAPI::Unit * unit = *it;
 		accum += unit->getPosition();
 	}
 	return BWAPI::Position(accum.x() / units.size(), accum.y() / units.size());
@@ -253,8 +268,10 @@ Squad::calcRegroupPosition()
 
 	int minDist(100000);
 
-	BOOST_FOREACH(BWAPI::Unit * unit, units)
-	{
+   UnitVector::const_iterator it = units.begin();
+   for (; it != units.end(); it++)
+   {
+      BWAPI::Unit * unit = *it;
 		if (!nearEnemy[unit])
 		{
 			int dist = unit->getDistance(BWAPI::Position(order.position));
@@ -282,8 +299,10 @@ Squad::unitClosestToEnemy()
 	BWAPI::Unit * closest = NULL;
 	int closestDist = 100000;
 
-	BOOST_FOREACH (BWAPI::Unit * unit, units)
-	{
+   UnitVector::const_iterator it = units.begin();
+   for (; it != units.end(); it++)
+   {
+      BWAPI::Unit * unit = *it;
 		if (unit->getType() == BWAPI::UnitTypes::Protoss_Observer)
 		{
 			continue;
@@ -301,8 +320,10 @@ Squad::unitClosestToEnemy()
 
 	if (!closest)
 	{
-		BOOST_FOREACH (BWAPI::Unit * unit, units)
-		{
+      UnitVector::const_iterator it = units.begin();
+      for (; it != units.end(); it++)
+      {
+         BWAPI::Unit * unit = *it;
 			if (unit->getType() == BWAPI::UnitTypes::Protoss_Observer)
 			{
 				continue;
@@ -327,8 +348,10 @@ Squad::squadUnitsNear(BWAPI::Position p)
 {
 	int numUnits = 0;
 
-	BOOST_FOREACH (BWAPI::Unit * unit, units)
-	{
+   UnitVector::const_iterator it = units.begin();
+   for (; it != units.end(); it++)
+   {
+      BWAPI::Unit * unit = *it;
 		if (unit->getDistance(p) < 600)
 		{
 			numUnits++;
@@ -341,8 +364,10 @@ Squad::squadUnitsNear(BWAPI::Position p)
 bool 
 Squad::squadObserverNear(BWAPI::Position p)
 {
-	BOOST_FOREACH (BWAPI::Unit * unit, units)
-	{
+   UnitVector::const_iterator it = units.begin();
+   for (; it != units.end(); it++)
+   {
+      BWAPI::Unit * unit = *it;
 		if (unit->getType().isDetector() && unit->getDistance(p) < 300)
 		{
 			return true;

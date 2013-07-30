@@ -30,8 +30,10 @@ void WorkerManager::update()
 void WorkerManager::updateWorkerStatus() 
 {
    // for each of our Workers
-   BOOST_FOREACH (BWAPI::Unit * worker, workerData.getWorkers())
+   std::set<BWAPI::Unit*>::const_iterator it = workerData.getWorkers().begin();
+   for (; it != workerData.getWorkers().end(); it++)
    {
+      BWAPI::Unit * worker = *it;
       if (!worker->isCompleted())
       {
          continue;
@@ -76,8 +78,10 @@ void WorkerManager::updateWorkerStatus()
 void WorkerManager::handleGasWorkers() 
 {
    // for each unit we have
-   BOOST_FOREACH (BWAPI::Unit * unit, BWAPI::Broodwar->self()->getUnits())
+   std::set<BWAPI::Unit*>::const_iterator it = BWAPI::Broodwar->self()->getUnits().begin();
+   for (; it != BWAPI::Broodwar->self()->getUnits().end(); it++)
    {
+      BWAPI::Unit * unit = *it;
       // if that unit is a refinery
       if (unit->getType().isRefinery() && unit->isCompleted())
       {
@@ -101,8 +105,10 @@ void WorkerManager::handleGasWorkers()
 void WorkerManager::handleIdleWorkers() 
 {
    // for each of our workers
-   BOOST_FOREACH (BWAPI::Unit * worker, workerData.getWorkers())
+   std::set<BWAPI::Unit*>::const_iterator it = workerData.getWorkers().begin();
+   for (; it != workerData.getWorkers().end(); it++)
    {
+      BWAPI::Unit * worker = *it;
       // if it is idle
       if (workerData.getWorkerJob(worker) == WorkerData::Idle) 
       {
@@ -115,8 +121,10 @@ void WorkerManager::handleIdleWorkers()
 // bad micro for combat workers
 void WorkerManager::handleCombatWorkers()
 {
-   BOOST_FOREACH (BWAPI::Unit * worker, workerData.getWorkers())
+   std::set<BWAPI::Unit*>::const_iterator it = workerData.getWorkers().begin();
+   for (; it != workerData.getWorkers().end(); it++)
    {
+      BWAPI::Unit * worker = *it;
       if (workerData.getWorkerJob(worker) == WorkerData::Combat)
       {
          BWAPI::Broodwar->drawCircleMap(worker->getPosition().x(), worker->getPosition().y(), 4, BWAPI::Colors::Yellow, true);
@@ -135,8 +143,10 @@ BWAPI::Unit * WorkerManager::getClosestEnemyUnit(BWAPI::Unit * worker)
    BWAPI::Unit * closestUnit = NULL;
    double closestDist = 10000;
 
-   BOOST_FOREACH (BWAPI::Unit * unit, BWAPI::Broodwar->enemy()->getUnits())
+   std::set<BWAPI::Unit*>::const_iterator it = BWAPI::Broodwar->enemy()->getUnits().begin();
+   for (; it != BWAPI::Broodwar->enemy()->getUnits().end(); it++)
    {
+      BWAPI::Unit * unit = *it;
       double dist = unit->getDistance(worker);
 
       if ((dist < 400) && (!closestUnit || (dist < closestDist)))
@@ -151,8 +161,10 @@ BWAPI::Unit * WorkerManager::getClosestEnemyUnit(BWAPI::Unit * worker)
 
 void WorkerManager::finishedWithCombatWorkers()
 {
-   BOOST_FOREACH (BWAPI::Unit * worker, workerData.getWorkers())
+   std::set<BWAPI::Unit*>::const_iterator it = workerData.getWorkers().begin();
+   for (; it != workerData.getWorkers().end(); it++)
    {
+      BWAPI::Unit * worker = *it;
       if (workerData.getWorkerJob(worker) == WorkerData::Combat)
       {
          setMineralWorker(worker);
@@ -163,8 +175,10 @@ void WorkerManager::finishedWithCombatWorkers()
 void WorkerManager::handleMoveWorkers() 
 {
    // for each of our workers
-   BOOST_FOREACH (BWAPI::Unit * worker, workerData.getWorkers())
+   std::set<BWAPI::Unit*>::const_iterator it = workerData.getWorkers().begin();
+   for (; it != workerData.getWorkers().end(); it++)
    {
+      BWAPI::Unit * worker = *it;
       // if it is a move worker
       if (workerData.getWorkerJob(worker) == WorkerData::Move) 
       {
@@ -208,8 +222,10 @@ BWAPI::Unit * WorkerManager::getClosestDepot(BWAPI::Unit * worker)
    BWAPI::Unit * closestDepot = NULL;
    double closestDistance = 0;
 
-   BOOST_FOREACH (BWAPI::Unit * unit, BWAPI::Broodwar->self()->getUnits())
+   std::set<BWAPI::Unit*>::const_iterator it = BWAPI::Broodwar->self()->getUnits().begin();
+   for (; it != BWAPI::Broodwar->self()->getUnits().end(); it++)
    {
+      BWAPI::Unit * unit = *it;
       if (unit->getType().isResourceDepot() && unit->isCompleted() && !workerData.depotIsFull(unit))
       {
          double distance = unit->getDistance(worker);
@@ -251,8 +267,10 @@ BWAPI::Unit * WorkerManager::getGasWorker(BWAPI::Unit * refinery)
    BWAPI::Unit * closestWorker = NULL;
    double closestDistance = 0;
 
-   BOOST_FOREACH (BWAPI::Unit * unit, workerData.getWorkers())
+   std::set<BWAPI::Unit*>::const_iterator it = workerData.getWorkers().begin();
+   for (; it != workerData.getWorkers().end(); it++)
    {
+      BWAPI::Unit * unit = *it;
       if (workerData.getWorkerJob(unit) == WorkerData::Minerals)
       {
          double distance = unit->getDistance(refinery);
@@ -279,8 +297,10 @@ BWAPI::Unit * WorkerManager::getBuilder(Building & b, bool setJobAsBuilder)
    double closestMiningWorkerDistance = 0;
 
    // look through each worker that had moved there first
-   BOOST_FOREACH (BWAPI::Unit * unit, workerData.getWorkers())
+   std::set<BWAPI::Unit*>::const_iterator it = workerData.getWorkers().begin();
+   for (; it != workerData.getWorkers().end(); it++)
    {
+      BWAPI::Unit * unit = *it;
       // mining worker check
       if (unit->isCompleted() && (workerData.getWorkerJob(unit) == WorkerData::Minerals))
       {
@@ -338,8 +358,10 @@ BWAPI::Unit * WorkerManager::getMoveWorker(BWAPI::Position p)
    double closestDistance = 0;
 
    // for each worker we currently have
-   BOOST_FOREACH (BWAPI::Unit * unit, workerData.getWorkers())
+   std::set<BWAPI::Unit*>::const_iterator it = workerData.getWorkers().begin();
+   for (; it != workerData.getWorkers().end(); it++)
    {
+      BWAPI::Unit * unit = *it;
       // only consider it if it's a mineral worker
       if (unit->isCompleted() && workerData.getWorkerJob(unit) == WorkerData::Minerals)
       {
@@ -365,8 +387,10 @@ void WorkerManager::setMoveWorker(int mineralsNeeded, int gasNeeded, BWAPI::Posi
    double closestDistance = 0;
 
    // for each worker we currently have
-   BOOST_FOREACH (BWAPI::Unit * unit, workerData.getWorkers())
+   std::set<BWAPI::Unit*>::const_iterator it = workerData.getWorkers().begin();
+   for (; it != workerData.getWorkers().end(); it++)
    {
+      BWAPI::Unit * unit = *it;
       // only consider it if it's a mineral worker
       if (unit->isCompleted() && workerData.getWorkerJob(unit) == WorkerData::Minerals)
       {
@@ -479,8 +503,10 @@ void WorkerManager::onUnitShow(BWAPI::Unit * unit)
 void WorkerManager::rebalanceWorkers()
 {
    // for each worker
-   BOOST_FOREACH (BWAPI::Unit * worker, workerData.getWorkers())
+   std::set<BWAPI::Unit*>::const_iterator it = workerData.getWorkers().begin();
+   for (; it != workerData.getWorkers().end(); it++)
    {
+      BWAPI::Unit * worker = *it;
       // we only care to rebalance mineral workers
       if (!workerData.getWorkerJob(worker) == WorkerData::Minerals)
       {
@@ -556,7 +582,10 @@ void WorkerManager::smartAttackUnit(BWAPI::Unit * attacker, BWAPI::Unit * target
 
 void WorkerManager::drawResourceDebugInfo() {
 
-   BOOST_FOREACH (BWAPI::Unit * worker, workerData.getWorkers()) {
+   std::set<BWAPI::Unit*>::const_iterator it = workerData.getWorkers().begin();
+   for (; it != workerData.getWorkers().end(); it++)
+   {
+      BWAPI::Unit * worker = *it;
 
       char job = workerData.getJobCode(worker);
 
@@ -582,8 +611,10 @@ void WorkerManager::drawWorkerInformation(int x, int y) {
 
    int yspace = 0;
 
-   BOOST_FOREACH (BWAPI::Unit * unit, workerData.getWorkers())
+   std::set<BWAPI::Unit*>::const_iterator it = workerData.getWorkers().begin();
+   for (; it != workerData.getWorkers().end(); it++)
    {
+      BWAPI::Unit * unit = *it;
       if (Options::Debug::DRAW_UALBERTABOT_DEBUG) BWAPI::Broodwar->drawTextScreen(x, y+40+((yspace)*10), "\x03 %d", unit->getID());
       if (Options::Debug::DRAW_UALBERTABOT_DEBUG) BWAPI::Broodwar->drawTextScreen(x+50, y+40+((yspace++)*10), "\x03 %c", workerData.getJobCode(unit));
    }

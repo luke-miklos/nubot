@@ -60,10 +60,14 @@ void ConstructionData::addBuilding(BuildingState bs, const Building & b)
 bool ConstructionData::isBeingBuilt(BWAPI::UnitType type)
 {
 	// for each building vector
-	BOOST_FOREACH (std::vector<Building> & buildingVector, buildings)
-	{
-		BOOST_FOREACH (Building & b, buildingVector)
-		{
+   std::vector<std::vector<Building> >::iterator it = buildings.begin();
+   for (; it != buildings.end(); it++)
+   {
+      std::vector<Building> buildingVector = *it;
+      std::vector<Building>::iterator bit = buildingVector.begin();
+      for (; bit != buildingVector.end(); bit++)
+      {
+         Building b = *bit;
 			if (b.type == type)
 			{
 				return true;

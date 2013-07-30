@@ -107,8 +107,10 @@ void MapTools::update()
 	}*/
 
 
-	BOOST_FOREACH (BWAPI::Unit * unit, BWAPI::Broodwar->getAllUnits())
-	{
+   std::set<BWAPI::Unit*>::const_iterator it = BWAPI::Broodwar->getAllUnits().begin();
+   for (; it != BWAPI::Broodwar->getAllUnits().end(); it++)
+   {
+      BWAPI::Unit * unit = *it;
 		BWAPI::Color c(BWAPI::Colors::Yellow);
 
 		if (unit->getPlayer() != BWAPI::Broodwar->self())
@@ -392,8 +394,10 @@ BWAPI::TilePosition MapTools::getNextExpansion()
 	BWAPI::TilePosition homeTile = BWAPI::Broodwar->self()->getStartLocation();
 
 	// for each base location
-	BOOST_FOREACH(BWTA::BaseLocation * base, BWTA::getBaseLocations())
-	{
+   std::set<BWTA::BaseLocation*>::const_iterator it = BWTA::getBaseLocations().begin();
+   for (; it != BWTA::getBaseLocations().end(); it++)
+   {
+      BWTA::BaseLocation* base = *it;
 		// if the base has gas
 		if(!base->isMineralOnly() && !(base == BWTA::getStartLocation(BWAPI::Broodwar->self())))
 		{
@@ -409,8 +413,10 @@ BWAPI::TilePosition MapTools::getNextExpansion()
 			bool buildingInTheWay = false;
 
 			// for each unit in the rectangle where we want to build it
-			BOOST_FOREACH (BWAPI::Unit * unit, BWAPI::Broodwar->getUnitsInRectangle(x1, y1, x2, y2))
-			{
+         std::set<BWAPI::Unit*>::const_iterator it = BWAPI::Broodwar->getUnitsInRectangle(x1, y1, x2, y2).begin();
+         for (; it != BWAPI::Broodwar->getUnitsInRectangle(x1, y1, x2, y2).end(); it++)
+         {
+            BWAPI::Unit * unit = *it;
 				// if the unit is a building, we can't build here
 				if (unit->getType().isBuilding())
 				{

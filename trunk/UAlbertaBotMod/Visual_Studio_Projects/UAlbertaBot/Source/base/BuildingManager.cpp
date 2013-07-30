@@ -254,7 +254,10 @@ void BuildingManager::constructAssignedBuildings()
 void BuildingManager::checkForStartedConstruction() 
 {
 	// for each building unit which is being constructed
-	BOOST_FOREACH (BWAPI::Unit * buildingStarted, BWAPI::Broodwar->self()->getUnits()) {
+   std::set<BWAPI::Unit*>::const_iterator it = BWAPI::Broodwar->self()->getUnits().begin();
+   for (; it != BWAPI::Broodwar->self()->getUnits().end(); it++)
+   {
+      BWAPI::Unit * buildingStarted = *it;
 
 		// filter out units which aren't buildings under construction
 		if (!(buildingStarted->getType().isBuilding() && buildingStarted->isBeingConstructed()))
@@ -407,10 +410,12 @@ int BuildingManager::getReservedGas() {
 	return reservedGas;
 }
 
-void BuildingManager::drawBuildingInformation(int x, int y) {
-
-	BOOST_FOREACH (BWAPI::Unit * unit, BWAPI::Broodwar->self()->getUnits())
-	{
+void BuildingManager::drawBuildingInformation(int x, int y)
+{
+   std::set<BWAPI::Unit*>::const_iterator it = BWAPI::Broodwar->self()->getUnits().begin();
+   for (; it != BWAPI::Broodwar->self()->getUnits().end(); it++)
+   {
+      BWAPI::Unit * unit = *it;
 		if (Options::Debug::DRAW_UALBERTABOT_DEBUG) BWAPI::Broodwar->drawTextMap(unit->getPosition().x(), unit->getPosition().y()+5, "\x07%d", unit->getID()); 
 	}
 

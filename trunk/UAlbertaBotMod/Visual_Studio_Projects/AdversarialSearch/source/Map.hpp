@@ -107,8 +107,10 @@ public:
 	{
 		_unitData = bvv(getTileWidth(), std::vector<bool>(getTileHeight(), true));
 
-		BOOST_FOREACH (BWAPI::Unit * unit, BWAPI::Broodwar->getAllUnits())
-		{
+      std::set<BWAPI::Unit*>::const_iterator it = BWAPI::Broodwar->getAllUnits().begin();
+      for (; it != BWAPI::Broodwar->getAllUnits().end(); it++)
+      {
+         BWAPI::Unit * unit = *it;
 			if (!unit->getType().isBuilding())
 			{
 				addUnit(unit);
@@ -125,8 +127,10 @@ public:
 	{
 		_buildingData = bvv(getTileWidth(), std::vector<bool>(getTileHeight(), true));
 
-		BOOST_FOREACH (BWAPI::Unit * unit, BWAPI::Broodwar->getAllUnits())
-		{
+      std::set<BWAPI::Unit*>::const_iterator it = BWAPI::Broodwar->getAllUnits().begin();
+      for (; it != BWAPI::Broodwar->getAllUnits().end(); it++)
+      {
+         BWAPI::Unit * unit = *it;
 			if (unit->getType().isBuilding())
 			{
 				addUnit(unit);
