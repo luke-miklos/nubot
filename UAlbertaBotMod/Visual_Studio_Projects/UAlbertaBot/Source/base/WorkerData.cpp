@@ -55,8 +55,10 @@ void WorkerData::removeDepot(BWAPI::Unit * unit)
 	depotWorkerCount.erase(unit);
 
 	// re-balance workers in here
-	BOOST_FOREACH (BWAPI::Unit * worker, workers)
-	{
+   std::set<BWAPI::Unit*>::const_iterator it = workers.begin();
+   for (; it != workers.end(); it++)
+   {
+      BWAPI::Unit * worker = *it;
 		// if a worker was working at this depot
 		if (workerDepotMap[worker] == unit)
 		{
@@ -184,8 +186,10 @@ int WorkerData::getNumWorkers()
 int WorkerData::getNumMineralWorkers()
 {
 	size_t num = 0;
-	BOOST_FOREACH (BWAPI::Unit * unit, workers)
-	{
+   std::set<BWAPI::Unit*>::const_iterator it = workers.begin();
+   for (; it != workers.end(); it++)
+   {
+      BWAPI::Unit * unit = *it;
 		if (workerJobMap[unit] == WorkerData::Minerals)
 		{
 			num++;
@@ -197,8 +201,10 @@ int WorkerData::getNumMineralWorkers()
 int WorkerData::getNumGasWorkers()
 {
 	size_t num = 0;
-	BOOST_FOREACH (BWAPI::Unit * unit, workers)
-	{
+   std::set<BWAPI::Unit*>::const_iterator it = workers.begin();
+   for (; it != workers.end(); it++)
+   {
+      BWAPI::Unit * unit = *it;
 		if (workerJobMap[unit] == WorkerData::Gas)
 		{
 			num++;
@@ -210,8 +216,10 @@ int WorkerData::getNumGasWorkers()
 int WorkerData::getNumIdleWorkers()
 {
 	size_t num = 0;
-	BOOST_FOREACH (BWAPI::Unit * unit, workers)
-	{
+   std::set<BWAPI::Unit*>::const_iterator it = workers.begin();
+   for (; it != workers.end(); it++)
+   {
+      BWAPI::Unit * unit = *it;
 		if (workerJobMap[unit] == WorkerData::Idle)
 		{
 			num++;
@@ -258,8 +266,10 @@ int WorkerData::getMineralsNearDepot(BWAPI::Unit * depot)
 
 	int mineralsNearDepot = 0;
 
-	BOOST_FOREACH (BWAPI::Unit * unit, BWAPI::Broodwar->getAllUnits())
-	{
+   std::set<BWAPI::Unit*>::const_iterator it = BWAPI::Broodwar->getAllUnits().begin();
+   for (; it != BWAPI::Broodwar->getAllUnits().end(); it++)
+   {
+      BWAPI::Unit * unit = *it;
 		if ((unit->getType() == BWAPI::UnitTypes::Resource_Mineral_Field) && unit->getDistance(depot) < 200)
 		{
 			mineralsNearDepot++;
@@ -308,8 +318,10 @@ BWAPI::Unit * WorkerData::getMineralToMine(BWAPI::Unit * worker)
 
 	if (depot)
 	{
-		BOOST_FOREACH (BWAPI::Unit * unit, BWAPI::Broodwar->getAllUnits())
-		{
+      std::set<BWAPI::Unit*>::const_iterator it = BWAPI::Broodwar->getAllUnits().begin();
+      for (; it != BWAPI::Broodwar->getAllUnits().end(); it++)
+      {
+         BWAPI::Unit * unit = *it;
 			if (unit->getType() == BWAPI::UnitTypes::Resource_Mineral_Field && unit->getResources() > 0)
 			{
 				double dist = unit->getDistance(depot);
@@ -434,8 +446,10 @@ char WorkerData::getJobCode(BWAPI::Unit * unit)
 
 void WorkerData::drawDepotDebugInfo()
 {
-	BOOST_FOREACH(BWAPI::Unit * depot, depots)
-	{
+   std::set<BWAPI::Unit*>::const_iterator it = depots.begin();
+   for (; it != depots.end(); it++)
+   {
+      BWAPI::Unit * depot = *it;
 		int x = depot->getPosition().x() - 64;
 		int y = depot->getPosition().y() - 32;
 

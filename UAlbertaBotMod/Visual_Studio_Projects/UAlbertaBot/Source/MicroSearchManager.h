@@ -8,7 +8,7 @@
 #include "..\..\AdversarialSearch\source\Player.h"
 #include "..\..\AdversarialSearch\source\TranspositionTable.h"
 
-#include <boost/shared_ptr.hpp>
+//#include <boost/shared_ptr.hpp>
 
 class AnimData
 {

@@ -6,8 +6,11 @@ UnitData::UnitData()
 	, gasLost(0)
 {
 	int maxTypeID(0);
-	BOOST_FOREACH (BWAPI::UnitType t, BWAPI::UnitTypes::allUnitTypes())
-	{
+
+   std::set<BWAPI::UnitType>::const_iterator it = BWAPI::UnitTypes::allUnitTypes().begin();
+   for (; it != BWAPI::UnitTypes::allUnitTypes().end(); it++)
+   {
+      BWAPI::UnitType t = *it;
 		maxTypeID = maxTypeID > t.getID() ? maxTypeID : t.getID();
 	}
 

@@ -23,8 +23,10 @@ void CombatSimulation::setCombatUnits(const BWAPI::Position & center, const int 
 
 	int y = 0;
 
-	BOOST_FOREACH (BWAPI::Unit * unit, ourCombatUnits)
-	{
+   UnitVector::const_iterator it = ourCombatUnits.begin();
+   for (; it != ourCombatUnits.end(); it++)
+   {
+      BWAPI::Unit * unit = *it;
 		if (InformationManager::Instance().isCombatUnit(unit->getType()))
 		{
 			s.addUnit(MicroSearch::Unit(unit, getPlayer(BWAPI::Broodwar->self()), BWAPI::Broodwar->getFrameCount()));
@@ -33,8 +35,10 @@ void CombatSimulation::setCombatUnits(const BWAPI::Position & center, const int 
 
 	y++;
 
-	BOOST_FOREACH (UnitInfo ui, enemyCombatUnits)
-	{
+   std::vector<UnitInfo>::const_iterator eit = enemyCombatUnits.begin();
+   for (; eit != enemyCombatUnits.end(); eit++)
+   {
+      UnitInfo ui = *eit;
 		if (!ui.type.isFlyer())
 		{
 			s.addUnit(getUnit(ui, getPlayer(BWAPI::Broodwar->enemy())));

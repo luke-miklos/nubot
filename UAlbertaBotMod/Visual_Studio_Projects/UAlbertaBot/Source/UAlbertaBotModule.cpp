@@ -24,7 +24,7 @@ UAlbertaBotModule::~UAlbertaBotModule() {}
 
 void UAlbertaBotModule::onStart()
 {
-	BWAPI::Broodwar->setLocalSpeed(0);
+	//BWAPI::Broodwar->setLocalSpeed(0);
 
 	BWAPI::Broodwar->enableFlag(BWAPI::Flag::UserInput);
 	//BWAPI::Broodwar->enableFlag(BWAPI::Flag::CompleteMapInformation);
@@ -77,8 +77,10 @@ void UAlbertaBotModule::onFrame()
 
 	if (Options::Modules::USING_REPLAY_VISUALIZER)
 	{
-		BOOST_FOREACH (BWAPI::Unit * unit, BWAPI::Broodwar->getAllUnits())
-		{
+      std::set<BWAPI::Unit*>::const_iterator it = BWAPI::Broodwar->getAllUnits().begin();
+      for (; it != BWAPI::Broodwar->getAllUnits().end(); it++)
+      {
+         BWAPI::Unit * unit = *it;
 			BWAPI::Broodwar->drawTextMap(unit->getPosition().x(), unit->getPosition().y(), "   %d", unit->getPlayer()->getID());
 
 			if (unit->isSelected())
@@ -112,8 +114,10 @@ void UAlbertaBotModule::onSendText(std::string text)
 	if (Options::Modules::USING_REPLAY_VISUALIZER && (text.compare("sim") == 0))
 	{
 		BWAPI::Unit * selected = NULL;
-		BOOST_FOREACH (BWAPI::Unit * unit, BWAPI::Broodwar->getAllUnits())
-		{
+      std::set<BWAPI::Unit*>::const_iterator it = BWAPI::Broodwar->getAllUnits().begin();
+      for (; it != BWAPI::Broodwar->getAllUnits().end(); it++)
+      {
+         BWAPI::Unit * unit = *it;
 			if (unit->isSelected())
 			{
 				selected = unit;

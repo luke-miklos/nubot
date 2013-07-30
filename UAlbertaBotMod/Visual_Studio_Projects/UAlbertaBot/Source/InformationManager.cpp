@@ -43,14 +43,18 @@ void InformationManager::update()
 void InformationManager::updateUnitInfo() 
 {
 	// update enemy unit information
-	BOOST_FOREACH (BWAPI::Unit * unit, BWAPI::Broodwar->enemy()->getUnits())
-	{
+   std::set<BWAPI::Unit*>::const_iterator it = BWAPI::Broodwar->enemy()->getUnits().begin();
+   for (; it != BWAPI::Broodwar->enemy()->getUnits().end(); it++)
+   {
+      BWAPI::Unit * unit = *it;
 		updateUnit(unit);
 	}
 
 	// update enemy unit information
-	BOOST_FOREACH (BWAPI::Unit * unit, BWAPI::Broodwar->self()->getUnits())
-	{
+   std::set<BWAPI::Unit*>::const_iterator sit = BWAPI::Broodwar->self()->getUnits().begin();
+   for (; sit != BWAPI::Broodwar->self()->getUnits().end(); sit++)
+   {
+      BWAPI::Unit * unit = *sit;
 		updateUnit(unit);
 	}
 
@@ -85,8 +89,10 @@ void InformationManager::updateBaseLocationInfo()
 		// an undexplored base location holder
 		BWTA::BaseLocation * unexplored = NULL;
 
-		BOOST_FOREACH (BWTA::BaseLocation * startLocation, BWTA::getStartLocations()) 
-		{
+      std::set<BWTA::BaseLocation*>::const_iterator it = BWTA::getStartLocations().begin();
+      for (; it != BWTA::getStartLocations().end(); it++)
+      {
+         BWTA::BaseLocation* startLocation = *it;
 			if (isEnemyBuildingInRegion(BWTA::getRegion(startLocation->getTilePosition()))) 
 			{
 				baseFound = true;
@@ -199,8 +205,10 @@ int InformationManager::numEnemyUnitsInRegion(BWTA::Region * region)
 	}
 
 	int unitsInRegion(0);
-	BOOST_FOREACH(BWAPI::Unit * unit, BWAPI::Broodwar->enemy()->getUnits()) 
-	{
+   std::set<BWAPI::Unit*>::const_iterator it = BWAPI::Broodwar->enemy()->getUnits().begin();
+   for (; it != BWAPI::Broodwar->enemy()->getUnits().end(); it++)
+   {
+      BWAPI::Unit * unit = *it;
 		if (unit->isVisible() && BWTA::getRegion(BWAPI::TilePosition(unit->getPosition())) == region) 
 		{
 			unitsInRegion++;
@@ -218,8 +226,10 @@ const UIMap & InformationManager::getUnitInfo(BWAPI::Player * player) const
 int InformationManager::numEnemyFlyingUnitsInRegion(BWTA::Region * region) 
 {
 	int unitsInRegion(0);
-	BOOST_FOREACH(BWAPI::Unit * unit, BWAPI::Broodwar->enemy()->getUnits()) 
-	{
+   std::set<BWAPI::Unit*>::const_iterator it = BWAPI::Broodwar->enemy()->getUnits().begin();
+   for (; it != BWAPI::Broodwar->enemy()->getUnits().end(); it++)
+   {
+      BWAPI::Unit * unit = *it;
 		if (unit->isVisible() && BWTA::getRegion(BWAPI::TilePosition(unit->getPosition())) == region && unit->getType().isFlyer()) 
 		{
 			unitsInRegion++;
@@ -253,8 +263,10 @@ void InformationManager::drawUnitInformation(int x, int y) {
 	int yspace = 0;
 
 	// for each unit in the queue
-	BOOST_FOREACH (BWAPI::UnitType t, BWAPI::UnitTypes::allUnitTypes()) 
-	{
+   std::set<BWAPI::UnitType>::const_iterator it = BWAPI::UnitTypes::allUnitTypes().begin();
+   for (; it != BWAPI::UnitTypes::allUnitTypes().end(); it++)
+   {
+      BWAPI::UnitType t = *it;
 		int numUnits = enemyUnitData.getNumUnits(t);
 		int numDeadUnits = enemyUnitData.getNumDeadUnits(t);
 
@@ -331,8 +343,10 @@ BWAPI::Unit * InformationManager::getClosestUnitToTarget(BWAPI::UnitType type, B
 	BWAPI::Unit * closestUnit = NULL;
 	double closestDist = 100000;
 
-	BOOST_FOREACH (BWAPI::Unit * unit, BWAPI::Broodwar->self()->getUnits())
-	{
+   std::set<BWAPI::Unit*>::const_iterator it = BWAPI::Broodwar->self()->getUnits().begin();
+   for (; it != BWAPI::Broodwar->self()->getUnits().end(); it++)
+   {
+      BWAPI::Unit * unit = *it;
 		if (unit->getType() == type)
 		{
 			double dist = unit->getDistance(target);

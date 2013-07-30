@@ -19,9 +19,12 @@ void RangedManager::executeMicro(const UnitVector & targets)
 	}
 
 	// for each zealot
-	BOOST_FOREACH(BWAPI::Unit * rangedUnit, rangedUnits)
-	{
-		// train sub units such as scarabs or interceptors
+   UnitVector::const_iterator it = rangedUnits.begin();
+   for (; it != rangedUnits.end(); it++)
+   {
+      BWAPI::Unit * rangedUnit = *it;
+
+      // train sub units such as scarabs or interceptors
 		//trainSubUnits(rangedUnit);
 
 		// if the order is to attack or defend
@@ -125,9 +128,12 @@ BWAPI::Unit * RangedManager::getTarget(BWAPI::Unit * rangedUnit, UnitVector & ta
 	BWAPI::Unit * inRangeTarget = NULL;
 	BWAPI::Unit * notInRangeTarget = NULL;
 
-	BOOST_FOREACH(BWAPI::Unit * unit, targets)
-	{
-		int priority = getAttackPriority(rangedUnit, unit);
+   UnitVector::const_iterator it = targets.begin();
+   for (; it != targets.end(); it++)
+   {
+      BWAPI::Unit * unit = *it;
+
+      int priority = getAttackPriority(rangedUnit, unit);
 		int distance = rangedUnit->getDistance(unit);
 
 		// if the unit is in range, update the target with the lowest hp
@@ -191,9 +197,12 @@ BWAPI::Unit * RangedManager::closestrangedUnit(BWAPI::Unit * target, std::set<BW
 	double minDistance = 0;
 	BWAPI::Unit * closest = NULL;
 
-	BOOST_FOREACH (BWAPI::Unit * rangedUnit, rangedUnitsToAssign)
-	{
-		double distance = rangedUnit->getDistance(target);
+   std::set<BWAPI::Unit*>::const_iterator it = rangedUnitsToAssign.begin();
+   for (; it != rangedUnitsToAssign.end(); it++)
+   {
+      BWAPI::Unit * rangedUnit = *it;
+
+      double distance = rangedUnit->getDistance(target);
 		if (!closest || distance < minDistance)
 		{
 			minDistance = distance;

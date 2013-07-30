@@ -24,8 +24,10 @@ void Visualizer::setBWAPIState()
 	state.setMaxUnits(200);
 	state.setMap(&map);
 
-	BOOST_FOREACH (BWAPI::Unit * unit, BWAPI::Broodwar->getAllUnits())
-	{
+   std::set<BWAPI::Unit*>::const_iterator it = BWAPI::Broodwar->getAllUnits().begin();
+   for (; it != BWAPI::Broodwar->getAllUnits().end(); it++)
+   {
+      BWAPI::Unit * unit = *it;
 		const IDType player(getPlayer(unit->getPlayer()));
 
 		if (player == Search::Players::Player_One || player == Search::Players::Player_Two)

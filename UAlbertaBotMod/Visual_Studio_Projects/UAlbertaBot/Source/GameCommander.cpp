@@ -4,112 +4,132 @@
 static int flowDebug = 0;
 static int flowMapIndex = 0;
 
-////for data logging
-//BWAPI::Unit* testUnit = 0;
-//int pixelsAhead = 0;
-//int frameCommanded = 0;
-//std::ofstream writeFile;
+const bool TEST_UNIT_MOVEMENT = false;
+
+//for data logging
+BWAPI::Unit* testUnit = 0;
+int pixelsAhead = 0;
+int frameCommanded = 0;
+std::ofstream writeFile;
 
 GameCommander::GameCommander() : numWorkerScouts(0), currentScout(NULL)
 {
-   //writeFile.open("bwapi-data/testio/luke.txt", std::ios::out | std::ios::app);
+   if (TEST_UNIT_MOVEMENT)
+   {
+      writeFile.open("bwapi-data/testio/luke.txt", std::ios::out | std::ios::app);
+   }
 }
 
 GameCommander::~GameCommander()
 {
-   //writeFile.close();
+   if (TEST_UNIT_MOVEMENT)
+   {
+      writeFile.close();
+   }
 }
 
 void GameCommander::update()
 {
-   //if (testUnit != 0)
-   //{
-   //   int frame = BWAPI::Broodwar->getFrameCount();
-   //   BWAPI::UnitType type = testUnit->getType();
-   //   if (writeFile.good())
-   //   {
-   //      writeFile << frame << ", " << type.getName() << ", " << pixelsAhead << ", " << type.topSpeed() << ", " << type.acceleration() << ", " << testUnit->getVelocityX() << ", " << testUnit->getVelocityY() << std::endl;
-   //      writeFile.flush();
-   //   }
+   if (TEST_UNIT_MOVEMENT)
+   {
+      if (testUnit != 0)
+      {
+         int frame = BWAPI::Broodwar->getFrameCount();
+         BWAPI::UnitType type = testUnit->getType();
 
-   //   BWAPI::Position pos = testUnit->getPosition();
-   //   pos.y() += pixelsAhead;
-   //   testUnit->move(pos);
+         //bool down = ((frame - frameCommanded) < 60);
+         BWAPI::Position pos = testUnit->getPosition();
 
-   //   if ((frame - frameCommanded) > 120)
-   //   {
-   //      testUnit = 0;
-   //   }
-   //}
+         if (writeFile.good())
+         {
+            writeFile << frame << ", " << type.getName() << ", " << pixelsAhead << ", " << type.topSpeed() << ", " << type.acceleration() << ", " << testUnit->getVelocityX() << ", " << testUnit->getVelocityY() << ", " << testUnit->getAngle() << ", " << pos.x() << ", " << pos.y() << std::endl;
+            writeFile.flush();
+         }
+         //if (down)
+         //{
+            pos.y() += pixelsAhead;
+         //}
+         //else
+         //{
+         //   pos.x() += pixelsAhead;
+         //}
+         testUnit->move(pos);
 
+         if ((frame - frameCommanded) > 120)
+         {
+            testUnit = 0;
+         }
+      }
+   }
+   else
+   {
+      FlowField::Instance();
+      if (flowDebug == 1)
+      {
+         std::set<BWAPI::TilePosition> starts = BWAPI::Broodwar->getStartLocations();
+         int i = flowMapIndex % starts.size();
+         std::set<BWAPI::TilePosition>::iterator it = starts.begin();
+         std::advance(it, i);
+         FlowField::Instance()->DrawFlowFieldOnMap(*it);
+         //FlowField::Instance()->DrawWalkable();
+      }
+      else if (flowDebug == 2)
+      {
+         std::set<BWAPI::TilePosition> starts = BWAPI::Broodwar->getStartLocations();
+         int i = flowMapIndex % starts.size();
+         std::set<BWAPI::TilePosition>::iterator it = starts.begin();
+         std::advance(it, i);
+         FlowField::Instance()->DrawFloodFillOnMap(*it);
+         //FlowField::Instance()->DrawWalkable();
+      }
 
+	   timerManager.startTimer(TimerManager::All);
 
-   //FlowField::Instance();
-   //if (flowDebug == 1)
-   //{
-   //   std::set<BWAPI::TilePosition> starts = BWAPI::Broodwar->getStartLocations();
-   //   int i = flowMapIndex % starts.size();
-   //   std::set<BWAPI::TilePosition>::iterator it = starts.begin();
-   //   std::advance(it, i);
-   //   FlowField::Instance()->DrawFlowFieldOnMap(*it);
-   //   //FlowField::Instance()->DrawWalkable();
-   //}
-   //else if (flowDebug == 2)
-   //{
-   //   std::set<BWAPI::TilePosition> starts = BWAPI::Broodwar->getStartLocations();
-   //   int i = flowMapIndex % starts.size();
-   //   std::set<BWAPI::TilePosition>::iterator it = starts.begin();
-   //   std::advance(it, i);
-   //   FlowField::Instance()->DrawFloodFillOnMap(*it);
-   //   //FlowField::Instance()->DrawWalkable();
-   //}
+	   // economy and base managers
+	   timerManager.startTimer(TimerManager::Worker);
+	   // populate the unit vectors we will pass into various managers
+	   populateUnitVectors();
+	   WorkerManager::Instance().update();
+	   timerManager.stopTimer(TimerManager::Worker);
 
-	timerManager.startTimer(TimerManager::All);
+	   timerManager.startTimer(TimerManager::Production);
+	   ProductionManager::Instance().update();
+	   timerManager.stopTimer(TimerManager::Production);
 
-	// economy and base managers
-	timerManager.startTimer(TimerManager::Worker);
-	// populate the unit vectors we will pass into various managers
-	populateUnitVectors();
-	WorkerManager::Instance().update();
-	timerManager.stopTimer(TimerManager::Worker);
+	   timerManager.startTimer(TimerManager::Building);
+	   BuildingManager::Instance().update();
+	   timerManager.stopTimer(TimerManager::Building);
 
-	timerManager.startTimer(TimerManager::Production);
-	ProductionManager::Instance().update();
-	timerManager.stopTimer(TimerManager::Production);
+	   // combat and scouting managers
+	   timerManager.startTimer(TimerManager::Combat);
+	   combatCommander.update(combatUnits);
+	   timerManager.stopTimer(TimerManager::Combat);
 
-	timerManager.startTimer(TimerManager::Building);
-	BuildingManager::Instance().update();
-	timerManager.stopTimer(TimerManager::Building);
+	   timerManager.startTimer(TimerManager::Scout);
+	   scoutManager.update(scoutUnits);
+	   timerManager.stopTimer(TimerManager::Scout);
 
-	// combat and scouting managers
-	timerManager.startTimer(TimerManager::Combat);
-	combatCommander.update(combatUnits);
-	timerManager.stopTimer(TimerManager::Combat);
+	   // utility managers
+	   timerManager.startTimer(TimerManager::InformationManager);
+	   InformationManager::Instance().update();
+	   timerManager.stopTimer(TimerManager::InformationManager);
 
-	timerManager.startTimer(TimerManager::Scout);
-	scoutManager.update(scoutUnits);
-	timerManager.stopTimer(TimerManager::Scout);
+	   timerManager.startTimer(TimerManager::MapGrid);
+	   MapGrid::Instance().update();
+	   timerManager.stopTimer(TimerManager::MapGrid);
 
-	// utility managers
-	timerManager.startTimer(TimerManager::InformationManager);
-	InformationManager::Instance().update();
-	timerManager.stopTimer(TimerManager::InformationManager);
+	   timerManager.startTimer(TimerManager::MapTools);
+	   MapTools::Instance().update();
+	   timerManager.stopTimer(TimerManager::MapTools);
 
-	timerManager.startTimer(TimerManager::MapGrid);
-	MapGrid::Instance().update();
-	timerManager.stopTimer(TimerManager::MapGrid);
-
-	timerManager.startTimer(TimerManager::MapTools);
-	MapTools::Instance().update();
-	timerManager.stopTimer(TimerManager::MapTools);
-
-	timerManager.startTimer(TimerManager::Search);
-	//StarcraftBuildOrderSearchManager::Instance().update(35 - timerManager.getTotalElapsed());
-	timerManager.stopTimer(TimerManager::Search);
+	   timerManager.startTimer(TimerManager::Search);
+	   //StarcraftBuildOrderSearchManager::Instance().update(35 - timerManager.getTotalElapsed());
+	   timerManager.stopTimer(TimerManager::Search);
 		
-	timerManager.stopTimer(TimerManager::All);
+	   timerManager.stopTimer(TimerManager::All);
 
-	drawDebugInterface();
+	   drawDebugInterface();
+   }
 }
 
 void GameCommander::drawDebugInterface()
@@ -157,8 +177,10 @@ void GameCommander::setValidUnits()
 	assignedUnits.clear();
 
 	// make sure the unit is completed and alive and usable
-	BOOST_FOREACH(BWAPI::Unit * unit, BWAPI::Broodwar->self()->getUnits())
-	{
+   std::set<BWAPI::Unit*>::const_iterator it = BWAPI::Broodwar->self()->getUnits().begin();
+   for (; it != BWAPI::Broodwar->self()->getUnits().end(); it++)
+   {
+      BWAPI::Unit * unit = *it;
 		if (isValidUnit(unit))
 		{	
 			validUnits.insert(unit);
@@ -201,8 +223,10 @@ void GameCommander::setCombatUnits()
 {
 	combatUnits.clear();
 
-	BOOST_FOREACH (BWAPI::Unit * unit, validUnits)
-	{
+   std::set<BWAPI::Unit*>::const_iterator it = validUnits.begin();
+   for (; it != validUnits.end(); it++)
+   {
+      BWAPI::Unit * unit = *it;
 		if (!isAssigned(unit) && isCombatUnit(unit))		
 		{	
 			combatUnits.insert(unit);
@@ -214,8 +238,10 @@ void GameCommander::setCombatUnits()
 	// add our workers to the combat force
 	if (combatUnits.empty() && StrategyManager::Instance().defendWithWorkers())
 	{
-		BOOST_FOREACH (BWAPI::Unit * unit, validUnits)
-		{
+      std::set<BWAPI::Unit*>::const_iterator it = validUnits.begin();
+      for (; it != validUnits.end(); it++)
+      {
+         BWAPI::Unit * unit = *it;
 			// if it's a worker
 			if (!isAssigned(unit) && unit->getType().isWorker())			
 			{	
@@ -258,8 +284,10 @@ BWAPI::Unit * GameCommander::getFirstSupplyProvider()
 
 	if (BWAPI::Broodwar->self()->getRace() == BWAPI::Races::Zerg)
 	{
-		BOOST_FOREACH(BWAPI::Unit * unit, BWAPI::Broodwar->self()->getUnits())
-		{
+      std::set<BWAPI::Unit*>::const_iterator it = BWAPI::Broodwar->self()->getUnits().begin();
+      for (; it != BWAPI::Broodwar->self()->getUnits().end(); it++)
+      {
+         BWAPI::Unit * unit = *it;
 			if (unit->getType() == BWAPI::UnitTypes::Zerg_Spawning_Pool)
 			{
 				supplyProvider = unit;
@@ -268,9 +296,10 @@ BWAPI::Unit * GameCommander::getFirstSupplyProvider()
 	}
 	else
 	{
-		
-		BOOST_FOREACH(BWAPI::Unit * unit, BWAPI::Broodwar->self()->getUnits())
-		{
+      std::set<BWAPI::Unit*>::const_iterator it = BWAPI::Broodwar->self()->getUnits().begin();
+      for (; it != BWAPI::Broodwar->self()->getUnits().end(); it++)
+      {
+         BWAPI::Unit * unit = *it;
 			if (unit->getType() == BWAPI::Broodwar->self()->getRace().getSupplyProvider())
 			{
 				supplyProvider = unit;
@@ -285,8 +314,10 @@ void GameCommander::setWorkerUnits()
 {
 	workerUnits.clear();
 
-	BOOST_FOREACH (BWAPI::Unit * unit, validUnits)
-	{
+   std::set<BWAPI::Unit*>::const_iterator it = validUnits.begin();
+   for (; it != validUnits.end(); it++)
+   {
+      BWAPI::Unit * unit = *it;
 		if (!isAssigned(unit) && unit->getType().isWorker())			
 		{	
 			workerUnits.insert(unit);
@@ -363,24 +394,38 @@ void GameCommander::onUnitMorph(BWAPI::Unit * unit)
 
 void GameCommander::onSendText(std::string text)
 {
-   //pixelsAhead = atoi(text.c_str());
-   //if (pixelsAhead > 0)
-   //{
-   //   const std::set<BWAPI::Unit*> units = BWAPI::Broodwar->self()->getUnits();
-   //   std::set<BWAPI::Unit*>::const_iterator it = units.begin();
-   //   for (;it!=units.end(); it++)
-   //   {
-   //      BWAPI::Unit* unit = *it;
-   //      if (unit->isSelected())
-   //      {
-   //         testUnit = unit;
-   //         frameCommanded = BWAPI::Broodwar->getFrameCount();
-   //         break;
-   //      }
-   //   }
-   //}
-
 	ProductionManager::Instance().onSendText(text);
+
+   if (TEST_UNIT_MOVEMENT)
+   {
+      pixelsAhead = atoi(text.c_str());
+      if (pixelsAhead > 0)
+      {
+         const std::set<BWAPI::Unit*> units = BWAPI::Broodwar->self()->getUnits();
+         std::set<BWAPI::Unit*>::const_iterator it = units.begin();
+         for (;it!=units.end(); it++)
+         {
+            BWAPI::Unit* unit = *it;
+            if (unit->isSelected())
+            {
+               testUnit = unit;
+               frameCommanded = BWAPI::Broodwar->getFrameCount();
+               break;
+            }
+         }
+      }
+   }
+   else
+   {
+	   if (text.compare("0") == 0)
+	   {
+	   	BWAPI::Broodwar->setLocalSpeed(0);
+	   }
+	   else if (atoi(text.c_str()) > 0)
+	   {
+	   	BWAPI::Broodwar->setLocalSpeed(atoi(text.c_str()));
+	   }
+   }
 
 	if (text.compare("f") == 0)
    {
@@ -398,15 +443,6 @@ void GameCommander::onSendText(std::string text)
    {
       flowMapIndex++;
    }
-
-	if (text.compare("0") == 0)
-	{
-		BWAPI::Broodwar->setLocalSpeed(0);
-	}
-	else if (atoi(text.c_str()) > 0)
-	{
-		BWAPI::Broodwar->setLocalSpeed(atoi(text.c_str()));
-	}
 }
 
 BWAPI::Unit * GameCommander::getClosestUnitToTarget(BWAPI::UnitType type, BWAPI::Position target)
@@ -414,8 +450,10 @@ BWAPI::Unit * GameCommander::getClosestUnitToTarget(BWAPI::UnitType type, BWAPI:
 	BWAPI::Unit * closestUnit = NULL;
 	double closestDist = 100000;
 
-	BOOST_FOREACH (BWAPI::Unit * unit, validUnits)
-	{
+   std::set<BWAPI::Unit*>::const_iterator it = validUnits.begin();
+   for (; it != validUnits.end(); it++)
+   {
+      BWAPI::Unit * unit = *it;
 		if (unit->getType() == type)
 		{
 			double dist = unit->getDistance(target);
@@ -435,8 +473,10 @@ BWAPI::Unit * GameCommander::getClosestWorkerToTarget(BWAPI::Position target)
 	BWAPI::Unit * closestUnit = NULL;
 	double closestDist = 100000;
 
-	BOOST_FOREACH (BWAPI::Unit * unit, validUnits)
-	{
+   std::set<BWAPI::Unit*>::const_iterator it = validUnits.begin();
+   for (; it != validUnits.end(); it++)
+   {
+      BWAPI::Unit * unit = *it;
 		if (!isAssigned(unit) && unit->getType().isWorker() && WorkerManager::Instance().isFree(unit))
 		{
 			double dist = unit->getDistance(target);

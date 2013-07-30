@@ -406,8 +406,10 @@ void ProductionManager::performCommand(BWAPI::UnitCommandType t) {
    if (t == BWAPI::UnitCommandTypes::Cancel_Construction)
    {
       BWAPI::Unit * extractor = NULL;
-      BOOST_FOREACH(BWAPI::Unit * unit, BWAPI::Broodwar->self()->getUnits())
+      std::set<BWAPI::Unit*>::const_iterator it = BWAPI::Broodwar->self()->getUnits().begin();
+      for (; it != BWAPI::Broodwar->self()->getUnits().end(); it++)
       {
+         BWAPI::Unit * unit = *it;
          if (unit->getType() == BWAPI::UnitTypes::Zerg_Extractor)
          {
             extractor = unit;
@@ -504,8 +506,10 @@ BWAPI::Unit * ProductionManager::selectUnitOfType(BWAPI::UnitType type, bool lea
    if (closestTo != BWAPI::Position(0,0))
    {
       double minDist(1000000);
-      BOOST_FOREACH (BWAPI::Unit * u, BWAPI::Broodwar->self()->getUnits())
+      std::set<BWAPI::Unit*>::const_iterator it = BWAPI::Broodwar->self()->getUnits().begin();
+      for (; it != BWAPI::Broodwar->self()->getUnits().end(); it++)
       {
+         BWAPI::Unit * u = *it;
          if (u->getType() == type)
          {
             double distance = u->getDistance(closestTo);
@@ -521,8 +525,10 @@ BWAPI::Unit * ProductionManager::selectUnitOfType(BWAPI::UnitType type, bool lea
    }
    else if (type.isBuilding() && leastTrainingTimeRemaining)
    {
-      BOOST_FOREACH (BWAPI::Unit * u, BWAPI::Broodwar->self()->getUnits())
+      std::set<BWAPI::Unit*>::const_iterator it = BWAPI::Broodwar->self()->getUnits().begin();
+      for (; it != BWAPI::Broodwar->self()->getUnits().end(); it++)
       {
+         BWAPI::Unit * u = *it;
          if (u->getType() == type && u->isCompleted() && !u->isTraining() && !u->isLifted() &&!u->isUnpowered())
          {
             return u;
@@ -532,8 +538,10 @@ BWAPI::Unit * ProductionManager::selectUnitOfType(BWAPI::UnitType type, bool lea
    }
    else
    {
-      BOOST_FOREACH(BWAPI::Unit * u, BWAPI::Broodwar->self()->getUnits()) 
+      std::set<BWAPI::Unit*>::const_iterator it = BWAPI::Broodwar->self()->getUnits().begin();
+      for (; it != BWAPI::Broodwar->self()->getUnits().end(); it++)
       {
+         BWAPI::Unit * u = *it;
          if (u->getType() == type && u->isCompleted() && u->getHitPoints() > 0 && !u->isLifted() &&!u->isUnpowered()) 
          {
             return u;
@@ -591,8 +599,10 @@ void ProductionManager::drawProductionInformation(int x, int y)
 {
    // fill prod with each unit which is under construction
    std::vector<BWAPI::Unit *> prod;
-   BOOST_FOREACH (BWAPI::Unit * unit, BWAPI::Broodwar->self()->getUnits())
+   std::set<BWAPI::Unit*>::const_iterator it = BWAPI::Broodwar->self()->getUnits().begin();
+   for (; it != BWAPI::Broodwar->self()->getUnits().end(); it++)
    {
+      BWAPI::Unit * unit = *it;
       if (unit->isBeingConstructed())
       {
          prod.push_back(unit);

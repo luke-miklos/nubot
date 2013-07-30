@@ -5,7 +5,7 @@
 #include "micromanagement/RangedManager.h"
 #include "micromanagement/DetectorManager.h"
 #include "micromanagement/TransportManager.h"
-//#include "FlockManager.h"
+#include "FlockManager.h"
 #include "SquadOrder.h"
 #include "DistanceMap.hpp"
 #include "StrategyManager.h"
@@ -33,7 +33,7 @@ class Squad
 	DetectorManager	detectorManager;
 	TransportManager	transportManager;
 
-   //FlockManager      flockManager;
+   FlockManager      flockManager;
 
 	std::map<BWAPI::Unit *, bool>	nearEnemy;
 

@@ -10,7 +10,7 @@
 #include "ScoutManager.h"
 #include "StrategyManager.h"
 
-//#include "FlowField.hpp"
+#include "FlowField.hpp"
 
 #include "..\..\StarcraftBuildOrderSearch\Source\starcraftsearch\Timer.hpp"
 

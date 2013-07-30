@@ -8,8 +8,10 @@ SquadData::SquadData()
 
 void SquadData::update()
 {
-	BOOST_FOREACH (Squad & squad, squads)
-	{
+   std::vector<Squad>::const_iterator it = squads.begin();
+   for (; it != squads.end(); it++)
+   {
+      Squad squad = *it;
 		squad.update();
 	}
 }

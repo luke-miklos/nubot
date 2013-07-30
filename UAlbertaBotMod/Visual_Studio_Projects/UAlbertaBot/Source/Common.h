@@ -16,9 +16,9 @@
 #include <set>
 #include <map>
 
-#include <boost/foreach.hpp>
-#include <boost/progress.hpp>
-#include <boost/timer.hpp>
+//#include <boost/foreach.hpp>
+//#include <boost/progress.hpp>
+//#include <boost/timer.hpp>
 
 #include <BWAPI.h>
 #include <BWTA.h>
