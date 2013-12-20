@@ -51,7 +51,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>../include;../../vendors_bwta/tinyxml;../../BWAPI 3.7.4/include;../../vendors_bwta/CGAL;../../vendors_bwta/CGAL/include;../../vendors_bwta/CGAL/auxiliary/gmp/include;../../vendors/boost_1_47_0;../../vendors_bwta/Qt/include;../../vendors_bwta/Qt/include/QtCore;../../vendors_bwta/Qt/include/QtGui;../../vendors_bwta/Qt/include/ActiveQt;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../include;../../vendors_bwta/tinyxml;../../../BWAPI 3.7.4/include;../../vendors_bwta/CGAL;../../vendors_bwta/CGAL/include;../../vendors_bwta/CGAL/auxiliary/gmp/include;../../../vendors/boost_1_47_0;../../;../../vendors_bwta/Qt/include;../../vendors_bwta/Qt/include/QtCore;../../vendors_bwta/Qt/include/QtGui;../../vendors_bwta/Qt/include/ActiveQt;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
