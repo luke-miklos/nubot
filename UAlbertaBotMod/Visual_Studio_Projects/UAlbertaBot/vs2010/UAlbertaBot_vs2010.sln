@@ -11,6 +11,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "StarcraftBuildOrderSearch",
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AdversarialSearch", "..\..\AdversarialSearch\vs2010\AdversarialSearch.vcxproj", "{E2AC42E2-950B-4D29-9B99-3A74A73FFC46}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "bwta", "..\..\..\..\bwta\src\bwta.vcxproj", "{E833654C-1984-4571-9C82-6F8976B81B3C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Itanium = Debug|Itanium
@@ -47,6 +49,14 @@ Global
 		{E2AC42E2-950B-4D29-9B99-3A74A73FFC46}.Release|Win32.Build.0 = Release|Win32
 		{E2AC42E2-950B-4D29-9B99-3A74A73FFC46}.Release|x64.ActiveCfg = Release|x64
 		{E2AC42E2-950B-4D29-9B99-3A74A73FFC46}.Release|x64.Build.0 = Release|x64
+		{E833654C-1984-4571-9C82-6F8976B81B3C}.Debug|Itanium.ActiveCfg = Debug|Win32
+		{E833654C-1984-4571-9C82-6F8976B81B3C}.Debug|Win32.ActiveCfg = Debug|Win32
+		{E833654C-1984-4571-9C82-6F8976B81B3C}.Debug|Win32.Build.0 = Debug|Win32
+		{E833654C-1984-4571-9C82-6F8976B81B3C}.Debug|x64.ActiveCfg = Debug|Win32
+		{E833654C-1984-4571-9C82-6F8976B81B3C}.Release|Itanium.ActiveCfg = Release|Win32
+		{E833654C-1984-4571-9C82-6F8976B81B3C}.Release|Win32.ActiveCfg = Release|Win32
+		{E833654C-1984-4571-9C82-6F8976B81B3C}.Release|Win32.Build.0 = Release|Win32
+		{E833654C-1984-4571-9C82-6F8976B81B3C}.Release|x64.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="game">
@@ -171,6 +171,12 @@
     <ClCompile Include="..\Source\influence_map\InfluenceMap.cpp">
       <Filter>game\util\map</Filter>
     </ClCompile>
+    <ClCompile Include="..\Source\PerceptionManager.cpp">
+      <Filter>game\combat\micro</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\PerceivedUnit.cpp">
+      <Filter>game\combat\micro\squad</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Source\CombatCommander.h">
@@ -307,6 +313,12 @@
     </ClInclude>
     <ClInclude Include="..\Source\influence_map\InfluenceMap.h">
       <Filter>game\util\map</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\PerceivedUnit.h">
+      <Filter>game\combat\micro\squad</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\PerceptionManager.h">
+      <Filter>game\combat\micro</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
